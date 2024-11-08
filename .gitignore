@@ -1,0 +1,58 @@
+# Ignore virtual environment
+venv/
+
+# Ignore environment variable files
+.env
+
+# Ignore compiled Python files
+*.pyc
+__pycache__/
+
+# Ignore Django migration files (optional, you might want to include these)
+*/migrations/*.py
+!*/migrations/__init__.py
+
+# Ignore static files (if generated automatically by collectstatic)
+staticfiles/
+static/
+
+# Ignore media files (if you upload files to media directory)
+media/
+
+# Ignore IDE specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore log files
+*.log
+
+# Ignore Python bytecode and caches
+*.pyo
+*.pyd
+*.pdb
+
+# Ignore coverage reports
+htmlcov/
+.coverage
+*.cover
+.cache
+.nox/
+
+# Ignore virtualenv and build artifacts
+bin/
+build/
+dist/
+lib/
+lib64/
+include/
+pip-wheel-metadata/
+pip-log.txt
+
+# Ignore pytest-related files
+.pytest_cache/
