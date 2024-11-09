@@ -48,7 +48,7 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const openAddCustomerOrderModal = () => setIsAddingCustomerOrder(true);
   const closeAddCustomerOrderModal = () => setIsAddingCustomerOrder(false);
 
-  const headers = ["Client ID", "Order Date", "Payment Status", "Action"];
+  const headers = ["Client ID", "Order Date", "Order Status", "Action"];
 
   const rows = sortedSales.map((sale) => [
     sale.CLIENT_ID,

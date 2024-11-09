@@ -9,7 +9,7 @@ export const SALES_ORDER = [
     SALES_ORDER_DISCOUNT: 100.0,
     SALES_ORDER_DLVRY_OPT: "Standard",
     SALES_ORDER_PYMNT_TERM: "Net 30",
-    SALES_ORDER_PYMNT_STAT: "Paid",
+    SALES_ORDER_PYMNT_STAT: "Cancelled",
     CLIENT_ID: "101",
     ORDER_ID: "1001",
     ORDER_DETAILS: [
@@ -185,7 +185,7 @@ export const SALES_ORDER = [
     SALES_ORDER_DISCOUNT: 250.0,
     SALES_ORDER_DLVRY_OPT: "Express",
     SALES_ORDER_PYMNT_TERM: "Net 15",
-    SALES_ORDER_PYMNT_STAT: "Paid",
+    SALES_ORDER_PYMNT_STAT: "Cancelled",
     CLIENT_ID: "108",
     ORDER_ID: "1008",
     ORDER_DETAILS: [

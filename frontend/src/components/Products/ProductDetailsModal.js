@@ -17,9 +17,6 @@ const ProductDetailsModal = ({ productId, onClose }) => {
   );
 
   const [isEditing, setIsEditing] = useState(false);
-  const [setEditedProduct] = useState(product);
-  const [setEditedProductDetail] = useState(productDetail);
-  const [setSelectedImage] = useState(product.PROD_IMAGE);
   const [showPriceHistory, setShowPriceHistory] = useState(false); // State for Price History Modal
 
   if (!product || !productDetail || !category) {
@@ -28,28 +25,6 @@ const ProductDetailsModal = ({ productId, onClose }) => {
 
   const handleEdit = () => setIsEditing(true);
 
-  const handleSave = () => {
-    const confirmSave = window.confirm(
-      "Are you sure you want to save the changes?"
-    );
-    if (confirmSave) {
-      // Implement save logic here
-      alert("Product details saved");
-      setIsEditing(false);
-    }
-  };
-
-  const handleCancel = () => {
-    const confirmCancel = window.confirm(
-      "Are you sure you want to discard the changes?"
-    );
-    if (confirmCancel) {
-      setIsEditing(false);
-      setEditedProduct(product);
-      setEditedProductDetail(productDetail);
-      setSelectedImage(product.PROD_IMAGE);
-    }
-  };
 
   const handleRemove = () => {
     const confirmRemoval = window.confirm(
@@ -59,17 +34,6 @@ const ProductDetailsModal = ({ productId, onClose }) => {
       // Implement remove logic here
       alert(`Product ${product.PROD_NAME} removed`);
       onClose(); // Close the modal after removal
-    }
-  };
-
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
     }
   };
 

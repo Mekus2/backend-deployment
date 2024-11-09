@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import Modal from "../../Layout/Modal";
 import { colors } from "../../../colors";
-import Button from "../../Layout/Button";
 
 // Define getProgressForStatus function outside of the component to avoid initialization errors
 const getProgressForStatus = (status) => {

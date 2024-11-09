@@ -40,12 +40,6 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
     }
   };
 
-  const calculateTotalQuantity = () => {
-    return deliveryDetails.reduce(
-      (total, item) => total + item.INBOUND_DEL_DETAIL_QTY_DLVRD,
-      0
-    );
-  };
 
   // Get progress percentage for each status
   const getProgressPercentage = () => {

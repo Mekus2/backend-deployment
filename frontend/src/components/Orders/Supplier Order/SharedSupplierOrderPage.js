@@ -53,7 +53,7 @@ const SharedSupplierOrderPage = () => {
   const openAddSupplierOrderModal = () => setIsAddingSupplierOrder(true);
   const closeAddSupplierOrderModal = () => setIsAddingSupplierOrder(false);
 
-  const headers = ["Supplier ID", "Order Date", "Status", "Action"];
+  const headers = ["Supplier ID", "Order Date", "Order Status", "Action"];
 
   // Rows for the table
   const rows = sortedOrders.map((order) => {
