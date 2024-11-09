@@ -1,0 +1,10 @@
+- To pull specific folder from other bracnh into your current branch
+git checkout branch-name -- foldername/
+(git checkout boroy-frontend -- frontend/)
+
+- After pulling commit to your current branch so the folder will be in your current branch.
+git add frontend/
+git commit -m "Pulled frontend folder from boroy-frontend branch"
+
+- Lastly
+git push origin current-branch-name
