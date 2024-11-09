@@ -7,7 +7,6 @@ import OUTBOUND_DELIVERY from "../../../data/OutboundData";
 import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import CardTotalCustomerDelivery from "../../CardsData/CardTotalCustomerDelivery";
-
 import Button from "../../Layout/Button";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
@@ -78,7 +77,7 @@ const SharedCustomerDeliveryPage = () => {
 
   // Update headers to only include the required fields
   const headers = [
-    { title: "Shipped Date", key: "OUTBOUND_DEL_SHIPPED_DATE" },
+    { title: "Shipped Datedddddddddddddddddddddddddddddd", key: "OUTBOUND_DEL_SHIPPED_DATE" },
     { title: "Received Date", key: "OUTBOUND_DEL_DATE_CUST_RCVD" },
     { title: "Status", key: "OUTBOUND_DEL_STATUS" },
     { title: "Quantity", key: "OUTBOUND_DEL_DLVRY_QTY" },

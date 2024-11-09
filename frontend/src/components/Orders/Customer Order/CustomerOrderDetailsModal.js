@@ -115,7 +115,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
             Cancel Order
           </Button>
           <Button variant="primary" onClick={handleAcceptOrder}>
-            Mark as paddingBottom: ,
+            Mark as Paid
           </Button>
         </ButtonGroup>
       )}
