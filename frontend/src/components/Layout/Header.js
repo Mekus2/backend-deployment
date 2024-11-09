@@ -6,7 +6,7 @@ import { FaBars } from "react-icons/fa";
 import styled from "styled-components";
 import { useLocation, useNavigate } from "react-router-dom";
 import { colors } from "../../colors";
-import BellNotif from "../Notifications/BellNotif"; // Import the new BellNotif component
+// import BellNotif from "../Notifications/BellNotif"; // Commented out the BellNotif component import
 
 const pageTitles = {
   "/admin/dashboard": "Dashboard",
@@ -97,7 +97,7 @@ const Header = ({ toggleSidebar }) => {
       <HamburgerMenu onClick={toggleSidebar} />
       <PageTitle>{pageTitle}</PageTitle>
       <RightSection>
-        <BellNotif />
+        {/* <BellNotif /> */} {/* Commented out BellNotif */}
         <ProfileContainer
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}

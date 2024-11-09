@@ -9,7 +9,6 @@ import LowestStocks from "../../components/Dashboard/LowestStocks";
 import CardLowStocks from "../../components/CardsData/CardLowStocks";
 import CardTotalProducts from "../../components/CardsData/CardTotalProducts";
 import CardTotalSales from "../../components/CardsData/CardTotalSales";
-import CardTotalNotification from "../../components/CardsData/CardTotalNotification";
 import CardTotalInventoryValue from "../../components/CardsData/CardTotalInventoryValue";
 import CardTotalCategories from "../../components/CardsData/CardTotalCategories";
 import CardTotalCustomerOrder from "../../components/CardsData/CardTotalCustomerOrder";
@@ -34,7 +33,6 @@ const SuperAdminDashboard = () => {
   const [currentCardOrder, setCurrentCardOrder] = useState([
     "CardTotalProducts",
     "CardLowStocks",
-    "CardTotalNotification",
     "CardTotalInventoryValue",
     "CardTotalCategories",
     "CardTotalCustomerOrder",
@@ -109,7 +107,6 @@ const SuperAdminDashboard = () => {
   const cardOnClickHandlers = {
     CardTotalProducts: () => navigate("/superadmin/products"),
     CardLowStocks: () => navigate("/superadmin/inventory"),
-    CardTotalNotification: () => navigate("/superadmin/notifications"),
     CardTotalInventoryValue: () => navigate("/superadmin/inventory"),
     CardTotalCategories: () => navigate("/superadmin/categories"),
     CardTotalCustomerOrder: () => navigate("/superadmin/customer-order"),
@@ -137,7 +134,6 @@ const SuperAdminDashboard = () => {
     CardTotalSales: <CardTotalSales />,
     CardTotalProducts: <CardTotalProducts />,
     CardLowStocks: <CardLowStocks />,
-    CardTotalNotification: <CardTotalNotification />,
     CardTotalInventoryValue: <CardTotalInventoryValue />,
     CardTotalCategories: <CardTotalCategories />,
     CardTotalCustomerOrder: <CardTotalCustomerOrder />,

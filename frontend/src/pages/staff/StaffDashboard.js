@@ -9,7 +9,7 @@ import CardTotalDelivery from "../../components/CardsData/CardTotalDelivery";
 import CardLowStocks from "../../components/CardsData/CardLowStocks";
 import CardTotalProducts from "../../components/CardsData/CardTotalProducts";
 import CardTotalCustomers from "../../components/CardsData/CardTotalCustomers";
-import CardTotalNotification from "../../components/CardsData/CardTotalNotification"; // Add this import
+//import CardTotalNotification from "../../components/CardsData/CardTotalNotification"; // Add this import
 import CardTotalCategories from "../../components/CardsData/CardTotalCategories"; // Add this import
 import LowestStocks from "../../components/Dashboard/LowestStocks"; // Add this import for low stock table
 import ExpiredItemsAlert from "../../components/Dashboard/ExpiredItemsAlert"; // Add this import for expired items
@@ -28,7 +28,7 @@ const StaffDashboard = () => {
     CardTotalCustomerOrder: <CardTotalCustomerOrder />,
     CardTotalReturns: <CardTotalReturns />,
     CardTotalDelivery: <CardTotalDelivery />,
-    CardTotalNotification: <CardTotalNotification />, // Add notification card
+  //  CardTotalNotification: <CardTotalNotification />,
     CardTotalCategories: <CardTotalCategories />, // Add categories card
   };
 

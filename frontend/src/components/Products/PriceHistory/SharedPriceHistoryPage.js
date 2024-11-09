@@ -3,13 +3,12 @@ import styled from "styled-components";
 import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import ReportCard from "../../Layout/ReportCard";
-import Button from "../../Layout/Button"; // Import Button component
-import { FaHistory, FaDollarSign } from "react-icons/fa";
+import Button from "../../Layout/Button";
+import { FaHistory } from "react-icons/fa";
 import productData from "../../../data/ProductData";
 import PRICE_HISTORY_DATA from "../../../data/PriceHistoryData";
-import { USER } from '../../../data/UserData';
-import Modal from "../../Layout/Modal"; 
-import PriceHistoryDetails from "./PriceHistoryDetails"; // Import the new component
+import Modal from "../../Layout/Modal";
+import PriceHistoryDetails from "./PriceHistoryDetails";
 
 const SharedPriceHistoryPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,20 +20,14 @@ const SharedPriceHistoryPage = () => {
     productData.PRODUCT.map((product) => [product.PROD_ID, product.PROD_NAME])
   );
 
-  const userMapping = Object.fromEntries(
-    USER.map((user) => [user.USER_ID, `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`])
-  );
-
   const filteredPriceHistory = PRICE_HISTORY_DATA.filter((entry) => {
     const productName = productMapping[entry.PROD_ID] || "Unknown Product";
-    const userName = userMapping[entry.UPDATED_BY_USER_ID] || "Unknown User";
     const oldPrice = entry.OLD_PRICE.toFixed(2);
     const newPrice = entry.NEW_PRICE.toFixed(2);
     const changeDate = new Date(entry.CHANGE_DATE).toLocaleDateString();
 
     const matchesSearchTerm =
       productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       oldPrice.includes(searchTerm) ||
       newPrice.includes(searchTerm) ||
       changeDate.includes(searchTerm);
@@ -51,32 +44,22 @@ const SharedPriceHistoryPage = () => {
   );
 
   const totalChanges = sortedPriceHistory.length;
-  const maxIncrease = Math.max(
-    ...sortedPriceHistory.map((entry) => entry.NEW_PRICE - entry.OLD_PRICE),
-    0
-  ).toFixed(2);
-  const maxDecrease = Math.min(
-    ...sortedPriceHistory.map((entry) => entry.NEW_PRICE - entry.OLD_PRICE),
-    0
-  ).toFixed(2);
 
   const formatCurrency = (value) => `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 
   const tableData = sortedPriceHistory.map((entry) => {
     const productName = productMapping[entry.PROD_ID] || "Unknown Product";
-    const userName = userMapping[entry.UPDATED_BY_USER_ID] || "Unknown User";
 
     return [
       productName,
       formatCurrency(entry.OLD_PRICE),
       formatCurrency(entry.NEW_PRICE),
       new Date(entry.CHANGE_DATE).toLocaleDateString(),
-      userName,
-      <Button onClick={() => handleDetailsClick(entry.PROD_ID)}>Details</Button> // Use Button component
+      <Button onClick={() => handleDetailsClick(entry.PROD_ID)}>Details</Button>
     ];
   });
 
-  const headers = ["Product Name", "Old Price", "New Price", "Change Date", "Updated By", "Action"];
+  const headers = ["Product Name", "Old Price", "New Price", "Change Date", "Action"];
 
   const handleDetailsClick = (prodId) => {
     const productHistory = PRICE_HISTORY_DATA.filter((entry) => entry.PROD_ID === prodId);
@@ -121,26 +104,15 @@ const SharedPriceHistoryPage = () => {
           value={`${totalChanges} Changes`}
           icon={<FaHistory />}
         />
-        <ReportCard
-          label="Largest Increase"
-          value={parseFloat(maxIncrease) > 0 ? formatCurrency(parseFloat(maxIncrease)) : "₱0.00"}
-          icon={<FaDollarSign />}
-        />
-        <ReportCard
-          label="Largest Decrease"
-          value={parseFloat(maxDecrease) < 0 ? formatCurrency(Math.abs(parseFloat(maxDecrease))) : "₱0.00"}
-          icon={<FaDollarSign />}
-        />
       </CardsContainer>
 
       <ReportContent>
         <Table headers={headers} rows={tableData} />
       </ReportContent>
 
-      {/* Modal to display product price history */}
       {selectedProductHistory && (
         <Modal onClose={closeModal} title="Product Price History">
-          <PriceHistoryDetails priceHistory={selectedProductHistory} userMapping={userMapping} />
+          <PriceHistoryDetails priceHistory={selectedProductHistory} />
         </Modal>
       )}
     </>

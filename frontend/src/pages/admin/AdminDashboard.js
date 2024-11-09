@@ -17,7 +17,7 @@ import CardTotalLogs from "../../components/CardsData/CardTotalLogs"; // Add log
 import CardTotalSuppliers from "../../components/CardsData/CardTotalSuppliers"; // Add suppliers card
 import CardTotalStaffs from "../../components/CardsData/CardTotalStaffs"; // Add users card
 import CardTotalSupplierOrder from "../../components/CardsData/CardTotalSupplierOrder"; // Add purchase order card
-import CardTotalNotification from "../../components/CardsData/CardTotalNotification"; // Add notifications card
+//import CardTotalNotification from "../../components/CardsData/CardTotalNotification"; // Add notifications card
 import { getLayout } from "../../utils/indexedDB";
 import MainLayout from "../../components/Layout/MainLayout";
 import Loading from "../../components/Layout/Loading";
@@ -38,7 +38,7 @@ const AdminDashboard = () => {
     CardTotalSuppliers: <CardTotalSuppliers />, // Add suppliers card
     CardTotalStaffs: <CardTotalStaffs />, // Add users card
     CardTotalSupplierOrder: <CardTotalSupplierOrder />, // Add purchase order card
-    CardTotalNotification: <CardTotalNotification />, // Add notifications card
+    // CardTotalNotification: <CardTotalNotification />, 
   };
 
   const tableComponents = {
