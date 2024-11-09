@@ -7,6 +7,7 @@ import OUTBOUND_DELIVERY from "../../../data/OutboundData";
 import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import CardTotalCustomerDelivery from "../../CardsData/CardTotalCustomerDelivery";
+
 import Button from "../../Layout/Button";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
