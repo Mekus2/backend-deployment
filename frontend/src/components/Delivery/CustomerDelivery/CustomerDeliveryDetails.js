@@ -20,6 +20,10 @@ const getProgressForStatus = (status) => {
 
 const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusUpdate }) => {
   const [status, setStatus] = useState(delivery.OUTBOUND_DEL_STATUS); // Manage the status using state
+  const [receivedDate, setReceivedDate] = useState(delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received");
+  const [expiryDates, setExpiryDates] = useState(
+    deliveryDetails.map(() => "") // Initialize expiryDates as empty strings
+  );
   const progress = getProgressForStatus(status); // Calculate progress percentage
 
   // Calculate the total quantity shipped
@@ -37,13 +41,27 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
       newStatus = "In Transit"; // Change to In Transit
     } else if (status === "In Transit") {
       newStatus = "Delivered"; // Change to Delivered
+      const currentDate = new Date().toISOString().split("T")[0]; // Get the current date in YYYY-MM-DD format
+      setReceivedDate(currentDate); // Set the received date to the current date
+      delivery.OUTBOUND_DEL_DATE_CUST_RCVD = currentDate; // Update the delivery data object
     } else if (status === "Delivered") {
       newStatus = "Pending"; // Revert back to Pending
+      setReceivedDate("Not Received"); // Clear the received date when reverting to Pending
     }
 
     setStatus(newStatus); // Update the status locally
     onStatusUpdate({ ...delivery, OUTBOUND_DEL_STATUS: newStatus }); // Notify parent of status update
   };
+
+  // Handle expiry date change per row
+  const handleExpiryDateChange = (index, date) => {
+    const updatedExpiryDates = [...expiryDates];
+    updatedExpiryDates[index] = date;
+    setExpiryDates(updatedExpiryDates);
+  };
+
+  // Get current date for restricting past dates
+  const currentDate = new Date().toISOString().split("T")[0]; // Get YYYY-MM-DD format
 
   return (
     <Modal
@@ -64,15 +82,7 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
           </FormGroup>
           <FormGroup>
             <Label>Received Date:</Label>
-            <Value>{delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received"}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Status:</Label>
-            <Status status={status}>{status}</Status> {/* Display status with background */}
-          </FormGroup>
-          <FormGroup>
-            <Label>Customer Name:</Label>
-            <Value>{delivery.CUSTOMER_NAME}</Value>
+            <Value>{receivedDate}</Value>
           </FormGroup>
         </Column>
         <Column>
@@ -108,7 +118,14 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
             <TableRow key={index}>
               <TableCell>{item.PROD_NAME}</TableCell>
               <TableCell>{item.OUTBOUND_DEL_DETAIL_QTY_SHIPPED}</TableCell>
-              <TableCell>{item.OUTBOUND_DEL_DETAIL_EXPIRY_DATE}</TableCell>
+              <TableCell>
+                <input
+                  type="date"
+                  value={expiryDates[index]}
+                  onChange={(e) => handleExpiryDateChange(index, e.target.value)}
+                  min={currentDate} // Disable past dates
+                />
+              </TableCell>
             </TableRow>
           ))}
         </tbody>
@@ -126,9 +143,9 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
       <ModalFooter>
         <StatusButton onClick={handleStatusChange}>
           {status === "Pending"
-            ? "In Transit"
+            ? "Mark as In Transit"
             : status === "In Transit"
-            ? "Delivered"
+            ? "Mark as Delivered"
             : "Mark as Pending"}
         </StatusButton>
       </ModalFooter>
@@ -160,22 +177,6 @@ const Label = styled.div`
 
 const Value = styled.div`
   color: ${colors.text};
-`;
-
-const Status = styled.span`
-  background-color: ${(props) =>
-    props.status === "Delivered"
-      ? "#1DBA0B"
-      : props.status === "In Transit"
-      ? "#f08400"
-      : props.status === "Pending"
-      ? "#ff5757"
-      : "gray"};
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
 `;
 
 const ProductTable = styled.table`

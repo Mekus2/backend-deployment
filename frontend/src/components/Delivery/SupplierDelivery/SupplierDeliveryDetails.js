@@ -2,11 +2,15 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import Modal from "../../Layout/Modal";
 import { colors } from "../../../colors";
-import Button from "../../Layout/Button";
 import INBOUND_DELIVERY from "../../../data/InboundData"; // Import the data
 
 const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
   const [status, setStatus] = useState(delivery.INBOUND_DEL_STATUS); // Use state to track the status
+  const [receivedDate, setReceivedDate] = useState(delivery.INBOUND_DEL_DATE_RCVD || "Not yet Received"); // Use state for received date
+  const [expiryDates, setExpiryDates] = useState(
+    Array(deliveryDetails.length).fill("") // Track expiry dates as an array
+  );
+  const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
 
   // Function to get the Supplier Name by Supplier ID
   const getSupplierNameById = (supplierId) => {
@@ -28,6 +32,12 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus); // Update the status state
     delivery.INBOUND_DEL_STATUS = newStatus; // This would be a way to mutate the status in the object
+
+    if (newStatus === "Received") {
+      const currentDate = new Date().toISOString().split("T")[0];
+      setReceivedDate(currentDate);
+      delivery.INBOUND_DEL_DATE_RCVD = currentDate; // Set the current date as received date in the data
+    }
   };
 
   const calculateTotalQuantity = () => {
@@ -51,6 +61,13 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
     }
   };
 
+  // Update expiry date for specific row
+  const handleExpiryDateChange = (index, value) => {
+    const newExpiryDates = [...expiryDates];
+    newExpiryDates[index] = value; // Set the specific index with new date value
+    setExpiryDates(newExpiryDates);
+  };
+
   return (
     <Modal
       data-cy="inbound-delivery-details-modal"
@@ -66,15 +83,11 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
           </FormGroup>
           <FormGroup>
             <Label>Supplier Name:</Label>
-            <Value>{getSupplierNameById(delivery.SUPP_ID)}</Value> {/* Supplier Name */}
+            <Value>{getSupplierNameById(delivery.SUPP_ID)}</Value>
           </FormGroup>
           <FormGroup>
             <Label>Received Date:</Label>
-            <Value>{delivery.INBOUND_DEL_DATE_RCVD}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Status:</Label>
-            <Value>{status}</Value> {/* Display current status */}
+            <Value>{receivedDate}</Value>
           </FormGroup>
           <FormGroup>
             <Label>Delivery Option:</Label>
@@ -93,10 +106,6 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
           <FormGroup>
             <Label>Date Created:</Label>
             <Value>{delivery.INBOUND_DEL_DATECREATED}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Date Updated:</Label>
-            <Value>{delivery.INBOUND_DEL_DATEUPDATED}</Value>
           </FormGroup>
           <FormGroup>
             <Label>Received By:</Label>
@@ -119,7 +128,14 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
             <TableRow key={index}>
               <TableCell>{item.PROD_NAME}</TableCell>
               <TableCell>{item.INBOUND_DEL_DETAIL_QTY_DLVRD}</TableCell>
-              <TableCell>{item.INBOUND_DEL_DETAIL_EXPIRY_DATE}</TableCell>
+              <TableCell>
+                <input
+                  type="date"
+                  min={today} // Set min date to today for future validation
+                  value={expiryDates[index] || ""} // Access individual expiry date
+                  onChange={(e) => handleExpiryDateChange(index, e.target.value)} // Handle change for specific index
+                />
+              </TableCell>
             </TableRow>
           ))}
         </tbody>
