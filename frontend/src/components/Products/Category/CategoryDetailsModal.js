@@ -1,23 +1,24 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import Modal from "../../Layout/Modal"; // Reusable Modal component
+import Modal from "../../Layout/Modal";
 import { colors } from "../../../colors";
-import SearchBar from "../../Layout/SearchBar"; // Reusable SearchBar component
-import EditCategoryModal from "./EditCategoryModal"; // Import the new EditCategoryModal
-import ProductDetailsModal from "../ProductDetailsModal"; // Import the ProductDetailsModal
-import CategoryAddProduct from "./CategoryAddProduct"; // Import the new CategoryAddProduct component
-import { FaPlus } from "react-icons/fa"; // Import the FaPlus icon
-import Button from "../../Layout/Button"; // Import the Button component
-import Table from "../../Layout/Table"; // Import the Table component
+import SearchBar from "../../Layout/SearchBar";
+import EditCategoryModal from "./EditCategoryModal";
+import ProductDetailsModal from "../ProductDetailsModal";
+import CategoryAddProduct from "./CategoryAddProduct";
+import { FaPlus } from "react-icons/fa";
+import Button from "../../Layout/Button";
+import Table from "../../Layout/Table";
+import AddSubcategoryModal from "./AddSubcategoryModal"; // Import the AddSubcategoryModal
 
 const CategoryDetailsModal = ({ category = {}, products = [], onClose }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
   const [categoryDetails, setCategoryDetails] = useState(category);
   const [selectedProductId, setSelectedProductId] = useState(null);
-  const [isAddProductMode, setIsAddProductMode] = useState(false); // State for Add Product modal
+  const [isAddProductMode, setIsAddProductMode] = useState(false);
+  const [isAddSubcategoryMode, setIsAddSubcategoryMode] = useState(false); // New state for Add Subcategory modal
 
-  // Filter products based on the search term
   const filteredProducts = products
     .filter((product) => product.PROD_CAT_CODE === category.PROD_CAT_CODE)
     .filter((product) => 
@@ -25,36 +26,30 @@ const CategoryDetailsModal = ({ category = {}, products = [], onClose }) => {
       product.PROD_QOH.toString().includes(searchTerm)
     );
 
-  // Function to handle saving category details
   const handleSaveCategory = (updatedCategory) => {
     setCategoryDetails(updatedCategory);
     setIsEditMode(false);
   };
 
-  // Function to handle the "Details" button click
   const handleShowDetails = (productId) => {
     setSelectedProductId(productId);
   };
 
-  // Function to handle adding a product to the category
   const handleAddProduct = (product) => {
     console.log("Adding product to category:", product);
-    setIsAddProductMode(false); // Close the Add Product modal
+    setIsAddProductMode(false);
   };
 
-  // Function to handle removing a product from the category
+  const handleAddSubcategory = (subcategory) => {
+    console.log("Adding subcategory:", subcategory);
+    setIsAddSubcategoryMode(false);
+  };
+
   const handleRemoveProduct = (productId) => {
     console.log("Removing product:", productId);
   };
 
-  // Prepare table headers
-  const headers = [
-    "Product Name",
-    "Quantity on Hand",
-    "Actions"
-  ];
-
-  // Prepare table rows
+  const headers = ["Product Name", "Quantity on Hand", "Actions"];
   const rows = filteredProducts.length > 0 ? filteredProducts.map((product) => (
     [
       product.PROD_NAME || "N/A",
@@ -70,7 +65,7 @@ const CategoryDetailsModal = ({ category = {}, products = [], onClose }) => {
           backgroundColor={colors.red}
           hoverColor={colors.redHover}
           onClick={() => handleRemoveProduct(product.PROD_ID)}
-          style={{ marginLeft: "10px" }} // Add space between the buttons
+          style={{ marginLeft: "10px" }}
         >
           Remove
         </Button>
@@ -79,36 +74,31 @@ const CategoryDetailsModal = ({ category = {}, products = [], onClose }) => {
   )) : [[<NoProductsCell colSpan={3}>No products found.</NoProductsCell>]];
 
   return (
-    <Modal
-      title={`Category: ${categoryDetails.PROD_CAT_NAME}`}
-      onClose={onClose}
-    >
+    <Modal title={`Category: ${categoryDetails.PROD_CAT_NAME}`} onClose={onClose}>
       <SearchBarContainer>
         <SearchBar
           placeholder="Search products..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <AddProductButton
-          variant="primary"
-          onClick={() => setIsAddProductMode(true)} // Open Add Product modal
-        >
-          <FaPlus style={{ marginRight: '5px' }} /> Product{/* Only the icon */}
-        </AddProductButton>
+        <ButtonGroup>
+          <AddProductButton variant="primary" onClick={() => setIsAddProductMode(true)}>
+            <FaPlus style={{ marginRight: '5px' }} /> Product
+          </AddProductButton>
+          <AddSubcategoryButton variant="primary" onClick={() => setIsAddSubcategoryMode(true)}>
+            <FaPlus style={{ marginRight: '5px' }} /> Subcategory
+          </AddSubcategoryButton>
+        </ButtonGroup>
       </SearchBarContainer>
 
       <Table headers={headers} rows={rows} />
 
       <ButtonGroup>
-        <Button
-          variant="primary"
-          onClick={() => setIsEditMode(true)} // Open edit mode
-        >
+        <Button variant="primary" onClick={() => setIsEditMode(true)}>
           Edit Category
         </Button>
       </ButtonGroup>
 
-      {/* Show the EditCategoryModal when isEditMode is true */}
       {isEditMode && (
         <EditCategoryModal
           categoryDetails={categoryDetails}
@@ -117,20 +107,26 @@ const CategoryDetailsModal = ({ category = {}, products = [], onClose }) => {
         />
       )}
 
-      {/* Show the CategoryAddProduct modal when isAddProductMode is true */}
       {isAddProductMode && (
         <CategoryAddProduct
-          availableProducts={products} // Pass the list of available products
-          onAddProduct={handleAddProduct} // Function to add the product
-          onClose={() => setIsAddProductMode(false)} // Close the modal
+          availableProducts={products}
+          onAddProduct={handleAddProduct}
+          onClose={() => setIsAddProductMode(false)}
         />
       )}
 
-      {/* Show the ProductDetailsModal when a product ID is selected */}
       {selectedProductId && (
         <ProductDetailsModal
           productId={selectedProductId}
           onClose={() => setSelectedProductId(null)}
+        />
+      )}
+
+      {isAddSubcategoryMode && (
+        <AddSubcategoryModal
+          category={categoryDetails}
+          onSave={handleAddSubcategory}
+          onClose={() => setIsAddSubcategoryMode(false)}
         />
       )}
     </Modal>
@@ -145,28 +141,34 @@ const SearchBarContainer = styled.div`
   margin-bottom: 15px;
 `;
 
+const ButtonGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Ensure there is a small gap between the buttons */
+`;
+
 const AddProductButton = styled(Button)`
   display: flex;
-  align-items: center; /* Align items vertically */
+  align-items: center;
+`;
+
+const AddSubcategoryButton = styled(Button)`
+  display: flex;
+  align-items: center;
+  background-color: ${colors.primary};
+  color: white;
 `;
 
 const ActionCell = styled.td`
   display: flex;
-  justify-content: center; /* Center the buttons in the Action cell */
-  align-items: center; /* Center vertically */
+  justify-content: center;
+  align-items: center;
 `;
 
 const NoProductsCell = styled.td`
   text-align: center;
   padding: 10px;
   border-bottom: 1px solid #ddd;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  margin-top: 15px;
 `;
 
 export default CategoryDetailsModal;
