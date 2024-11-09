@@ -82,7 +82,7 @@ const SharedRequestsPage = ({ showRequestButton }) => { // Accept prop
   const headers = [
     { label: "Request By", key: "requestBy" },
     { label: "Request Date", key: "requestDate" },
-    { label: "Status", key: "status" },
+    { label: "Order Status", key: "status" },
     { label: "Action" },
   ];
 
