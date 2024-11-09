@@ -7,7 +7,7 @@ import OUTBOUND_DELIVERY from "../../../data/OutboundData";
 import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import CardTotalCustomerDelivery from "../../CardsData/CardTotalCustomerDelivery";
-import Button from "../../Layout/Button"; 
+import Button from "../../Layout/Button";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
 const SharedCustomerDeliveryPage = () => {
@@ -40,7 +40,7 @@ const SharedCustomerDeliveryPage = () => {
   // Filter and search deliveries across all fields
   const filteredDeliveries = OUTBOUND_DELIVERY.OUTBOUND_DELIVERY.filter((delivery) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return Object.values(delivery).some(value => 
+    return Object.values(delivery).some(value =>
       value && value.toString().toLowerCase().includes(lowerCaseSearchTerm)
     );
   });
@@ -68,13 +68,11 @@ const SharedCustomerDeliveryPage = () => {
   const closeDetailsModal = () => setSelectedDelivery(null);
 
   const handleSort = (key) => {
-    if (key === "OUTBOUND_DEL_SHIPPED_DATE" || key === "OUTBOUND_DEL_DATE_CUST_RCVD") {
-      let direction = "asc";
-      if (sortConfig.key === key && sortConfig.direction === "asc") {
-        direction = "desc";
-      }
-      setSortConfig({ key, direction });
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
     }
+    setSortConfig({ key, direction });
   };
 
   // Update headers to only include the required fields
@@ -180,10 +178,10 @@ const Status = styled.span`
     props.status === "Delivered"
       ? "#1DBA0B"
       : props.status === "In Transit"
-      ? "#f08400"
-      : props.status === "Pending"
-      ? "#ff5757"
-      : "gray"};
+        ? "#f08400"
+        : props.status === "Pending"
+          ? "#ff5757"
+          : "gray"};
   color: white;
   padding: 4px 8px;
   border-radius: 4px;
