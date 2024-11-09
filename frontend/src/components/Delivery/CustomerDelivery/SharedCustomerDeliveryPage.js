@@ -6,7 +6,7 @@ import { colors } from "../../../colors";
 import OUTBOUND_DELIVERY from "../../../data/OutboundData";
 import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
-import CardTotalDelivery from "../../CardsData/CardTotalDelivery";
+import CardTotalCustomerDelivery from "../../CardsData/CardTotalCustomerDelivery";
 import Button from "../../Layout/Button"; 
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
@@ -115,7 +115,7 @@ const SharedCustomerDeliveryPage = () => {
         />
       </Controls>
       <SummarySection>
-        <CardTotalDelivery />
+        <CardTotalCustomerDelivery />
       </SummarySection>
       <Table
         headers={headers.map((header) => (

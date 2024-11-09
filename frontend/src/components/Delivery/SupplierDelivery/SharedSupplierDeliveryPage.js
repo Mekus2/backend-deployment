@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import SupplierDeliveryDetails from "./SupplierDeliveryDetails";
 import { colors } from "../../../colors";
-import INBOUND_DELIVERY from "../../../data/InboundData";
+import INBOUND_DELIVERY from "../../../data/InboundData"; // Updated import
 import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
-import CardTotalDelivery from "../../CardsData/CardTotalDelivery";
+import CardTotalSupplierDelivery from "../../CardsData/CardTotalSupplierDelivery";
 import Button from "../../Layout/Button";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
@@ -14,7 +14,7 @@ function getSupplierNameById(id) {
   const supplier = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
     (delivery) => delivery.SUPP_ID === id
   )?.SUPPLIER;
-  return supplier ? supplier.SUPP_NAME : "Unknown Supplier";
+  return supplier ? supplier.SUPP_NAME : "Unknown Supplier"; // Handle missing supplier
 }
 
 // Function to get User Name by ID
@@ -22,11 +22,11 @@ function getUserNameById(userId) {
   const delivery = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
     (d) => d.INBOUND_DEL_RCVD_BY_USER_ID === userId
   );
-  if (delivery) {
+  if (delivery && delivery.USER) {
     const user = delivery.USER;
-    return user ? `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}` : "Unknown User";
+    return `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`;
   }
-  return "Unknown User";
+  return "Unknown User"; // Handle missing user
 }
 
 const SharedSupplierDeliveryPage = () => {
@@ -39,7 +39,6 @@ const SharedSupplierDeliveryPage = () => {
 
   const filteredDeliveries = INBOUND_DELIVERY.INBOUND_DELIVERY.filter((delivery) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    // Search through relevant fields only: Date Created, Status, Supplier, Received By
     return (
       delivery.INBOUND_DEL_DATECREATED.toLowerCase().includes(lowerCaseSearchTerm) ||
       delivery.INBOUND_DEL_STATUS.toLowerCase().includes(lowerCaseSearchTerm) ||
@@ -84,10 +83,10 @@ const SharedSupplierDeliveryPage = () => {
   ];
 
   const rows = sortedDeliveries.map((delivery) => [
-    delivery.INBOUND_DEL_DATECREATED,  // Date Created
+    delivery.INBOUND_DEL_DATECREATED,
     <Status status={delivery.INBOUND_DEL_STATUS}>{delivery.INBOUND_DEL_STATUS}</Status>,
-    getSupplierNameById(delivery.SUPP_ID),  // Supplier Name
-    getUserNameById(delivery.INBOUND_DEL_RCVD_BY_USER_ID),  // Received By User
+    getSupplierNameById(delivery.SUPP_ID),
+    getUserNameById(delivery.INBOUND_DEL_RCVD_BY_USER_ID),
     <Button
       data-cy="details-button"
       backgroundColor={colors.primary}
@@ -109,7 +108,7 @@ const SharedSupplierDeliveryPage = () => {
         />
       </Controls>
       <SummarySection>
-        <CardTotalDelivery />
+        <CardTotalSupplierDelivery />
       </SummarySection>
       <Table
         headers={headers.map((header) => (
