@@ -1,13 +1,13 @@
 // Imports
 import React, { useState } from "react";
 import styled from "styled-components";
-import CustomerDeliveryDetails from "./CustomerDeliveryDetails";
+import CustomerDeliveryDetails from "./CustomerDeliveryDetails"; // Make sure this is the correct path and is a default export
 import { colors } from "../../../colors";
 import OUTBOUND_DELIVERY from "../../../data/OutboundData";
-import SearchBar from "../../Layout/SearchBar";
-import Table from "../../Layout/Table";
-import CardTotalCustomerDelivery from "../../CardsData/CardTotalCustomerDelivery";
-import Button from "../../Layout/Button";
+import SearchBar from "../../Layout/SearchBar"; // Confirm the default export or change to named export if necessary
+import Table from "../../Layout/Table"; // Confirm the default export or change to named export if necessary
+import CardTotalCustomerDelivery from "../../CardsData/CardTotalCustomerDelivery"; // Confirm the default export or change to named export if necessary
+import Button from "../../Layout/Button"; // Confirm the default export or change to named export if necessary
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
 const SharedCustomerDeliveryPage = () => {
@@ -20,7 +20,6 @@ const SharedCustomerDeliveryPage = () => {
 
   // Handle status update from the modal
   const handleStatusUpdate = (updatedDelivery) => {
-    // Update the status in the OUTBOUND_DELIVERY data
     const updatedDeliveries = OUTBOUND_DELIVERY.OUTBOUND_DELIVERY.map((delivery) => {
       if (delivery.OUTBOUND_DEL_ID === updatedDelivery.OUTBOUND_DEL_ID) {
         return updatedDelivery;
@@ -31,7 +30,6 @@ const SharedCustomerDeliveryPage = () => {
     // Update the global OUTBOUND_DELIVERY with the new status
     OUTBOUND_DELIVERY.OUTBOUND_DELIVERY = updatedDeliveries;
 
-    // Update selectedDelivery status
     if (selectedDelivery && selectedDelivery.delivery.OUTBOUND_DEL_ID === updatedDelivery.OUTBOUND_DEL_ID) {
       setSelectedDelivery({ ...selectedDelivery, delivery: updatedDelivery });
     }
@@ -40,7 +38,7 @@ const SharedCustomerDeliveryPage = () => {
   // Filter and search deliveries across all fields
   const filteredDeliveries = OUTBOUND_DELIVERY.OUTBOUND_DELIVERY.filter((delivery) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return Object.values(delivery).some(value =>
+    return Object.values(delivery).some((value) =>
       value && value.toString().toLowerCase().includes(lowerCaseSearchTerm)
     );
   });
@@ -77,11 +75,11 @@ const SharedCustomerDeliveryPage = () => {
 
   // Update headers to only include the required fields
   const headers = [
-    { title: "Shipped Datedddddddddddddddddddddddddddddd", key: "OUTBOUND_DEL_SHIPPED_DATE" },
+    { title: "Shipped Date", key: "OUTBOUND_DEL_SHIPPED_DATE" },
     { title: "Received Date", key: "OUTBOUND_DEL_DATE_CUST_RCVD" },
     { title: "Status", key: "OUTBOUND_DEL_STATUS" },
     { title: "Quantity", key: "OUTBOUND_DEL_DLVRY_QTY" },
-    { title: "Customer Name", key: "CUSTOMER_NAME" }, // Make sure this matches the field in your data
+    { title: "Customer Name", key: "CUSTOMER_NAME" },
     { title: "Action", key: "action" },
   ];
 
@@ -91,7 +89,7 @@ const SharedCustomerDeliveryPage = () => {
     delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received",
     <Status status={delivery.OUTBOUND_DEL_STATUS}>{delivery.OUTBOUND_DEL_STATUS}</Status>,
     delivery.OUTBOUND_DEL_DLVRY_QTY,
-    delivery.CUSTOMER_NAME, // Correct field for customer name
+    delivery.CUSTOMER_NAME,
     <Button
       data-cy="details-button"
       backgroundColor={colors.primary}
@@ -151,7 +149,7 @@ const SharedCustomerDeliveryPage = () => {
           delivery={selectedDelivery.delivery}
           deliveryDetails={selectedDelivery.deliveryDetails}
           onClose={closeDetailsModal}
-          onStatusUpdate={handleStatusUpdate} // Pass the status update handler
+          onStatusUpdate={handleStatusUpdate}
         />
       )}
     </>

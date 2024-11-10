@@ -86,9 +86,10 @@ const TableHeader = styled.th`
   background-color: ${colors.primary};
   color: white;
   padding: 10px;
-  border: 1px solid #ddd;
   font-size: 17px;
   text-align: center;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
 `;
 
 const TableRow = styled.tr`
@@ -99,8 +100,12 @@ const TableRow = styled.tr`
 
 const TableCell = styled.td`
   padding: 10px;
-  border: 1px solid #ddd;
   font-size: 13px;
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+  /* Remove any vertical borders */
+  border-left: none;
+  border-right: none;
 `;
 
 const Pagination = styled.div`
