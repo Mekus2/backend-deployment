@@ -1,23 +1,24 @@
 # Ignore virtual environment
-venv/
+backend/venv/
 
 # Ignore environment variable files
-.env
+backend/.env
 
 # Ignore compiled Python files
-*.pyc
-__pycache__/
+backend/**/*.pyc
+backend/**/__pycache__/
 
-# Ignore Django migration files (optional, you might want to include these)
-*/migrations/*.py
-!*/migrations/__init__.py
+# Ignore Django migration files, except for __init__.py
+backend/**/migrations/*.py
+!backend/**/migrations/__init__.py
 
 # Ignore static files (if generated automatically by collectstatic)
-staticfiles/
-static/
+backend/staticfiles/
+backend/static/
 
 # Ignore media files (if you upload files to media directory)
-media/
+backend/media/
+
 
 # Ignore IDE specific files
 .vscode/
