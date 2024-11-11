@@ -265,7 +265,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
 
     const newOrder = {
       SALES_ORDER_STATUS: "Pending",
-      SALES_ORDER_CREATEDBY_USER: 2, // Replace with actual user ID if dynamic
+      SALES_ORDER_CREATEDBY_USER: 1, // Replace with actual user ID if dynamic
       CLIENT_ID: clientId,
       SALES_ORDER_CLIENT_NAME: clientName,
       SALES_ORDER_CLIENT_PROVINCE: clientProvince,

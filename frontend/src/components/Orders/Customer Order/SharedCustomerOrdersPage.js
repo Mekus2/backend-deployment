@@ -42,24 +42,26 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const filteredSales = customer.filter((sale) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return (
-      sale.CLIENT_ID?.toLowerCase().includes(lowerCaseSearchTerm) ||
+      String(sale.CLIENT_ID)?.toLowerCase().includes(lowerCaseSearchTerm) ||
       sale.SALES_ORDER_DATACREATED.toLowerCase().includes(
         lowerCaseSearchTerm
       ) ||
-      sale.SALES_ORDER_PYMNT_STAT?.toLowerCase().includes(lowerCaseSearchTerm) // Add this line to search payment status
+      String(sale.SALES_ORDER_PYMNT_STAT)
+        ?.toLowerCase()
+        .includes(lowerCaseSearchTerm)
     );
   });
 
   const sortedSales = filteredSales.sort((a, b) => {
-    if (sortConfig.key === "SALES_ORDER_DATACREATED") {
+    if (sortConfig.key === "SALES_ORDER_DATE_CREATED") {
       return (
-        (new Date(b.SALES_ORDER_DATACREATED) -
-          new Date(a.SALES_ORDER_DATACREATED)) *
+        (new Date(b.SALES_ORDER_DATE_CREATED) -
+          new Date(a.SALES_ORDER_DATE_CREATED)) *
         (sortConfig.direction === "asc" ? 1 : -1)
       );
     }
     return (
-      a.CLIENT_ID.localeCompare(b.CLIENT_ID) *
+      a.SALES_ORDER_CLIENT_NAME.localeCompare(b.SALES_ORDER_CLIENT_NAME) *
       (sortConfig.direction === "asc" ? 1 : -1)
     );
   });
@@ -121,7 +123,7 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
                 handleSort(
                   header === "Order Date"
                     ? "SALES_ORDER_DATE_CREATED"
-                    : "ORDER_ID"
+                    : "SALES_ORDER_ID"
                 );
               }
             }}
