@@ -6,7 +6,11 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from .models import SalesOrder, SalesOrderDetails
 from .serializers import SalesOrderSerializer, SalesOrderDetailsSerializer
-from ...Customer.utils import check_customer_exists, add_customer
+from ...Customer.utils import (
+    check_customer_exists,
+    add_customer,
+    get_existing_customer_id,
+)
 
 
 # Permission imports
@@ -44,13 +48,27 @@ class SalesOrderListCreateAPIView(APIView):
         }
 
         # Check if the customer exists and add them if not
+        customer_id = None
         if customer_data and not check_customer_exists(customer_data):
-            add_customer(customer_data)
+            customer = add_customer(customer_data)
+            customer_id = customer.id
+        else:
+            customer_id = get_existing_customer_id(
+                customer_data
+            )  # Assuming this function fetches the customer ID
+
+        # Update sales order data with the customer ID
+        if customer_id:
+            sales_order_data = request.data.copy()
+            sales_order_data["CLIENT_ID"] = customer_id
+            sales_order_serializer = SalesOrderSerializer(
+                data=sales_order_data
+            )  # Update serializer with modified data
 
         if sales_order_serializer.is_valid():
             # Use transaction.atomic() to ensure atomicity
             with transaction.atomic():
-                # Save the sales order #
+                # Save the sales order
                 sales_order = sales_order_serializer.save()  # noqa:F841
             return Response(sales_order_serializer.data, status=status.HTTP_201_CREATED)
 
