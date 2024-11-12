@@ -1,8 +1,9 @@
 // src/pages/LoginPage.js
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import styled from 'styled-components';
 import { useUserRole } from '../context/UserContext'; // Import useUserRole to set the role
+import { loginUser } from '../api/LoginApi'; // Import the loginUser function
 import logo from '../assets/roundlogo.png';
 import loginbg from '../assets/loginbg.jpg';
 
@@ -11,21 +12,23 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { setRole } = useUserRole(); // Access setRole from context
+  const navigate = useNavigate(); // Initialize useNavigate
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError(''); // Reset error state
 
-    if (username === 'admin@gmail.com' && password === 'Password123') {
-      setRole('admin');
-      window.location.href = '/admin/dashboard';
-    } else if (username === 'superadmin@gmail.com' && password === 'Password123') {
-      setRole('superadmin');
-      window.location.href = '/superadmin/dashboard';
-    } else if (username === 'staff@gmail.com' && password === 'Password123') {
-      setRole('staff');
-      window.location.href = '/staff/dashboard';
-    } else {
-      setError('Invalid username or password');
+    try {
+      const credentials = { username, password };
+      const data = await loginUser(credentials); // Call the login API
+
+      // Use the returned data
+      setRole(data.type); // Set role based on API response
+      navigate(`/${data.type}/dashboard`); // Redirect based on role using navigate
+    } catch (err) {
+      // Handle error responses
+      setError(err.detail || 'Login failed'); // Display detailed error message from the response
+      console.error('Login failed:', err); // Log the error for debugging
     }
   };
 
@@ -149,7 +152,7 @@ const ForgotPasswordText = styled.p`
 const LoginButton = styled.button`
   width: 100%;
   padding: 12px;
-  background-color: #EF893E;
+  background-color: #ef893e;
   color: white;
   font-size: 18px;
   font-weight: bold;

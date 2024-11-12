@@ -26,7 +26,7 @@ import { FaPlus } from "react-icons/fa";
 import useAddCustomerOrderModal from "../../../hooks/useAddCustomerOrderModal";
 import {
   calculateLineTotal,
-  calculateTotalDiscount,
+  // calculateTotalDiscount,
 } from "../../../utils/CalculationUtils"; // Import calculation utilities
 import "../../../styles.css"; // Import your custom styles
 
@@ -53,6 +53,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     handleProductInputChange,
     handleProductSelect,
     handleClientInputChange,
+    handleDiscountChange,
     handleClientSelect,
     handleQuantityChange,
     handlePriceChange,
@@ -61,10 +62,12 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     handleAddClient,
     totalQuantity,
     totalValue,
+    totalDiscount,
     setOrderDetails,
   } = useAddCustomerOrderModal(onSave, onClose);
 
   const [errors, setErrors] = useState({});
+  const [inputStates, setInputStates] = useState({});
 
   const validateFields = () => {
     const newErrors = {};
@@ -74,7 +77,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     if (!clientProvince) newErrors.clientProvince = true;
     if (!deliveryOption) newErrors.deliveryOption = true;
     if (!paymentTerms) newErrors.paymentTerms = true;
-    
+
     // Validate each order detail (especially Product Name)
     orderDetails.forEach((detail, index) => {
       if (!detail.productName) {
@@ -101,7 +104,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
   };
 
   // Calculate total discount
-  const totalDiscount = calculateTotalDiscount(orderDetails);
+  // const totalDiscount = calculateTotalDiscount(orderDetails);
 
   return (
     <Modal title="Add Customer Order" onClose={onClose}>
@@ -135,7 +138,8 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
 
       <Field>
         <Label>
-          Client Name {errors.clientName && <span style={{ color: "red" }}>*</span>}
+          Client Name{" "}
+          {errors.clientName && <span style={{ color: "red" }}>*</span>}
         </Label>
         <Input
           value={clientName}
@@ -182,7 +186,8 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
 
       <Field>
         <Label>
-          Delivery Option {errors.deliveryOption && <span style={{ color: "red" }}>*</span>}
+          Delivery Option{" "}
+          {errors.deliveryOption && <span style={{ color: "red" }}>*</span>}
         </Label>
         <Select
           value={deliveryOption}
@@ -202,7 +207,8 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
 
       <Field>
         <Label>
-          Payment Terms {errors.paymentTerms && <span style={{ color: "red" }}>*</span>}
+          Payment Terms{" "}
+          {errors.paymentTerms && <span style={{ color: "red" }}>*</span>}
         </Label>
         <Select
           value={paymentTerms}
@@ -236,11 +242,18 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
               <tr key={index}>
                 <td>
                   <Input
-                    style={{ display: 'inline-block', width: 'calc(100% - 20px)' }}
-                    value={orderDetail.productName}
+                    style={{
+                      display: "inline-block",
+                      width: "calc(100% - 10px)",
+                    }}
+                    value={inputStates[index] || ""} // Use specific input state for each index
                     onChange={(e) => {
+                      setInputStates((prevStates) => ({
+                        ...prevStates,
+                        [index]: e.target.value,
+                      }));
                       handleProductInputChange(index, e.target.value);
-                      clearError(`productName${index}`); // Clear error on change
+                      clearError(`productName${index}`);
                     }}
                     placeholder="Product Name"
                   />
@@ -254,11 +267,15 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                           {filteredProducts.map((product) => (
                             <SuggestionItem
                               key={product.id}
-                              onClick={() =>
-                                handleProductSelect(index, product)
-                              }
+                              onClick={() => {
+                                setInputStates((prevStates) => ({
+                                  ...prevStates,
+                                  [index]: product.PROD_NAME,
+                                }));
+                                handleProductSelect(index, product);
+                              }}
                             >
-                              {product.name}
+                              {product.PROD_NAME}
                             </SuggestionItem>
                           ))}
                         </SuggestionsList>
@@ -295,7 +312,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                       updatedOrderDetails[index] = {
                         ...updatedOrderDetails[index],
                         discountValue: value,
-                        discountType: "amount", // Assuming fixed discount
+                        // discountType: "amount", // Assuming fixed discount
                       };
                       setOrderDetails(updatedOrderDetails); // Update the order details state
                     }}
@@ -323,7 +340,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           <TotalRow>
             <TotalLabel>Total Discount</TotalLabel>
             <TotalValue style={{ color: "#ff5757" }}>
-              ₱{totalDiscount.toFixed(2)}
+              ₱{(totalDiscount || 0).toFixed(2)}
             </TotalValue>
           </TotalRow>
           <TotalRow>

@@ -25,8 +25,10 @@ const SharedInventoryPage = () => {
     );
   });
 
-  // Sort the filtered inventory by quantity on hand (ascending)
-  const sortedInventory = [...filteredInventory].sort((a, b) => a.PROD_INV_QTY_ON_HAND - b.PROD_INV_QTY_ON_HAND);
+  // Sort the filtered inventory by expiry date (ascending)
+  const sortedInventory = [...filteredInventory].sort((a, b) => 
+    new Date(a.PROD_INV_EXP_DATE) - new Date(b.PROD_INV_EXP_DATE)
+  );
 
   const handleDetailClick = (item) => {
     setSelectedItem(item);

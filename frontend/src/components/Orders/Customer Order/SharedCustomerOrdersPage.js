@@ -1,43 +1,67 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import AddCustomerOrderModal from "./AddCustomerOrderModal";
 import SearchBar from "../../../components/Layout/SearchBar";
 import Table from "../../../components/Layout/Table";
 import CardTotalCustomerOrder from "../../../components/CardsData/CardTotalCustomerOrder";
 import Button from "../../../components/Layout/Button";
-import { SALES_ORDER } from "../../../data/CustomerOrderData";
+import { fetchCustomerOrders } from "../../../api/fetchCustomerOrders";
 import { FaPlus } from "react-icons/fa";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import CustomerOrderDetailsModal from "./CustomerOrderDetailsModal";
 
 const SharedCustomerOrdersPage = ({ userRole }) => {
-  const [customer] = useState(SALES_ORDER);
+  const [customer, setCustomer] = useState([]); // Use customer data instead of orders
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isAddingCustomerOrder, setIsAddingCustomerOrder] = useState(false);
   const [sortConfig, setSortConfig] = useState({
-    key: "SALES_ORDER_DATACREATED",
+    key: "SALES_ORDER_DATE_CREATED",
     direction: "desc",
   });
+
+  // Fetch data from API when component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetchCustomerOrders();
+      setCustomer(data);
+    };
+    fetchData();
+  }, []);
+
+  // Helper function to format date to mm/dd/yyyy
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    if (isNaN(date)) return ""; // Return empty string if invalid date
+    return `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
 
   const filteredSales = customer.filter((sale) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return (
-      sale.CLIENT_ID?.toLowerCase().includes(lowerCaseSearchTerm) ||
-      sale.SALES_ORDER_DATACREATED.toLowerCase().includes(lowerCaseSearchTerm) ||
-      sale.SALES_ORDER_PYMNT_STAT?.toLowerCase().includes(lowerCaseSearchTerm) // Add this line to search payment status
+      String(sale.CLIENT_ID)?.toLowerCase().includes(lowerCaseSearchTerm) ||
+      sale.SALES_ORDER_DATACREATED.toLowerCase().includes(
+        lowerCaseSearchTerm
+      ) ||
+      String(sale.SALES_ORDER_PYMNT_STAT)
+        ?.toLowerCase()
+        .includes(lowerCaseSearchTerm)
     );
   });
 
   const sortedSales = filteredSales.sort((a, b) => {
-    if (sortConfig.key === "SALES_ORDER_DATACREATED") {
+    if (sortConfig.key === "SALES_ORDER_DATE_CREATED") {
       return (
-        (new Date(b.SALES_ORDER_DATACREATED) - new Date(a.SALES_ORDER_DATACREATED)) *
+        (new Date(b.SALES_ORDER_DATE_CREATED) -
+          new Date(a.SALES_ORDER_DATE_CREATED)) *
         (sortConfig.direction === "asc" ? 1 : -1)
       );
     }
     return (
-      a.CLIENT_ID.localeCompare(b.CLIENT_ID) *
+      a.SALES_ORDER_CLIENT_NAME.localeCompare(b.SALES_ORDER_CLIENT_NAME) *
       (sortConfig.direction === "asc" ? 1 : -1)
     );
   });
@@ -48,14 +72,20 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const openAddCustomerOrderModal = () => setIsAddingCustomerOrder(true);
   const closeAddCustomerOrderModal = () => setIsAddingCustomerOrder(false);
 
-  const headers = ["Client ID", "Order Date", "Order Status", "Action"];
+  // Update headers to exclude Total Amount
+  const headers = [
+    "Order ID",
+    "Client",
+    "Order Date",
+    "Payment Status",
+    "Action",
+  ];
 
   const rows = sortedSales.map((sale) => [
-    sale.CLIENT_ID,
-    sale.SALES_ORDER_DATACREATED,
-    <Status status={sale.SALES_ORDER_PYMNT_STAT}>
-      {sale.SALES_ORDER_PYMNT_STAT}
-    </Status>,
+    sale.SALES_ORDER_ID,
+    sale.SALES_ORDER_CLIENT_NAME,
+    formatDate(sale.SALES_ORDER_DATE_CREATED), // Show formatted order creation date
+    <Status status={sale.SALES_ORDER_STATUS}>{sale.SALES_ORDER_STATUS}</Status>, // Example status mapping
     <Button onClick={() => openDetailsModal(sale)} fontSize="14px">
       Details
     </Button>,
@@ -92,8 +122,8 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
               if (header === "Order Date" || header === "Client ID") {
                 handleSort(
                   header === "Order Date"
-                    ? "SALES_ORDER_DATACREATED"
-                    : "CLIENT_ID"
+                    ? "SALES_ORDER_DATE_CREATED"
+                    : "SALES_ORDER_ID"
                 );
               }
             }}
@@ -103,8 +133,8 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
               <>
                 {sortConfig.key ===
                 (header === "Order Date"
-                  ? "SALES_ORDER_DATACREATED"
-                  : "CLIENT_ID") ? (
+                  ? "SALES_ORDER_DATE_CREATED"
+                  : "SALES_ORDER_CLIENT_NAME") ? (
                   sortConfig.direction === "asc" ? (
                     <FaChevronUp
                       style={{ marginLeft: "5px", fontSize: "12px" }}

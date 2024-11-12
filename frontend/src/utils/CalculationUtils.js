@@ -10,12 +10,10 @@ export const calculateLineTotal = (detail) => {
 export const calculateDiscountAmount = (detail) => {
   let discountAmount = 0;
 
-  // Since we only want to consider fixed discount amounts
-  if (detail.discountType === "amount") {
-    // Use the fixed discount amount, but ensure it doesn't exceed the total before discount
-    discountAmount = Math.min(detail.discountValue, detail.quantity * detail.price);
-  }
-
+  discountAmount = Math.min(
+    detail.discountValue,
+    detail.quantity * detail.price
+  );
   return discountAmount;
 };
 
