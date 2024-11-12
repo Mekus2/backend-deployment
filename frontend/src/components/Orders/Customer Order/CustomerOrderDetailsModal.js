@@ -40,7 +40,9 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   };
 
   // Conditionally render the Accept and Cancel buttons if status is "Pending" and role is either admin or superadmin
-  const canModifyOrder = order.SALES_ORDER_PYMNT_STAT === "Pending" && (userRole === "admin" || userRole === "superadmin");
+  const canModifyOrder =
+    order.SALES_ORDER_PYMNT_STAT === "Pending" &&
+    (userRole === "admin" || userRole === "superadmin");
 
   return (
     <Modal
@@ -56,13 +58,16 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
           <strong>Order Created Date:</strong> {order.SALES_ORDER_DATACREATED}
         </p>
         <p>
-          <strong>Delivery Date:</strong> {order.SALES_ORDER_DLVRY_DATE || "N/A"}
+          <strong>Delivery Date:</strong>{" "}
+          {order.SALES_ORDER_DLVRY_DATE || "N/A"}
         </p>
         <p>
-          <strong>Discount:</strong> {formatCurrency(order.SALES_ORDER_DISCOUNT || 0)}
+          <strong>Discount:</strong>{" "}
+          {formatCurrency(order.SALES_ORDER_DISCOUNT || 0)}
         </p>
         <p>
-          <strong>Delivery Option:</strong> {order.SALES_ORDER_DLVRY_OPT || "N/A"}
+          <strong>Delivery Option:</strong>{" "}
+          {order.SALES_ORDER_DLVRY_OPT || "N/A"}
         </p>
         <p>
           <strong>Client ID:</strong> {order.CLIENT_ID}
@@ -83,10 +88,16 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
               {orderDetails.length > 0 ? (
                 orderDetails.map((detail, index) => (
                   <TableRow key={index}>
-                    <TableCell>{detail.SALES_ORDER_PROD_NAME || "Unknown Product"}</TableCell>
+                    <TableCell>
+                      {detail.SALES_ORDER_PROD_NAME || "Unknown Product"}
+                    </TableCell>
                     <TableCell>{detail.SALES_ORDER_QTY || 0}</TableCell>
-                    <TableCell>{formatCurrency(detail.SALES_ORDER_PRICE || 0)}</TableCell>
-                    <TableCell>{formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)}</TableCell>
+                    <TableCell>
+                      {formatCurrency(detail.SALES_ORDER_PRICE || 0)}
+                    </TableCell>
+                    <TableCell>
+                      {formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
@@ -115,7 +126,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
             Cancel Order
           </Button>
           <Button variant="primary" onClick={handleAcceptOrder}>
-            Mark as Paid
+            Accept Order
           </Button>
         </ButtonGroup>
       )}
