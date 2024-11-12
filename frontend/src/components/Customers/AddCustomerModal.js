@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
+import { addCustomer } from "../../api/CustomerApi"; // Import the addCustomer API function
 
 const AddCustomerModal = ({ onClose, onAdd }) => {
   const [clientName, setClientName] = useState("");
-  const [clientCity, setClientCity] = useState("");
+  const [clientAddress, setClientAddress] = useState(""); // Updated variable name to match input
   const [clientProvince, setClientProvince] = useState("");
-  const [clientPhoneNum, setClientPhoneNum] = useState("0"); // Initialize with "0"
+  const [clientPhoneNum, setClientPhoneNum] = useState("0");
   const [errors, setErrors] = useState({});
 
   const validatePhoneNumber = (phoneNum) => {
@@ -15,30 +16,40 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
     return phoneRegex.test(phoneNum);
   };
 
-  const handleAddCustomer = () => {
+  const handleAddCustomer = async () => {
     let newErrors = {};
 
     // Validate all fields are filled
     if (!clientName) newErrors.clientName = "Customer name is required";
-    if (!clientCity) newErrors.clientCity = "City is required";
+    if (!clientAddress) newErrors.clientAddress = "Address is required"; // Corrected validation message
     if (!clientProvince) newErrors.clientProvince = "Province is required";
 
     // Validate phone number
     if (!clientPhoneNum) {
       newErrors.clientPhoneNum = "Phone number is required";
     } else if (!validatePhoneNumber(clientPhoneNum)) {
-      newErrors.clientPhoneNum = "Phone number is required";
+      newErrors.clientPhoneNum = "Phone number must start with '0' and be exactly 11 digits";
     }
 
     if (Object.keys(newErrors).length === 0) {
+      // No errors, send data to the API
       const newClient = {
-        CLIENT_NAME: clientName,
-        CLIENT_CITY: clientCity,
-        CLIENT_PROVINCE: clientProvince,
-        CLIENT_PHONENUM: clientPhoneNum,
+        name: clientName,
+        address: clientAddress,
+        province: clientProvince,
+        phoneNumber: clientPhoneNum,
       };
-      onAdd(newClient);
-      onClose();
+
+      try {
+        const addedCustomer = await addCustomer(newClient); // Call API function to add customer
+        onAdd(addedCustomer); // Pass the added customer data to the parent
+        console.log('data:', addCustomer);
+        console.log('customer data:', newClient);
+        onClose(); // Close the modal
+      } catch (error) {
+        console.error("Error adding customer:", error);
+        // Optionally, you can handle errors here, like displaying an error message
+      }
     } else {
       setErrors(newErrors);
     }
@@ -51,7 +62,6 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
     if (value === "" || (value.length > 0 && value[0] === "0")) {
       // Only allow digits and limit input to 11 characters
       if (/^\d*$/.test(value) && value.length <= 11) {
-        // If the first character is "0", prevent erasing it
         setClientPhoneNum(value.length === 0 ? "0" : value);
       }
     }
@@ -68,17 +78,16 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
           value={clientName}
           onChange={(e) => setClientName(e.target.value)}
         />
-        
 
         <Label>Location</Label>
         <LocationContainer>
           <CityInput
             type="text"
-            placeholder="City"
-            value={clientCity}
-            onChange={(e) => setClientCity(e.target.value)}
+            placeholder="Address"
+            value={clientAddress}
+            onChange={(e) => setClientAddress(e.target.value)}
           />
-          {errors.clientCity && <Error>{errors.clientCity}</Error>}
+          {errors.clientAddress && <Error>{errors.clientAddress}</Error>} {/* Updated error */}
           <ProvinceInput
             type="text"
             placeholder="Province"
@@ -95,9 +104,8 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
           placeholder="Enter Phone Number"
           value={clientPhoneNum}
           maxLength="11"
-          onChange={handlePhoneNumberChange} // Updated onChange
+          onChange={handlePhoneNumberChange}
         />
-        
 
         <ButtonGroup>
           <Button variant="red" onClick={onClose}>
@@ -131,15 +139,15 @@ const Input = styled.input`
 
 const LocationContainer = styled.div`
   display: flex;
-  gap: 10px; /* Space between city and province */
+  gap: 10px;
 `;
 
 const CityInput = styled(Input)`
-  flex: 1; /* Allows the city input to take available space */
+  flex: 1;
 `;
 
 const ProvinceInput = styled(Input)`
-  flex: 1; /* Allows the province input to take available space */
+  flex: 1;
 `;
 
 const ButtonGroup = styled.div`

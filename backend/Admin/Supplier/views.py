@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from django.shortcuts import get_object_or_404
 from .models import Supplier
 from .serializers import CreateSupplierSerializer, SupplierSerializer
@@ -10,7 +11,7 @@ from Admin.AdminPermission import IsAdminUser
 
 class SupplierManager(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [IsAdminUser]
+    permission_classes = [AllowAny]
 
     # new
     def get(self, request, pk=None):
@@ -47,3 +48,12 @@ class SupplierManager(APIView):
         supplier = get_object_or_404(Supplier, pk=pk)
         supplier.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class TotalSupplierCount(APIView):
+     authentication_classes = [CookieJWTAuthentication]
+     permission_classes = [AllowAny]
+
+     def get(self, request):
+         
+         total_supplier = Supplier.objects.count()
+         return Response({total_supplier}, status=status.HTTP_200_OK)

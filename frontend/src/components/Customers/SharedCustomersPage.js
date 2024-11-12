@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
@@ -6,32 +6,47 @@ import CardTotalCustomers from "../CardsData/CardTotalCustomers";
 import Button from "../Layout/Button";
 import AddCustomerModal from "./AddCustomerModal";
 import CustomerDetailsModal from "./CustomerDetailsModal";
-import clientsData from "../../data/ClientsData"; // Adjust the import based on your file structure
 import { FaPlus } from "react-icons/fa";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { colors } from "../../colors";
+import { fetchCustomers } from "../../api/CustomerApi"; // Import the fetchCustomers function
+import axios from "axios"; // Import axios for making requests
 
 const SharedCustomersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredCustomers, setFilteredCustomers] = useState(clientsData);
+  const [customers, setCustomers] = useState([]);
+  const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [sortConfig, setSortConfig] = useState({
-    key: "CLIENT_NAME",
+    key: "name",
     direction: "asc",
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchCustomers();
+        setCustomers(data);
+        setFilteredCustomers(data);
+      } catch (error) {
+        console.error("Failed to fetch customers", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleSearch = (event) => {
     const value = event.target.value.trim().toLowerCase();
     setSearchTerm(value);
-    const filtered = clientsData.filter((customer) => {
+    const filtered = customers.filter((customer) => {
       if (!value) return true;
       return (
-        customer.CLIENT_NAME.toLowerCase().includes(value) ||
-        customer.CLIENT_CITY.toLowerCase().includes(value) ||
-        customer.CLIENT_PROVINCE.toLowerCase().includes(value) ||
-        customer.CLIENT_PHONENUM.includes(value)
+        customer.name.toLowerCase().includes(value) ||
+        customer.address.toLowerCase().includes(value) ||
+        customer.province.toLowerCase().includes(value) ||
+        customer.phoneNumber.includes(value)
       );
     });
     setFilteredCustomers(filtered);
@@ -41,10 +56,22 @@ const SharedCustomersPage = () => {
     setShowAddModal(true);
   };
 
-  const openDetailsModal = (customer) => {
-    setSelectedCustomer(customer);
+
+  useEffect(() => {
+    console.log('Selected Customer:', selectedCustomer);
+  }, [selectedCustomer]);
+
+  // Fetch customer by ID and open details modal
+  const openDetailsModal = async (customer) => {
+  try {
+    const response = await axios.get(`http://127.0.0.1:8000/customer/clients/${customer.id}/`);
+    console.log('API Response:', response.data); // Log the response to check if the data is correct
+    setSelectedCustomer(response.data); // Set the fetched data into state
     setShowDetailsModal(true);
-  };
+  } catch (error) {
+    console.error("Error fetching customer data:", error);
+  }
+};
 
   const closeModals = () => {
     setShowAddModal(false);
@@ -58,14 +85,14 @@ const SharedCustomersPage = () => {
 
   const handleRemoveCustomer = (customerId) => {
     const updatedCustomers = filteredCustomers.filter(
-      (customer) => customer.CLIENT_ID !== customerId
+      (customer) => customer.id !== customerId
     );
     setFilteredCustomers(updatedCustomers);
   };
 
   const headers = [
     "Customer Name",
-    "City",
+    "Address",
     "Province",
     "Phone",
     "Action",
@@ -80,20 +107,18 @@ const SharedCustomersPage = () => {
   };
 
   const sortedCustomers = [...filteredCustomers].sort((a, b) => {
-    if (sortConfig.key === "CLIENT_NAME") {
-      return (
-        a.CLIENT_NAME.localeCompare(b.CLIENT_NAME) *
-        (sortConfig.direction === "asc" ? 1 : -1)
-      );
-    }
-    return 0;
+    if (!a[sortConfig.key] || !b[sortConfig.key]) return 0;
+    return (
+      (a[sortConfig.key] || "").localeCompare(b[sortConfig.key] || "") *
+      (sortConfig.direction === "asc" ? 1 : -1)
+    );
   });
 
   const rows = sortedCustomers.map((customer) => [
-    customer.CLIENT_NAME,
-    customer.CLIENT_CITY,
-    customer.CLIENT_PROVINCE,
-    customer.CLIENT_PHONENUM,
+    customer.name,
+    customer.address,
+    customer.province,
+    customer.phoneNumber,
     <ActionButton key="action" onClick={() => openDetailsModal(customer)}>
       Details
     </ActionButton>,
@@ -119,13 +144,13 @@ const SharedCustomersPage = () => {
           <TableHeader
             key={index}
             onClick={() => {
-              if (header === "Customer Name") handleSort("CLIENT_NAME");
+              if (header === "Customer Name") handleSort("name");
             }}
           >
             {header}
             {header === "Customer Name" && (
               <>
-                {sortConfig.key === "CLIENT_NAME" ? (
+                {sortConfig.key === "name" ? (
                   sortConfig.direction === "asc" ? (
                     <FaChevronUp
                       style={{ marginLeft: "5px", fontSize: "12px" }}

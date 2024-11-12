@@ -10,7 +10,7 @@ from Admin.AdminPermission import IsAdminUser
 
 
 class ClientListManager(APIView):
-    # authentication_classes = [CookieJWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [AllowAny]
 
     def get(self, request, pk=None):
@@ -46,3 +46,12 @@ class ClientListManager(APIView):
         client = get_object_or_404(Clients, pk=pk)
         client.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class TotalClientsCount(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]  # Modify this to IsAdminUser if admin access is required
+
+    def get(self, request):
+        # Get the total number of clients
+        total_clients = Clients.objects.count()
+        return Response({ total_clients}, status=status.HTTP_200_OK)

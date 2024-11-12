@@ -1,81 +1,88 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { colors } from "../../colors";
-import SupplierDetailsModal from "../../components/Suppliers/SupplierDetailsModal";
-import AddSupplierModal from "../../components/Suppliers/AddSupplierModal"; // Import the Add Supplier Modal
 import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
 import CardTotalSuppliers from "../../components/CardsData/CardTotalSuppliers";
-import { suppliers as initialSuppliers } from "../../data/SupplierData"; // Import supplier data
 import Button from "../../components/Layout/Button";
-import { FaPlus } from "react-icons/fa"; // Import the FaPlus icon
-import { FaChevronUp, FaChevronDown } from "react-icons/fa"; // Import chevron icons
+import AddSupplierModal from "./AddSupplierModal";
+import SupplierDetailsModal from "./SupplierDetailsModal";
+import { FaPlus } from "react-icons/fa";
+import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { colors } from "../../colors";
+import { fetchSuppliers } from "../../api/SupplierApi"; // Import the fetchSuppliers function
+import axios from "axios"; // Import axios for making requests
 
 const SharedSuppliersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredSuppliers, setFilteredSuppliers] = useState(initialSuppliers);
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const [suppliers, setSuppliers] = useState([]);
+  const [filteredSuppliers, setFilteredSuppliers] = useState([]);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false); // Track the Add modal visibility
+  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [sortConfig, setSortConfig] = useState({
     key: "SUPP_COMPANY_NAME",
     direction: "asc",
-  }); // Default sorting
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const data = await fetchSuppliers();
+        setSuppliers(data);
+        setFilteredSuppliers(data);
+      } catch (error) {
+        console.error("Failed to fetch suppliers", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   const handleSearch = (event) => {
     const value = event.target.value.trim().toLowerCase();
     setSearchTerm(value);
-    const filtered = initialSuppliers.filter((supplier) => {
+    const filtered = suppliers.filter((supplier) => {
       if (!value) return true;
       return (
-        supplier.SUPP_COMPANY_NAME?.toLowerCase().includes(value) || // Optional chaining to handle undefined
+        supplier.SUPP_COMPANY_NAME?.toLowerCase().includes(value) ||
         supplier.SUPP_COMPANY_NUM.includes(value) ||
-        supplier.SUPP_CONTACT_NAME?.toLowerCase().includes(value) || // Optional chaining to handle undefined
+        supplier.SUPP_CONTACT_NAME?.toLowerCase().includes(value) ||
         supplier.SUPP_CONTACT_PHNUM.includes(value)
       );
     });
     setFilteredSuppliers(filtered);
   };
 
-  const openDetailsModal = (supplier) => {
-    setSelectedSupplier(supplier);
-    setShowDetailsModal(true);
-  };
-
-  const openAddModal = () => {
+  const openAddSupplierModal = () => {
     setShowAddModal(true);
   };
 
+  const openDetailsModal = async (supplier) => {
+    try {
+      const response = await axios.get(`http://127.0.0.1:8000/supplier/suppliers/${supplier.id}/`);
+      console.log('API RESPONSE:', response.data);
+      setSelectedSupplier(response.data);
+      setShowDetailsModal(true);
+    } catch (error) {
+      console.error("Error fetching supplier data:", error);
+    }
+  };
+
   const closeModals = () => {
-    setSelectedSupplier(null);
-    setShowDetailsModal(false);
     setShowAddModal(false);
+    setShowDetailsModal(false);
+    setSelectedSupplier(null);
   };
 
   const handleAddSupplier = (newSupplier) => {
-    // Add the new supplier to the supplier list
-    setFilteredSuppliers((prevSuppliers) => [...prevSuppliers, newSupplier]);
+    setFilteredSuppliers([...filteredSuppliers, newSupplier]);
   };
 
-  // Sort suppliers based on the current sort configuration
-  const handleSort = (key) => {
-    let direction = "asc";
-    if (sortConfig.key === key && sortConfig.direction === "asc") {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
+  const handleRemoveSupplier = (supplierId) => {
+    const updatedSuppliers = filteredSuppliers.filter(
+      (supplier) => supplier.id !== supplierId
+    );
+    setFilteredSuppliers(updatedSuppliers);
   };
-
-  const sortedSuppliers = [...filteredSuppliers].sort((a, b) => {
-    if (sortConfig.key === "SUPP_COMPANY_NAME") {
-      const nameA = a.SUPP_COMPANY_NAME || ""; // Fallback to empty string if undefined
-      const nameB = b.SUPP_COMPANY_NAME || ""; // Fallback to empty string if undefined
-      return (
-        nameA.localeCompare(nameB) * (sortConfig.direction === "asc" ? 1 : -1)
-      );
-    }
-    return 0;
-  });
 
   const headers = [
     "Supplier Name",
@@ -85,11 +92,27 @@ const SharedSuppliersPage = () => {
     "Action",
   ];
 
+  const handleSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedSuppliers = [...filteredSuppliers].sort((a, b) => {
+    if (!a[sortConfig.key] || !b[sortConfig.key]) return 0;
+    return (
+      (a[sortConfig.key] || "").localeCompare(b[sortConfig.key] || "") *
+      (sortConfig.direction === "asc" ? 1 : -1)
+    );
+  });
+
   const rows = sortedSuppliers.map((supplier) => [
-    supplier.SUPP_COMPANY_NAME,
-    supplier.SUPP_COMPANY_NUM,
-    supplier.SUPP_CONTACT_NAME,
-    supplier.SUPP_CONTACT_PHNUM,
+    supplier.Supp_Company_Name,
+    supplier.Supp_Company_Num,
+    supplier.Supp_Contact_Pname,
+    supplier.Supp_Contact_Num,
     <ActionButton key="action" onClick={() => openDetailsModal(supplier)}>
       Details
     </ActionButton>,
@@ -103,25 +126,22 @@ const SharedSuppliersPage = () => {
           value={searchTerm}
           onChange={handleSearch}
         />
-        <ButtonGroup>
-          <StyledButton bgColor={colors.primary} onClick={openAddModal}>
-            <FaPlus className="icon" /> Supplier
-          </StyledButton>
-        </ButtonGroup>
+        <StyledButton onClick={openAddSupplierModal}>
+          <FaPlus className="icon" /> Supplier
+        </StyledButton>
       </Controls>
-      <AnalyticsContainer>
+      <SummarySection>
         <CardTotalSuppliers />
-      </AnalyticsContainer>
+      </SummarySection>
       <Table
         headers={headers.map((header, index) => (
           <TableHeader
             key={index}
-            onClick={() =>
-              header === "Supplier Name" && handleSort("SUPP_COMPANY_NAME")
-            }
+            onClick={() => {
+              if (header === "Supplier Name") handleSort("SUPP_COMPANY_NAME");
+            }}
           >
             {header}
-            {/* Display chevrons for Supplier Name */}
             {header === "Supplier Name" && (
               <>
                 {sortConfig.key === "SUPP_COMPANY_NAME" ? (
@@ -150,16 +170,14 @@ const SharedSuppliersPage = () => {
         ))}
         rows={rows}
       />
+      {showAddModal && (
+        <AddSupplierModal onClose={closeModals} onAdd={handleAddSupplier} />
+      )}
       {showDetailsModal && selectedSupplier && (
         <SupplierDetailsModal
           supplier={selectedSupplier}
           onClose={closeModals}
-        />
-      )}
-      {showAddModal && (
-        <AddSupplierModal
-          onClose={closeModals}
-          onAdd={handleAddSupplier} // Pass the add handler
+          onRemove={handleRemoveSupplier}
         />
       )}
     </>
@@ -175,16 +193,11 @@ const Controls = styled.div`
   padding: 0 1px;
 `;
 
-const AnalyticsContainer = styled.div`
+const SummarySection = styled.div`
   display: flex;
   gap: 16px;
   margin-bottom: 16px;
   padding: 0 1px;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 10px;
 `;
 
 const StyledButton = styled(Button)`
