@@ -1,61 +1,62 @@
-// src/components/Header.js
-
 import React, { useState } from "react";
 import { TbUserCircle } from "react-icons/tb";
-import { FaBars } from "react-icons/fa";
+import { FaRegBell, FaBars } from "react-icons/fa";
 import styled from "styled-components";
 import { useLocation, useNavigate } from "react-router-dom";
 import { colors } from "../../colors";
-// import BellNotif from "../Notifications/BellNotif"; // Commented out the BellNotif component import
 
+// Updated pageTitles with superadmin and other role titles
 const pageTitles = {
+  // Admin routes
   "/admin/dashboard": "Dashboard",
-  "/admin/request-order": "Request Orders",
-  "/admin/customer-order": "Customer Orders",
-  "/admin/purchase-order": "Supplier Orders",
-  "/admin/customer-delivery": "Customer Deliveries",
-  "/admin/supplier-delivery": "Supplier Deliveries",
-  "/admin/products": "Products",
-  "/admin/price-history": "Price History",
-  "/admin/categories": "Categories",
+  "/admin/orders": "Order",
+  "/admin/request-order": "Request Order",
+  "/admin/customer-order": "Customer Order",
+  "/admin/purchase-order": "Purchase Order",
+  "/admin/delivery": "Delivery",
+  "/admin/products": "Total Products",
+  "/admin/categories": "Category",
   "/admin/inventory": "Inventory",
-  "/admin/suppliers": "Suppliers",
-  "/admin/customers": "Customers",
-  "/admin/users": "Staffs",
+  "/admin/suppliers": "Supplier",
+  "/admin/customers": "Customer",
+  "/admin/users": "User",
   "/admin/sales": "Sales",
-  "/admin/returns": "Returns",
-  "/admin/logs": "Logs",
+  "/admin/returns": "Return",
+  "/admin/logs": "Log",
   "/admin/reports": "Reports",
   "/admin/profile": "Profile",
   "/admin/notifications": "Notifications",
+  "/admin/purchase": "Purchase Order",
 
+  // SuperAdmin routes
   "/superadmin/dashboard": "Dashboard",
-  "/superadmin/request-order": "Request Orders",
-  "/superadmin/customer-order": "Customer Orders",
-  "/superadmin/purchase-order": "Supplier Orders",
-  "/superadmin/customer-delivery": "Customer Deliveries",
-  "/superadmin/supplier-delivery": "Supplier Deliveries",
-  "/superadmin/products": "Products",
-  "/superadmin/price-history": "Price History",
-  "/superadmin/categories": "Categories",
+  "/superadmin/orders": "Order",
+  "/superadmin/request-order": "Request Order",
+  "/superadmin/customer-order": "Customer Order",
+  "/superadmin/purchase-order": "Purchase Order",
+  "/superadmin/delivery": "Delivery",
+  "/superadmin/products": "Total Products",
+  "/superadmin/categories": "Category",
   "/superadmin/inventory": "Inventory",
-  "/superadmin/suppliers": "Suppliers",
-  "/superadmin/customers": "Customers",
-  "/superadmin/users": "Users",
+  "/superadmin/suppliers": "Supplier",
+  "/superadmin/customers": "Customer",
+  "/superadmin/users": "User",
   "/superadmin/sales": "Sales",
-  "/superadmin/returns": "Returns",
-  "/superadmin/logs": "Logs",
+  "/superadmin/returns": "Return",
+  "/superadmin/logs": "Log",
   "/superadmin/reports": "Reports",
   "/superadmin/profile": "SuperAdmin Profile",
   "/superadmin/notifications": "Notifications",
+  "/superadmin/purchase": "Purchase Order",
 
+  // Staff routes
   "/staff/dashboard": "Dashboard",
   "/staff/profile": "Staff Profile",
-  "/staff/request-order": "Request Orders",
-  "/staff/customer-order": "Customer Orders",
-  "/staff/customer-delivery": "Customer Deliveries",
-  "/staff/products": "Products",
-  "/staff/categories": "Categories",
+  "/staff/request-order": "Request Order",
+  "/staff/customer-order": "Customer Order",
+  "/staff/delivery": "Delivery",
+  "/staff/products": "Total Products",
+  "/staff/categories": "Category",
   "/staff/inventory": "Inventory",
   "/staff/customers": "Customers",
   "/staff/reports": "Reports",
@@ -88,8 +89,26 @@ const Header = ({ toggleSidebar }) => {
     }
   };
 
+  const goToNotifications = () => {
+    if (location.pathname.startsWith("/admin")) {
+      navigate("/admin/notifications");
+    } else if (location.pathname.startsWith("/staff")) {
+      navigate("/staff/notifications");
+    } else if (location.pathname.startsWith("/superadmin")) {
+      navigate("/superadmin/notifications");
+    }
+  };
+
   const handleSignOut = () => {
-    navigate("/login");
+       // Clear access token and any other user-related data from localStorage
+       localStorage.removeItem('access_tokenStorage');
+       localStorage.removeItem('refresh_token');
+       localStorage.removeItem('user_id');
+       localStorage.removeItem('user_first_name');
+       localStorage.removeItem('user_type'); // Clear any other stored user info
+   
+       console.log("User signed out. Tokens cleared."); // Log the sign-out action
+       navigate("/login"); // Redirect to the login page
   };
 
   return (
@@ -97,7 +116,12 @@ const Header = ({ toggleSidebar }) => {
       <HamburgerMenu onClick={toggleSidebar} />
       <PageTitle>{pageTitle}</PageTitle>
       <RightSection>
-        {/* <BellNotif /> */} {/* Commented out BellNotif */}
+        <BellIcon
+          className={
+            location.pathname.includes("/notifications") ? "active" : ""
+          }
+          onClick={goToNotifications}
+        />
         <ProfileContainer
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -111,7 +135,7 @@ const Header = ({ toggleSidebar }) => {
                 ? "Admin"
                 : location.pathname.startsWith("/superadmin")
                 ? "SuperAdmin"
-                : "Staff"}
+                : "User"}
             </span>
             <TbUserCircle className="h-5 w-5 ml-1" />
           </ProfileButton>
@@ -130,7 +154,7 @@ const Header = ({ toggleSidebar }) => {
   );
 };
 
-// Styled components (unchanged from previous)
+// Styled components
 const HeaderContainer = styled.div`
   display: flex;
   justify-content: flex-start;
@@ -218,6 +242,21 @@ const DropdownItem = styled.div`
   cursor: pointer;
 
   &:hover {
+    background-color: ${colors.primary};
+    color: white;
+  }
+`;
+
+const BellIcon = styled(FaRegBell)`
+  font-size: 30px;
+  margin-right: -5px;
+  cursor: pointer;
+  background-color: white;
+  border-radius: 50%;
+  padding: 4px;
+  color: black;
+
+  &.active {
     background-color: ${colors.primary};
     color: white;
   }

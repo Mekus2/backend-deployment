@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie'; // Ensure js-cookie is installed
 
-const API_URL = 'http://127.0.0.1:8000/'; // Base URL for the API
+const API_URL = 'http://localhost:8000/'; // Base URL for the API
 
 // Function to log in
 export const loginUser = async (credentials) => {

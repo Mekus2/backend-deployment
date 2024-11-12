@@ -6,6 +6,7 @@ import loginbg from "../assets/loginbg.jpg";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { sendOtp, verifyOtp, resetPassword } from "../api/ForgotPasswordApi";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -23,54 +24,69 @@ const ForgotPassword = () => {
     toast.success(message);
   };
 
-  const handleSendResetLink = () => {
+  const handleSendResetLink = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
-      return; // Return early for validation errors
+      return;
     }
 
-    console.log(`Reset link sent to: ${email}`);
-    setError("");
-    setOtpSent(true);
-    notifySuccess("Reset link sent! Check your email."); // Success notification
+    try {
+      await sendOtp(email);
+      setOtpSent(true);
+      notifySuccess("OTP has been sent! Check your email.");
+    } catch (error) {
+      setError(error);
+    }
   };
 
-  const handleVerifyOtp = () => {
-    // Skip OTP validation and directly proceed to enter new password
-    setOtpVerified(true);
-    setError("");
-    notifySuccess("OTP verified! You can now set a new password."); // Success notification
+  const handleVerifyOtp = async () => {
+    try {
+      await verifyOtp(email, otp);
+      setOtpVerified(true);
+      notifySuccess("OTP verified! You can now set a new password.");
+    } catch (error) {
+      // Show alert instead of setting an error text on the page
+      window.alert("Invalid OTP. Please try again.");
+    }
   };
 
-  const handleResetPassword = () => {
-    if (newPassword === "" || confirmPassword === "") {
+  const handleResetPassword = async () => {
+    // Validate new password and confirm password fields
+    if (!newPassword || !confirmPassword) {
       setError("Both fields are required.");
-      return; // Return early for validation errors
+      return;
     }
-
     if (newPassword.length < 6) {
       setError("Password must be at least 6 characters long.");
-      return; // Return early for validation errors
+      return;
     }
-
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
-      return; // Return early for validation errors
+      setError("Passwords do not match. Please re-enter your passwords.");
+      return;
     }
-
-    // Simulate password reset logic
-    console.log(`Password has been reset to: ${newPassword}`);
-    setError("");
-    setPasswordResetSuccess(true);
-    notifySuccess("Password has been reset successfully!"); // Success notification
+  
+    try {
+      // Attempt to reset the password using the provided OTP and new password
+      await resetPassword(otp, newPassword);
+      setPasswordResetSuccess(true);
+      notifySuccess("Your password has been reset successfully! You can now log in.");
+      localStorage.removeItem('forgotPasswordEmail');
+    } catch (error) {
+      // Check if the error has a specific message
+      const errorMessage = error.response?.data?.detail || "An error occurred while resetting your password. Please try again.";
+      setError(errorMessage);
+      console.log(error);
+    }
   };
+  
+  
 
   const handleResendOtp = () => {
     setOtpSent(false);
     setEmail("");
     setOtp("");
-    notifySuccess("OTP has been resent. Please check your email."); // Success notification
+    notifySuccess("OTP has been resent. Please check your email.");
   };
 
   return (
@@ -300,29 +316,19 @@ const PasswordContainer = styled.div`
 
 const TogglePasswordVisibility = styled.button`
   position: absolute;
-  right: 12px;
-  top: 16px;
-  background: none;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
   border: none;
   cursor: pointer;
-  color: gray;
-  font-size: 18px;
-
-  &:hover {
-    color: darkgray;
-  }
 `;
 
-const BackToLoginLink = styled.p`
+const BackToLoginLink = styled.span`
   margin-top: 20px;
-  font-size: 14px;
-  color: gray;
-  text-align: center;
-
-  &:hover {
-    text-decoration: underline;
-    cursor: pointer;
-  }
+  color: #007B83;
+  text-decoration: underline;
+  cursor: pointer;
 `;
 
 export default ForgotPassword;
