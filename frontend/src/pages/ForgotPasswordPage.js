@@ -6,6 +6,7 @@ import loginbg from "../assets/loginbg.jpg";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { sendOtp, verifyOtp, resetPassword, resendOtp } from "../api/ForgotPasswordApi";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -23,54 +24,64 @@ const ForgotPassword = () => {
     toast.success(message);
   };
 
-  const handleSendResetLink = () => {
+  const handleSendResetLink = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError("Please enter a valid email address.");
-      return; // Return early for validation errors
+      return;
     }
 
-    console.log(`Reset link sent to: ${email}`);
-    setError("");
-    setOtpSent(true);
-    notifySuccess("Reset link sent! Check your email."); // Success notification
+    try {
+      await sendOtp(email);
+      setOtpSent(true);
+      notifySuccess("OTP has been sent! Check your email.");
+    } catch (error) {
+      setError(error);
+    }
   };
 
-  const handleVerifyOtp = () => {
-    // Skip OTP validation and directly proceed to enter new password
-    setOtpVerified(true);
-    setError("");
-    notifySuccess("OTP verified! You can now set a new password."); // Success notification
+  const handleVerifyOtp = async () => {
+    try {
+      await verifyOtp(email, otp);
+      setOtpVerified(true);
+      notifySuccess("OTP verified! You can now set a new password.");
+    } catch (error) {
+      window.alert("Invalid OTP. Please try again.");
+    }
   };
 
-  const handleResetPassword = () => {
-    if (newPassword === "" || confirmPassword === "") {
+  const handleResetPassword = async () => {
+    if (!newPassword || !confirmPassword) {
       setError("Both fields are required.");
-      return; // Return early for validation errors
+      return;
     }
-
     if (newPassword.length < 6) {
       setError("Password must be at least 6 characters long.");
-      return; // Return early for validation errors
+      return;
     }
-
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
-      return; // Return early for validation errors
+      setError("Passwords do not match. Please re-enter your passwords.");
+      return;
     }
 
-    // Simulate password reset logic
-    console.log(`Password has been reset to: ${newPassword}`);
-    setError("");
-    setPasswordResetSuccess(true);
-    notifySuccess("Password has been reset successfully!"); // Success notification
+    try {
+      await resetPassword(otp, newPassword);
+      setPasswordResetSuccess(true);
+      notifySuccess("Your password has been reset successfully! You can now log in.");
+      localStorage.removeItem("forgotPasswordEmail");
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || "An error occurred while resetting your password. Please try again.";
+      setError(errorMessage);
+    }
   };
 
-  const handleResendOtp = () => {
-    setOtpSent(false);
-    setEmail("");
-    setOtp("");
-    notifySuccess("OTP has been resent. Please check your email."); // Success notification
+  const handleResendOtp = async () => {
+    try {
+      await resendOtp(email);
+      notifySuccess("OTP has been resent. Please check your email.");
+    } catch (error) {
+      setError(error.response?.data?.detail || "Failed to resend OTP");
+    }
   };
 
   return (
@@ -166,7 +177,6 @@ const ForgotPassword = () => {
   );
 };
 
-// Styled components for styling
 const BackgroundContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -188,11 +198,6 @@ const FormContainer = styled.div`
   width: 100%;
   max-width: 400px;
   box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-
-  @media (min-width: 768px) {
-    padding: 40px;
-    max-width: 450px;
-  }
 `;
 
 const LogoContainer = styled.div`
@@ -205,10 +210,6 @@ const LogoContainer = styled.div`
 
 const Logo = styled.img`
   width: 140px;
-
-  @media (min-width: 768px) {
-    width: 150px;
-  }
 `;
 
 const Title = styled.h1`
@@ -216,10 +217,6 @@ const Title = styled.h1`
   font-weight: bold;
   margin: 70px 0 20px 0;
   text-align: center;
-
-  @media (min-width: 768px) {
-    font-size: 28px;
-  }
 `;
 
 const InstructionText = styled.p`
@@ -227,10 +224,6 @@ const InstructionText = styled.p`
   text-align: center;
   color: #333;
   margin-bottom: 20px;
-
-  @media (min-width: 768px) {
-    font-size: 18px;
-  }
 `;
 
 const ErrorText = styled.p`
@@ -278,18 +271,18 @@ const SubmitButton = styled.button`
 const ResendOtpButton = styled.button`
   width: 100%;
   padding: 12px;
-  background-color: #007B83;
+  background-color: #b2b2b2;
   color: white;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   border: none;
   border-radius: 10px;
   cursor: pointer;
   text-align: center;
-  margin-top: 10px;
+  margin-top: 15px;
 
   &:hover {
-    background-color: #005f68;
+    background-color: #9e9e9e;
   }
 `;
 
@@ -298,31 +291,18 @@ const PasswordContainer = styled.div`
   width: 100%;
 `;
 
-const TogglePasswordVisibility = styled.button`
+const TogglePasswordVisibility = styled.div`
   position: absolute;
-  right: 12px;
-  top: 16px;
-  background: none;
-  border: none;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   cursor: pointer;
-  color: gray;
-  font-size: 18px;
-
-  &:hover {
-    color: darkgray;
-  }
 `;
 
-const BackToLoginLink = styled.p`
+const BackToLoginLink = styled.div`
   margin-top: 20px;
-  font-size: 14px;
-  color: gray;
-  text-align: center;
-
-  &:hover {
-    text-decoration: underline;
-    cursor: pointer;
-  }
+  color: #007b83;
+  cursor: pointer;
 `;
 
 export default ForgotPassword;

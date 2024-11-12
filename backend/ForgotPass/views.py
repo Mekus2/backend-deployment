@@ -168,3 +168,63 @@ class ChangePasswordView(APIView):
             return Response(
                 {"message": "User not found."}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class ResendOTPView(APIView):
+    permission_classes = [permissions.AllowAny]  # Allow public access to this endpoint
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+
+        if not email:
+            return Response(
+                {"message": "Email is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if email exists
+        if not User.objects.filter(email=email).exists():
+            return Response(
+                {"message": "Email not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Retrieve the user
+        user = User.objects.get(email=email)
+
+        # Mark the current OTP as used (if it exists)
+        otp_instance = OTP.objects.filter(user=user, is_used=False).order_by("-created_at").first()
+        if otp_instance:
+            otp_instance.is_used = True
+            otp_instance.save()
+
+        # Generate a new 6-digit OTP
+        otp_value = str(random.randint(100000, 999999))
+
+        # Create and save the new OTP instance
+        new_otp_instance = OTP.objects.create(user=user, otp_value=otp_value)
+
+        # Custom email message
+        email_message = f"""
+        Hi {user.first_name},
+        You recently requested to reset your password. To do so, here is your new OTP to complete the reset:
+        {otp_value}
+        If you did not request this, please ignore this email.
+        """
+
+        # Send the OTP via email
+        try:
+            send_mail(
+                "Your OTP for Password Reset",
+                email_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            return Response(
+                {"message": "New OTP sent to email successfully."},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {"message": f"Failed to send OTP. Error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
