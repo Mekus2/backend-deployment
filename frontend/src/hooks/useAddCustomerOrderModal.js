@@ -352,6 +352,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
     handleAddClient,
     totalQuantity,
     totalValue,
+    totalDiscount,
   };
 };
 
