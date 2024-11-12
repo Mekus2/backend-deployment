@@ -73,6 +73,7 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Amoxicillin",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 50,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-08-01",
+      PRICE_PER_UNIT: 10.00, // Price per unit in USD
     },
     {
       INBOUND_DEL_DETAIL_ID: "DEL002",
@@ -81,14 +82,16 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Cephalexin",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 30,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-08-01",
+      PRICE_PER_UNIT: 12.00,
     },
     {
       INBOUND_DEL_DETAIL_ID: "DEL003",
       INBOUND_DEL_ID: "INB002",
       PROD_ID: "P007",
       PROD_NAME: "Ciprofloxacin",
-      INBOUND_DEL_DETAIL_QTY_DLVRD: 40,
+      INBOUND_DEL_DETAIL_QTY_DLVRD: 20,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-08-15",
+      PRICE_PER_UNIT: 100.00, // Price per unit in PHP
     },
     {
       INBOUND_DEL_DETAIL_ID: "DEL004",
@@ -97,6 +100,7 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Doxycycline",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 60,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2026-01-10",
+      PRICE_PER_UNIT: 8.50,
     },
     {
       INBOUND_DEL_DETAIL_ID: "DEL005",
@@ -105,6 +109,7 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Ibuprofen",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 25,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-12-01",
+      PRICE_PER_UNIT: 5.00,
     },
   ],
 };

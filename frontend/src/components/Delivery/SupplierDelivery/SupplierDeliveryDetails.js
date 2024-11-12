@@ -10,6 +10,7 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
   const [expiryDates, setExpiryDates] = useState(
     Array(deliveryDetails.length).fill("") // Track expiry dates as an array
   );
+  const [receivedClicked, setReceivedClicked] = useState(false); // Track if the Mark as Received button was clicked
   const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
 
   // Function to get the Supplier Name by Supplier ID
@@ -40,7 +41,6 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
     }
   };
 
-
   // Get progress percentage for each status
   const getProgressPercentage = () => {
     switch (status) {
@@ -60,6 +60,27 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
     const newExpiryDates = [...expiryDates];
     newExpiryDates[index] = value; // Set the specific index with new date value
     setExpiryDates(newExpiryDates);
+  };
+
+  // Calculate total value for each product (Quantity Delivered * Price per Unit)
+  const calculateItemTotal = (qty, price) => qty * price;
+
+  // Calculate total quantity and total amount for the summary
+  const totalQuantity = deliveryDetails.reduce((total, item) => total + item.INBOUND_DEL_DETAIL_QTY_DLVRD, 0);
+  const totalAmount = deliveryDetails.reduce((total, item) => total + calculateItemTotal(item.INBOUND_DEL_DETAIL_QTY_DLVRD, item.PRICE_PER_UNIT), 0);
+
+  // Check if all expiry dates are filled
+  const areAllExpiryDatesFilled = expiryDates.every((date) => date !== "");
+
+  // Handle the Mark as Received button click
+  const handleMarkAsReceivedClick = () => {
+    setReceivedClicked(true); // Set to true when the button is clicked
+
+    if (!areAllExpiryDatesFilled) {
+      return; // Do not allow status change if expiry dates are not filled
+    }
+
+    handleStatusChange("Received");
   };
 
   return (
@@ -83,23 +104,17 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
             <Label>Received Date:</Label>
             <Value>{receivedDate}</Value>
           </FormGroup>
-          <FormGroup>
-            <Label>Delivery Option:</Label>
-            <Value>{delivery.INBOUND_DEL_DLVRY_OPT}</Value>
-          </FormGroup>
+
         </Column>
         <Column>
-          <FormGroup>
-            <Label>Total Quantity Received:</Label>
-            <Value>{delivery.INBOUND_DEL_RCVD_QTY}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Product Total:</Label>
-            <Value>{delivery.INBOUND_DEL_PROD_TOTAL}</Value>
-          </FormGroup>
+
           <FormGroup>
             <Label>Date Created:</Label>
             <Value>{delivery.INBOUND_DEL_DATECREATED}</Value>
+          </FormGroup>
+          <FormGroup>
+            <Label>Delivery Option:</Label>
+            <Value>{delivery.INBOUND_DEL_DLVRY_OPT}</Value>
           </FormGroup>
           <FormGroup>
             <Label>Received By:</Label>
@@ -115,6 +130,8 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
             <TableHeader>Product Name</TableHeader>
             <TableHeader>Quantity Delivered</TableHeader>
             <TableHeader>Expiry Date</TableHeader>
+            <TableHeader>Price</TableHeader>
+            <TableHeader>Total</TableHeader>
           </tr>
         </thead>
         <tbody>
@@ -123,17 +140,33 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
               <TableCell>{item.PROD_NAME}</TableCell>
               <TableCell>{item.INBOUND_DEL_DETAIL_QTY_DLVRD}</TableCell>
               <TableCell>
-                <input
-                  type="date"
-                  min={today} // Set min date to today for future validation
-                  value={expiryDates[index] || ""} // Access individual expiry date
-                  onChange={(e) => handleExpiryDateChange(index, e.target.value)} // Handle change for specific index
-                />
+                <InputContainer>
+                  <input
+                    type="date"
+                    min={today} // Set min date to today for future validation
+                    value={expiryDates[index] || ""} // Access individual expiry date
+                    onChange={(e) => handleExpiryDateChange(index, e.target.value)} // Handle change for specific index
+                  />
+                  {/* Show asterisk if the button is clicked and expiry date is empty */}
+                  {receivedClicked && expiryDates[index] === "" && <Asterisk>*</Asterisk>}
+                </InputContainer>
               </TableCell>
+              <TableCell>₱{item.PRICE_PER_UNIT.toFixed(2)}</TableCell>
+              <TableCell>₱{calculateItemTotal(item.INBOUND_DEL_DETAIL_QTY_DLVRD, item.PRICE_PER_UNIT).toFixed(2)}</TableCell>
             </TableRow>
           ))}
         </tbody>
       </ProductTable>
+
+      {/* Summary Section */}
+      <TotalSummary>
+        <SummaryItem>
+          <strong>Total Quantity:</strong> {totalQuantity}
+        </SummaryItem>
+        <SummaryItem>
+          <strong>Total Amount:</strong> <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
+        </SummaryItem>
+      </TotalSummary>
 
       {/* Progress Bar */}
       <ProgressSection>
@@ -151,7 +184,7 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
           </StatusButton>
         )}
         {status === "In Transit" && (
-          <StatusButton onClick={() => handleStatusChange("Received")}>
+          <StatusButton onClick={handleMarkAsReceivedClick}>
             Mark as Received
           </StatusButton>
         )}
@@ -165,7 +198,7 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
   );
 };
 
-// Styled components
+// Styled components (no changes here)
 const DetailsContainer = styled.div`
   display: flex;
   justify-content: space-between;
@@ -244,6 +277,23 @@ const TableCell = styled.td`
   border-bottom: 1px solid #ddd;
 `;
 
+const TotalSummary = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 20px;
+  font-weight: bold;
+`;
+
+const SummaryItem = styled.div`
+  margin-top: 10px;
+`;
+
+const HighlightedTotal = styled.span`
+  color: green;
+  font-size: 16px;
+`;
+
 const ModalFooter = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -253,16 +303,30 @@ const ModalFooter = styled.div`
 const StatusButton = styled.button`
   background-color: ${colors.primary};
   color: white;
-  padding: 5px 10px;
+  padding: 10px;
   border: none;
-  cursor: pointer;
-  font-size: 14px;
   border-radius: 5px;
-  margin-left: 10px;
+  cursor: pointer;
 
   &:hover {
-    background-color: ${colors.primaryHover};
+    background-color: ${colors.primaryDark};
   }
+
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+`;
+
+const InputContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const Asterisk = styled.span`
+  color: red;
+  margin-left: 5px;
+  font-size: 18px;
 `;
 
 export default SupplierDeliveryDetails;
