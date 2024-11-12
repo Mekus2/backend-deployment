@@ -1,4 +1,3 @@
-// ChangePassModal.js
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -38,12 +37,39 @@ const ChangePassModal = ({ onClose, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
-    onSave(newPassword);
-    onClose();
+  
+    const userId = localStorage.getItem("user_id");
+    const accessToken = localStorage.getItem("access_token");  // Make sure the token is stored in localStorage
+  
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/account/users/${userId}/change-password/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,  // Include the access token for authentication
+        },
+        body: JSON.stringify({
+          old_password: currentPassword,
+          new_password: newPassword,
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to change password:", errorData);
+        setErrors({ apiError: errorData.error || "Failed to change password" });
+      } else {
+        console.log("Password changed successfully");
+        onClose(); // Close the modal on success
+      }
+    } catch (error) {
+      console.error("An error occurred:", error);
+      setErrors({ apiError: "An error occurred. Please try again." });
+    }
   };
-
+  
   return (
     <Backdrop onClick={(e) => e.target === e.currentTarget && onClose()}>
       <ModalContainer ref={modalRef}>
@@ -55,6 +81,7 @@ const ChangePassModal = ({ onClose, onSave }) => {
         </Header>
 
         <Content>
+          {errors.apiError && <ErrorText>{errors.apiError}</ErrorText>}
           <Field>
             <Label>Current Password</Label>
             <InputContainer>
