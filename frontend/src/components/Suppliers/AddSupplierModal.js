@@ -1,67 +1,52 @@
 import React, { useState } from "react";
-import Modal from "../Layout/Modal"; // Assuming you already have a reusable Modal component
+import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
+import { addSupplier } from "../../api/SupplierApi"; // Import the addSupplier API function
 
 const AddSupplierModal = ({ onClose, onAdd }) => {
   const [supplierName, setSupplierName] = useState("");
-  const [supplierNumber, setSupplierNumber] = useState("0"); // Initialize with "0"
+  const [supplierNumber, setSupplierNumber] = useState("0");
   const [contactPersonName, setContactPersonName] = useState("");
-  const [contactPersonNumber, setContactPersonNumber] = useState("0"); // Initialize with "0"
+  const [contactPersonNumber, setContactPersonNumber] = useState("0");
   const [errors, setErrors] = useState({});
 
   const validateFields = () => {
     const newErrors = {};
     if (!supplierName) newErrors.supplierName = "Supplier name is required.";
-    if (!supplierNumber || supplierNumber.length !== 11) newErrors.supplierNumber = "Supplier number must be 11 digits.";
+    if (!/^\d{11}$/.test(supplierNumber)) newErrors.supplierNumber = "Supplier number must be 11 digits and start with '0'.";
     if (!contactPersonName) newErrors.contactPersonName = "Contact person name is required.";
-    if (!contactPersonNumber || contactPersonNumber.length !== 11) newErrors.contactPersonNumber = "Contact person number must be 11 digits.";
+    if (!/^\d{11}$/.test(contactPersonNumber)) newErrors.contactPersonNumber = "Contact person number must be 11 digits and start with '0'.";
     return newErrors;
   };
 
-  const handleAddSupplier = () => {
+  const handleAddSupplier = async () => {
     const newErrors = validateFields();
     if (Object.keys(newErrors).length === 0) {
       const newSupplier = {
-        supplierName,
-        supplierNumber,
-        contactPersonName,
-        contactPersonNumber,
+        Supp_Company_Name: supplierName,
+        Supp_Company_Num: supplierNumber,
+        Supp_Contact_Pname: contactPersonName,
+        Supp_Contact_Num: contactPersonNumber,
       };
-      onAdd(newSupplier); // Pass the new supplier data to parent
-      onClose(); // Close the modal after adding supplier
+
+      try {
+        const addedSupplier = await addSupplier(newSupplier); // Call API function to add supplier
+        onAdd(addedSupplier); // Pass the added supplier data to the parent
+        onClose(); // Close the modal
+      } catch (error) {
+        console.error("Error adding supplier:", error);
+      }
     } else {
       setErrors(newErrors);
     }
   };
 
-  const handleSupplierNumberChange = (e) => {
+  const handleNumberChange = (setter) => (e) => {
     const value = e.target.value;
-
-    // Prevent backspacing the leading "0"
-    if (value.length === 0 || (value.length === 1 && value === "0")) {
-      return; // Do nothing if trying to remove the only "0"
-    }
-
-    // Allow digits and ensure length is at most 11
+    if (value.length === 0 || (value.length === 1 && value === "0")) return;
     if (/^\d*$/.test(value) && value.length <= 11) {
-      // Prepend "0" if the first character isn't already "0"
-      setSupplierNumber(value.startsWith("0") ? value : "0" + value);
-    }
-  };
-
-  const handleContactPersonNumberChange = (e) => {
-    const value = e.target.value;
-
-    // Prevent backspacing the leading "0"
-    if (value.length === 0 || (value.length === 1 && value === "0")) {
-      return; // Do nothing if trying to remove the only "0"
-    }
-
-    // Allow digits and ensure length is at most 11
-    if (/^\d*$/.test(value) && value.length <= 11) {
-      // Prepend "0" if the first character isn't already "0"
-      setContactPersonNumber(value.startsWith("0") ? value : "0" + value);
+      setter(value.startsWith("0") ? value : "0" + value);
     }
   };
 
@@ -82,7 +67,7 @@ const AddSupplierModal = ({ onClose, onAdd }) => {
         <Input
           type="text"
           value={supplierNumber}
-          onChange={handleSupplierNumberChange}
+          onChange={handleNumberChange(setSupplierNumber)}
           placeholder="Enter supplier number"
           maxLength="11"
         />
@@ -101,7 +86,7 @@ const AddSupplierModal = ({ onClose, onAdd }) => {
         <Input
           type="text"
           value={contactPersonNumber}
-          onChange={handleContactPersonNumberChange}
+          onChange={handleNumberChange(setContactPersonNumber)}
           placeholder="Enter contact person number"
           maxLength="11"
         />
@@ -124,7 +109,6 @@ const Form = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 16px;
 `;
 
 const Label = styled.label`
@@ -146,7 +130,7 @@ const ButtonGroup = styled.div`
 const Error = styled.p`
   color: red;
   font-size: 12px;
-  margin-bottom: -13px; // Space between error message and input
+  margin-bottom: -13px;
 `;
 
 export default AddSupplierModal;
