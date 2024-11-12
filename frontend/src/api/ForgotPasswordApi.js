@@ -4,6 +4,7 @@ import axios from "axios";
 const OTP_URL = "http://127.0.0.1:8000/forgot/otp/";
 const VERIFY_OTP_URL = "http://127.0.0.1:8000/forgot/verifyotp/";
 const CHANGE_PASSWORD_URL = "http://127.0.0.1:8000/forgot/changepassword/";
+const RESEND_OTP_URL = "http://127.0.0.1:8000/forgot/resend-otp/";
 
 // Function to send the OTP email
 export const sendOtp = async (email) => {
@@ -51,5 +52,14 @@ export const resetPassword = async (otp, newPassword) => {
     return response.data;
   } catch (error) {
     throw error.response?.data?.message || "Failed to reset password";
+  }
+};
+
+export const resendOtp = async (email) => {
+  try {
+    const response = await axios.post(RESEND_OTP_URL, { email });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "Failed to resend OTP";
   }
 };
