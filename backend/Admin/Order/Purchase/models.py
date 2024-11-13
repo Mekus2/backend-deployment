@@ -49,6 +49,7 @@ class PurchaseOrderDetails(models.Model):
     PURCHASE_ORDER_DET_ID = models.AutoField(primary_key=True)
     PURCHASE_ORDER_DET_PROD_ID = models.IntegerField(null=False)
     PURCHASE_ORDER_DET_PROD_NAME = models.CharField(max_length=60, null=False)
+    PURCHASE_ORDER_DET_PROD_LINE_QTY = models.PositiveIntegerField(null=True)
     PURCHASE_ORDER_ID = models.ForeignKey(
         PurchaseOrder, on_delete=models.CASCADE, related_name="purchase_order"
     )

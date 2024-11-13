@@ -6,7 +6,6 @@ from .views import SupplierManager, TotalSupplierCount
 urlpatterns = [
     path("suppliers/", SupplierManager.as_view(), name="supplier-list"),
     path("suppliers/<int:pk>/", SupplierManager.as_view(), name="supplier-detail"),
-
-    #Path for total Suppliers
-    path('totalSupplier/', TotalSupplierCount.as_view(), name='Total supplier'),
+    # Path for total Suppliers
+    path("totalSupplier/", TotalSupplierCount.as_view(), name="Total supplier"),
 ]

@@ -1,11 +1,10 @@
 from django.urls import path
 from .views import (
     PurchaseOrderListCreateView,
-    PurchaseOrderListView,
     PurchaseOrderDetailView,
 )
 
-urlpattern = [
+urlpatterns = [
     path("", PurchaseOrderListCreateView.as_view(), name="purchase-order-list-create"),
     path(
         "<int:pk>/details",
