@@ -40,7 +40,7 @@ const pageTitles = {
   "/superadmin/inventory": "Inventory",
   "/superadmin/suppliers": "Supplier",
   "/superadmin/customers": "Customer",
-  "/superadmin/staffs": "Staff",
+  "/superadmin/users": "User",
   "/superadmin/sales": "Sales",
   "/superadmin/returns": "Return",
   "/superadmin/logs": "Log",
