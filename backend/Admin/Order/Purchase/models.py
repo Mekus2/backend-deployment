@@ -22,8 +22,8 @@ class PurchaseOrder(models.Model):
     PURCHASE_ORDER_SUPPLIER_ID = models.ForeignKey(
         Supplier, on_delete=models.CASCADE, related_name="supplied_orders"
     )
-    PURCHASE_ORDER_SUPPLIER_NAME = models.CharField(max_length=60, null=False)
     PURCHASE_ORDER_SUPPLIER_CMPNY_NAME = models.CharField(max_length=60, null=False)
+    PURCHASE_ORDER_SUPPLIER_CMPNY_NUM = models.CharField(max_length=60, null=False)
     PURCHASE_ORDER_CONTACT_PERSON = models.CharField(max_length=60, null=False)
     PURCHASE_ORDER_CONTACT_NUMBER = models.CharField(max_length=60, null=False)
     PURCHASE_ORDER_DATE_CREATED = models.DateTimeField(auto_now_add=True)
