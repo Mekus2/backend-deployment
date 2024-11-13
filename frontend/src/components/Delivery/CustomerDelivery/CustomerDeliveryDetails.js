@@ -20,9 +20,6 @@ const getProgressForStatus = (status) => {
 const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusUpdate }) => {
   const [status, setStatus] = useState(delivery.OUTBOUND_DEL_STATUS); // Manage the status using state
   const [receivedDate, setReceivedDate] = useState(delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received");
-  const [expiryDates, setExpiryDates] = useState(
-    deliveryDetails.map(() => "") // Initialize expiryDates as empty strings
-  );
   const progress = getProgressForStatus(status); // Calculate progress percentage
 
   // Calculate the total quantity shipped
@@ -32,6 +29,16 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
       0
     );
   };
+
+  // Calculate total price for each item (quantity * price)
+  const calculateItemTotal = (qty, price) => qty * price;
+
+  // Calculate total quantity and amount for summary
+  const totalQuantity = calculateTotalQuantity();
+  const totalAmount = deliveryDetails.reduce(
+    (total, item) => total + calculateItemTotal(item.OUTBOUND_DEL_DETAIL_QTY_SHIPPED, item.OUTBOUND_DEL_DETAIL_PRICE),
+    0
+  );
 
   // Handle status change
   const handleStatusChange = () => {
@@ -51,16 +58,6 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
     setStatus(newStatus); // Update the status locally
     onStatusUpdate({ ...delivery, OUTBOUND_DEL_STATUS: newStatus }); // Notify parent of status update
   };
-
-  // Handle expiry date change per row
-  const handleExpiryDateChange = (index, date) => {
-    const updatedExpiryDates = [...expiryDates];
-    updatedExpiryDates[index] = date;
-    setExpiryDates(updatedExpiryDates);
-  };
-
-  // Get current date for restricting past dates
-  const currentDate = new Date().toISOString().split("T")[0]; // Get YYYY-MM-DD format
 
   return (
     <Modal
@@ -90,10 +87,6 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
             <Value>{delivery.OUTBOUND_DEL_DLVRY_OPT}</Value>
           </FormGroup>
           <FormGroup>
-            <Label>Total Quantity:</Label>
-            <Value>{calculateTotalQuantity()}</Value>
-          </FormGroup>
-          <FormGroup>
             <Label>City:</Label>
             <Value>{delivery.OUTBOUND_DEL_CITY}</Value>
           </FormGroup>
@@ -109,7 +102,8 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
           <tr>
             <TableHeader>Product Name</TableHeader>
             <TableHeader>Quantity Shipped</TableHeader>
-            <TableHeader>Expiry Date</TableHeader>
+            <TableHeader>Price</TableHeader>
+            <TableHeader>Total</TableHeader>
           </tr>
         </thead>
         <tbody>
@@ -117,18 +111,22 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
             <TableRow key={index}>
               <TableCell>{item.PROD_NAME}</TableCell>
               <TableCell>{item.OUTBOUND_DEL_DETAIL_QTY_SHIPPED}</TableCell>
-              <TableCell>
-                <input
-                  type="date"
-                  value={expiryDates[index]}
-                  onChange={(e) => handleExpiryDateChange(index, e.target.value)}
-                  min={currentDate} // Disable past dates
-                />
-              </TableCell>
+              <TableCell>₱{item.OUTBOUND_DEL_DETAIL_PRICE.toFixed(2)}</TableCell>
+              <TableCell>₱{calculateItemTotal(item.OUTBOUND_DEL_DETAIL_QTY_SHIPPED, item.OUTBOUND_DEL_DETAIL_PRICE).toFixed(2)}</TableCell>
             </TableRow>
           ))}
         </tbody>
       </ProductTable>
+
+      {/* Summary Section */}
+      <TotalSummary>
+        <SummaryItem>
+          <strong>Total Quantity:</strong> {totalQuantity}
+        </SummaryItem>
+        <SummaryItem>
+          <strong>Total Amount:</strong> <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
+        </SummaryItem>
+      </TotalSummary>
 
       {/* Progress Bar Section */}
       <ProgressSection>
@@ -202,6 +200,23 @@ const TableRow = styled.tr`
 const TableCell = styled.td`
   padding: 10px;
   border-bottom: 1px solid #ddd;
+`;
+
+const TotalSummary = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 20px;
+  font-weight: bold;
+`;
+
+const SummaryItem = styled.div`
+  margin-top: 10px;
+`;
+
+const HighlightedTotal = styled.span`
+  color: green;
+  font-size: 16px;
 `;
 
 const ProgressSection = styled.div`
