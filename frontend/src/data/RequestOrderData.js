@@ -1,9 +1,9 @@
 export const requests = [
   {
     requestBy: "Christine Hermosa",
-    requestDate: "Feb 14, 2023",
+    requestDate: "2023-02-14",
     status: "Completed",
-    deliveryDateExpected: "Feb 20, 2023",
+    deliveryDateExpected: "2023-02-20",
     clientID: "C001",
     description: "This delivery is for Christine Hermosa and includes a selection of various pet medications...",
     orderDetails: [
@@ -17,9 +17,9 @@ export const requests = [
   },
   {
     requestBy: "John Doe",
-    requestDate: "Mar 2, 2023",
+    requestDate: "2023-03-02",
     status: "Pending",
-    deliveryDateExpected: "Mar 5, 2023",
+    deliveryDateExpected: "2023-03-05",
     clientID: "C002",
     description: "Order for John Doe with various pet medications.",
     orderDetails: [
@@ -30,7 +30,7 @@ export const requests = [
   },
   {
     requestBy: "Alice Smith",
-    requestDate: "Jan 20, 2023",
+    requestDate: "2023-01-05",
     status: "Cancelled",
     deliveryDateExpected: "",
     clientID: "C003",
@@ -43,9 +43,9 @@ export const requests = [
   },
   {
     requestBy: "Michael Johnson",
-    requestDate: "Apr 10, 2023",
+    requestDate: "2023-04-10",
     status: "Completed",
-    deliveryDateExpected: "Apr 15, 2023",
+    deliveryDateExpected: "2023-04-15",
     clientID: "C004",
     description: "Order for Michael Johnson, including various pet supplies and equipment.",
     orderDetails: [
@@ -56,9 +56,9 @@ export const requests = [
   },
   {
     requestBy: "Emily Davis",
-    requestDate: "May 5, 2023",
+    requestDate: "2023-05-05",
     status: "Completed",
-    deliveryDateExpected: "May 10, 2023",
+    deliveryDateExpected: "2023-05-10",
     clientID: "C005",
     description: "Order for Emily Davis including various high-demand veterinary products.",
     orderDetails: [
@@ -70,9 +70,9 @@ export const requests = [
   // New Requests
   {
     requestBy: "Daniel Kim",
-    requestDate: "Mar 15, 2023",
+    requestDate: "2023-03-15",
     status: "Completed",
-    deliveryDateExpected: "Mar 20, 2023",
+    deliveryDateExpected: "2023-03-20",
     clientID: "C006",
     description: "Complete order for Daniel Kim, focused on cat care products.",
     orderDetails: [
@@ -83,9 +83,9 @@ export const requests = [
   },
   {
     requestBy: "Sophia Lee",
-    requestDate: "Mar 22, 2023",
+    requestDate: "2023-03-22",
     status: "Pending",
-    deliveryDateExpected: "Mar 29, 2023",
+    deliveryDateExpected: "2023-03-29",
     clientID: "C007",
     description: "Pending order for Sophia Lee containing dog supplies.",
     orderDetails: [
@@ -96,9 +96,9 @@ export const requests = [
   },
   {
     requestBy: "Joshua Rivera",
-    requestDate: "Mar 30, 2023",
+    requestDate: "2023-03-30",
     status: "Completed",
-    deliveryDateExpected: "Apr 5, 2023",
+    deliveryDateExpected: "2023-04-05",
     clientID: "C008",
     description: "Order for Joshua Rivera including various small animal supplies.",
     orderDetails: [
@@ -109,7 +109,7 @@ export const requests = [
   },
   {
     requestBy: "Olivia Martin",
-    requestDate: "Apr 1, 2023",
+    requestDate: "2023-04-01",
     status: "Cancelled",
     deliveryDateExpected: "",
     clientID: "C009",
@@ -121,9 +121,9 @@ export const requests = [
   },
   {
     requestBy: "Ethan Wong",
-    requestDate: "Apr 15, 2023",
+    requestDate: "2023-04-15",
     status: "Completed",
-    deliveryDateExpected: "Apr 20, 2023",
+    deliveryDateExpected: "2023-04-20",
     clientID: "C010",
     description: "Ethan Wong's order focused on aquatic pets.",
     orderDetails: [
@@ -134,9 +134,9 @@ export const requests = [
   },
   {
     requestBy: "Ava Chen",
-    requestDate: "Apr 20, 2023",
+    requestDate: "2023-04-20",
     status: "Pending",
-    deliveryDateExpected: "Apr 25, 2023",
+    deliveryDateExpected: "2023-04-25",
     clientID: "C011",
     description: "Pending order for Ava Chen, consisting of grooming supplies.",
     orderDetails: [
@@ -146,9 +146,9 @@ export const requests = [
   },
   {
     requestBy: "Liam White",
-    requestDate: "May 1, 2023",
+    requestDate: "2023-05-01",
     status: "Completed",
-    deliveryDateExpected: "May 5, 2023",
+    deliveryDateExpected: "2023-05-05",
     clientID: "C012",
     description: "Liam White's order for pet supplements.",
     orderDetails: [
@@ -158,9 +158,9 @@ export const requests = [
   },
   {
     requestBy: "Isabella Brown",
-    requestDate: "May 10, 2023",
+    requestDate: "2023-05-10",
     status: "Pending",
-    deliveryDateExpected: "May 15, 2023",
+    deliveryDateExpected: "2023-05-15",
     clientID: "C013",
     description: "Pending order for Isabella Brown's hamster supplies.",
     orderDetails: [
@@ -170,9 +170,9 @@ export const requests = [
   },
   {
     requestBy: "Mason Rodriguez",
-    requestDate: "May 15, 2023",
+    requestDate: "2023-05-15",
     status: "Completed",
-    deliveryDateExpected: "May 20, 2023",
+    deliveryDateExpected: "2023-05-20",
     clientID: "C014",
     description: "Order for Mason Rodriguez, includes various dog supplies.",
     orderDetails: [
@@ -182,9 +182,9 @@ export const requests = [
   },
   {
     requestBy: "Sofia Scott",
-    requestDate: "May 20, 2023",
+    requestDate: "2023-05-20",
     status: "Completed",
-    deliveryDateExpected: "May 25, 2023",
+    deliveryDateExpected: "2023-05-25",
     clientID: "C015",
     description: "Order for Sofia Scott focused on pet enrichment.",
     orderDetails: [
@@ -194,9 +194,9 @@ export const requests = [
   },
   {
     requestBy: "James Hall",
-    requestDate: "May 25, 2023",
+    requestDate: "2023-05-25",
     status: "Pending",
-    deliveryDateExpected: "May 30, 2023",
+    deliveryDateExpected: "2023-05-30",
     clientID: "C016",
     description: "Pending order for James Hall's bird supplies.",
     orderDetails: [
@@ -206,9 +206,9 @@ export const requests = [
   },
   {
     requestBy: "Avery Young",
-    requestDate: "Jun 1, 2023",
+    requestDate: "2023-06-01",
     status: "Completed",
-    deliveryDateExpected: "Jun 5, 2023",
+    deliveryDateExpected: "2023-06-05",
     clientID: "C017",
     description: "Order for Avery Young containing dog training items.",
     orderDetails: [
@@ -218,9 +218,9 @@ export const requests = [
   },
   {
     requestBy: "Lucas King",
-    requestDate: "Jun 10, 2023",
+    requestDate: "2023-06-10",
     status: "Completed",
-    deliveryDateExpected: "Jun 15, 2023",
+    deliveryDateExpected: "2023-06-15",
     clientID: "C018",
     description: "Order for Lucas King including various cat care products.",
     orderDetails: [
@@ -230,9 +230,9 @@ export const requests = [
   },
   {
     requestBy: "Zoe Martinez",
-    requestDate: "Jun 20, 2023",
+    requestDate: "2023-06-20",
     status: "Pending",
-    deliveryDateExpected: "Jun 25, 2023",
+    deliveryDateExpected: "2023-06-25",
     clientID: "C019",
     description: "Pending order for Zoe Martinez focused on small animals.",
     orderDetails: [
@@ -242,9 +242,9 @@ export const requests = [
   },
   {
     requestBy: "Evelyn Carter",
-    requestDate: "Jul 1, 2023",
+    requestDate: "2023-07-01",
     status: "Completed",
-    deliveryDateExpected: "Jul 5, 2023",
+    deliveryDateExpected: "2023-07-05",
     clientID: "C020",
     description: "Order for Evelyn Carter including various bird supplies.",
     orderDetails: [
@@ -254,7 +254,7 @@ export const requests = [
   },
   {
     requestBy: "Henry Green",
-    requestDate: "Jul 10, 2023",
+    requestDate: "2023-07-10",
     status: "Cancelled",
     deliveryDateExpected: "",
     clientID: "C021",
@@ -266,9 +266,9 @@ export const requests = [
   },
   {
     requestBy: "Chloe Nguyen",
-    requestDate: "Jul 15, 2023",
+    requestDate: "2023-07-15",
     status: "Pending",
-    deliveryDateExpected: "Jul 20, 2023",
+    deliveryDateExpected: "2023-07-20",
     clientID: "C022",
     description: "Pending order for Chloe Nguyen's reptile supplies.",
     orderDetails: [
