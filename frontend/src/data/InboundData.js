@@ -10,7 +10,7 @@ const INBOUND_DELIVERY = {
       INBOUND_DEL_DATECREATED: "2024-07-25",
       INBOUND_DEL_DATEUPDATED: "2024-08-01",
       INBOUND_DEL_RCVD_BY_USER_ID: "USR001", // User ID who received this delivery
-      PURCHASE_ORDER_ID: "PO001", // Linked Purchase Order ID
+      PURCHASE_ORDER_ID: "PO001", // Linked Supplier Order ID
       SUPP_ID: "SUP001", // Supplier ID
       USER: {
         USER_ID: "25",
@@ -73,7 +73,7 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Amoxicillin",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 50,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-08-01",
-      PRICE_PER_UNIT: 10.00, // Price per unit in USD
+      PRICE_PER_UNIT: 10.0, // Price per unit in USD
     },
     {
       INBOUND_DEL_DETAIL_ID: "DEL002",
@@ -82,7 +82,7 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Cephalexin",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 30,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-08-01",
-      PRICE_PER_UNIT: 12.00,
+      PRICE_PER_UNIT: 12.0,
     },
     {
       INBOUND_DEL_DETAIL_ID: "DEL003",
@@ -91,7 +91,7 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Ciprofloxacin",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 20,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-08-15",
-      PRICE_PER_UNIT: 100.00, // Price per unit in PHP
+      PRICE_PER_UNIT: 100.0, // Price per unit in PHP
     },
     {
       INBOUND_DEL_DETAIL_ID: "DEL004",
@@ -100,7 +100,7 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Doxycycline",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 60,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2026-01-10",
-      PRICE_PER_UNIT: 8.50,
+      PRICE_PER_UNIT: 8.5,
     },
     {
       INBOUND_DEL_DETAIL_ID: "DEL005",
@@ -109,7 +109,7 @@ const INBOUND_DELIVERY = {
       PROD_NAME: "Ibuprofen",
       INBOUND_DEL_DETAIL_QTY_DLVRD: 25,
       INBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-12-01",
-      PRICE_PER_UNIT: 5.00,
+      PRICE_PER_UNIT: 5.0,
     },
   ],
 };
