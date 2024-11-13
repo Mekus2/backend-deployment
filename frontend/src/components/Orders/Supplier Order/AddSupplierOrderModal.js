@@ -23,11 +23,7 @@ import {
 } from "../OrderStyles";
 import { FaPlus } from "react-icons/fa";
 import useAddSupplierOrderModal from "../../../hooks/useAddSupplierOrderModal";
-import {
-  calculateLineTotal,
-  calculateTotalQuantity,
-  calculateTotalValue,
-} from "../../../utils/CalculationUtils"; // Import calculation utilities
+import { calculateTotalQuantity } from "../../../utils/CalculationUtils"; // Import total quantity calculation utility
 
 const AddSupplierOrderModal = ({ onClose, onSave }) => {
   const {
@@ -52,8 +48,6 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
     handleSupplierInputChange,
     handleSupplierSelect,
     handleQuantityChange,
-    handlePriceChange,
-    handleSave,
     handleRemoveProduct,
     handleAddSupplier,
   } = useAddSupplierOrderModal(onSave, onClose);
@@ -63,13 +57,11 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
   const validateFields = () => {
     const newErrors = {};
 
-    // Validate required fields
     if (!supplierCompanyName) newErrors.supplierCompanyName = true;
     if (!supplierCompanyNum) newErrors.supplierCompanyNum = true;
     if (!contactPersonName) newErrors.contactPersonName = true;
     if (!contactPersonNumber) newErrors.contactPersonNumber = true;
 
-    // Validate contact numbers (must be 11 digits and start with 0)
     if (!/^(0\d{10})?$/.test(contactPersonNumber)) {
       newErrors.contactPersonNumber = true;
     }
@@ -77,7 +69,6 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
       newErrors.supplierCompanyNum = true;
     }
 
-    // Validate order details (ensure product name is not empty)
     orderDetails.forEach((detail, index) => {
       if (!detail.productName) {
         newErrors[`productName${index}`] = true;
@@ -90,36 +81,29 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
 
   const handleSaveWithValidation = () => {
     if (validateFields()) {
-      handleSave(); // Proceed to save only if validation passes
+      if (onSave) onSave(); // Ensure handleSave is called correctly
     }
   };
 
-  // Automatically clear error messages when input is valid
   const clearError = (field) => {
     setErrors((prevErrors) => ({
       ...prevErrors,
-      [field]: undefined, // Remove the specific error
+      [field]: undefined,
     }));
   };
 
-  // Function to handle number input and ensure first digit is '0'
   const handlePhoneNumberChange = (setterFunction, value) => {
-    let sanitizedValue = value.replace(/[^0-9]/g, ""); // Allow only numbers
+    let sanitizedValue = value.replace(/[^0-9]/g, "");
     if (sanitizedValue.length > 11) {
-      sanitizedValue = sanitizedValue.slice(0, 11); // Limit to 11 digits
+      sanitizedValue = sanitizedValue.slice(0, 11);
     }
-
-    // Ensure the first digit is '0'
     if (sanitizedValue && sanitizedValue[0] !== "0") {
       sanitizedValue = "0" + sanitizedValue.slice(0, 10);
     }
-
     setterFunction(sanitizedValue);
   };
 
-  // Calculate total values
-  const totalQuantity = calculateTotalQuantity(orderDetails); // Total quantity of items
-  const totalValue = calculateTotalValue(orderDetails); // Total value without discount
+  const totalQuantity = calculateTotalQuantity(orderDetails);
 
   return (
     <Modal title="Add Supplier Order" onClose={onClose}>
@@ -161,7 +145,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
           value={supplierCompanyName}
           onChange={(e) => {
             setSupplierCompanyName(e.target.value);
-            clearError("supplierCompanyName"); // Clear error on change
+            clearError("supplierCompanyName");
           }}
           placeholder="Supplier Name"
           disabled={!editable}
@@ -176,7 +160,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
           value={supplierCompanyNum}
           onChange={(e) => {
             handlePhoneNumberChange(setSupplierCompanyNum, e.target.value);
-            clearError("supplierCompanyNum"); // Clear error on change
+            clearError("supplierCompanyNum");
           }}
           placeholder="Supplier Contact Number"
           disabled={!editable}
@@ -191,7 +175,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
           value={contactPersonName}
           onChange={(e) => {
             setContactPersonName(e.target.value);
-            clearError("contactPersonName"); // Clear error on change
+            clearError("contactPersonName");
           }}
           placeholder="Contact Person Name"
           disabled={!editable}
@@ -208,7 +192,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
           value={contactPersonNumber}
           onChange={(e) => {
             handlePhoneNumberChange(setContactPersonNumber, e.target.value);
-            clearError("contactPersonNumber"); // Clear error on change
+            clearError("contactPersonNumber");
           }}
           placeholder="Contact Person Number"
           disabled={!editable}
@@ -222,8 +206,6 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
             <tr>
               <th>Product Name</th>
               <th>Quantity</th>
-              <th>Price</th>
-              <th>Total</th>
               <th></th>
             </tr>
           </thead>
@@ -239,7 +221,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                     value={orderDetail.productName}
                     onChange={(e) => {
                       handleProductInputChange(index, e.target.value);
-                      clearError(`productName${index}`); // Clear error on change
+                      clearError(`productName${index}`);
                     }}
                     placeholder="Product Name"
                   />
@@ -275,17 +257,6 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                   />
                 </td>
                 <td>
-                  <Input
-                    type="number"
-                    value={orderDetail.price}
-                    onChange={(e) =>
-                      handlePriceChange(index, parseFloat(e.target.value))
-                    }
-                    placeholder="Price"
-                  />
-                </td>
-                <td>{calculateLineTotal(orderDetail)}</td>
-                <td>
                   <DeleteButton onClick={() => handleRemoveProduct(index)}>
                     <IoCloseCircle className="icon" />
                   </DeleteButton>
@@ -302,12 +273,6 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
           <TotalRow>
             <TotalLabel>Total Quantity</TotalLabel>
             <TotalValue>{totalQuantity}</TotalValue>
-          </TotalRow>
-          <TotalRow>
-            <TotalLabel>Total Value</TotalLabel>
-            <TotalValue style={{ color: "#1DBA0B" }}>
-              ₱{totalValue.toFixed(2)}
-            </TotalValue>
           </TotalRow>
         </TotalSection>
       </OrderDetailsSection>
