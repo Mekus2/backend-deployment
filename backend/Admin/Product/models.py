@@ -28,10 +28,12 @@ class ProductDetails(models.Model):
 
 class Product(models.Model):
     PROD_NAME = models.CharField(max_length=255, unique=False)
-    PROD_DETAILS_CODE = models.ForeignKey(ProductDetails, on_delete=models.CASCADE)
-    PROD_RO_LEVEL = models.IntegerField()  # Consider using IntegerField
+    PROD_DETAILS_CODE = models.ForeignKey(
+        ProductDetails, on_delete=models.CASCADE, null=True
+    )
+    PROD_RO_LEVEL = models.IntegerField(default=0)  # Consider using IntegerField
     PROD_RO_QTY = models.IntegerField(default=0)  # Use IntegerField with default
-    PROD_QOH = models.IntegerField()  # Use IntegerField for quantity
+    PROD_QOH = models.IntegerField(default=0)  # Use IntegerField for quantity
     PROD_IMAGE = models.ImageField(upload_to="Prod_image", blank=True, null=True)
     PROD_DATECREATED = models.DateTimeField(auto_now_add=True)
     PROD_DATEUPDATED = models.DateTimeField(auto_now=True)
