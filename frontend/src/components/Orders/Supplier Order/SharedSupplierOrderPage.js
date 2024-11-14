@@ -25,7 +25,7 @@ const SharedSupplierOrderPage = () => {
   const filteredOrders = (orders || []).filter((order) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return (
-      order.SUPPLIER_ID.toString().includes(lowerCaseSearchTerm) ||
+      order.SUPP_COMPANY_NAME.toString().includes(lowerCaseSearchTerm) ||
       order.PURCHASE_ORDER_DATE.toLowerCase().includes(lowerCaseSearchTerm) ||
       order.PURCHASE_ORDER_STATUS.toLowerCase().includes(lowerCaseSearchTerm)
     );
@@ -45,7 +45,8 @@ const SharedSupplierOrderPage = () => {
         (sortConfig.direction === "asc" ? 1 : -1)
       );
     }
-    return a.SUPPLIER_ID - b.SUPPLIER_ID; // Sorting by Supplier ID
+    // Sorting by Supplier Name
+    return a.SUPP_COMPANY_NAME.localeCompare(b.SUPP_COMPANY_NAME) * (sortConfig.direction === "asc" ? 1 : -1);
   });
 
   const openDetailsModal = (order) => setSelectedOrder(order);
@@ -53,12 +54,13 @@ const SharedSupplierOrderPage = () => {
   const openAddSupplierOrderModal = () => setIsAddingSupplierOrder(true);
   const closeAddSupplierOrderModal = () => setIsAddingSupplierOrder(false);
 
-  const headers = ["Supplier ID", "Order Date", "Order Status", "Action"];
+  const headers = ["Order ID", "Supplier Name", "Order Date", "Order Status", "Action"];
 
   // Rows for the table
   const rows = sortedOrders.map((order) => {
     return [
-      order.SUPPLIER_ID, // Display supplier ID
+      order.PURCHASE_ORDER_ID, // Display order id
+      order.SUPP_COMPANY_NAME, // Display supplier ID
       order.PURCHASE_ORDER_DATE,
       <Status status={order.PURCHASE_ORDER_STATUS || "Pending"}>
         {order.PURCHASE_ORDER_STATUS || "Pending"}
@@ -100,39 +102,35 @@ const SharedSupplierOrderPage = () => {
           <TableHeader
             key={index}
             onClick={() => {
-              if (header === "Order Date" || header === "Supplier ID") {
+              if (header === "Order Date" || header === "Supplier Name" || header === "Order ID") {
                 handleSort(
                   header === "Order Date"
                     ? "PURCHASE_ORDER_DATE"
+                    : header === "Supplier Name"
+                    ? "SUPP_COMPANY_NAME" // Updated to SUPP_COMPANY_NAME
                     : "PURCHASE_ORDER_ID"
                 );
               }
             }}
           >
             {header}
-            {(header === "Order Date" || header === "Supplier ID") && (
+            {(header === "Order Date" || header === "Supplier Name" || header === "Order ID") && (
               <>
                 {sortConfig.key ===
                 (header === "Order Date"
                   ? "PURCHASE_ORDER_DATE"
+                  : header === "Supplier Name"
+                  ? "SUPP_COMPANY_NAME" // Updated to SUPP_COMPANY_NAME
                   : "PURCHASE_ORDER_ID") ? (
                   sortConfig.direction === "asc" ? (
-                    <FaChevronUp
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
+                    <FaChevronUp style={{ marginLeft: "5px", fontSize: "12px" }} />
                   ) : (
-                    <FaChevronDown
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
+                    <FaChevronDown style={{ marginLeft: "5px", fontSize: "12px" }} />
                   )
                 ) : (
                   <span style={{ opacity: 0.5 }}>
-                    <FaChevronUp
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                    <FaChevronDown
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
+                    <FaChevronUp style={{ marginLeft: "5px", fontSize: "12px" }} />
+                    <FaChevronDown style={{ marginLeft: "5px", fontSize: "12px" }} />
                   </span>
                 )}
               </>
