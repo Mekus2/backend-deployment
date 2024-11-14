@@ -23,7 +23,8 @@ import {
 } from "../OrderStyles";
 import { FaPlus } from "react-icons/fa";
 import useAddSupplierOrderModal from "../../../hooks/useAddSupplierOrderModal";
-import { calculateTotalQuantity } from "../../../utils/CalculationUtils"; // Import total quantity calculation utility
+import { calculateTotalQuantity } from "../../../utils/CalculationUtils";
+import { notify } from "../../Layout/CustomToast"; // Import the toast notification utility
 
 const AddSupplierOrderModal = ({ onClose, onSave }) => {
   const {
@@ -79,9 +80,20 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveWithValidation = () => {
+  const handleSaveWithValidation = async () => {
     if (validateFields()) {
-      if (onSave) onSave(); // Ensure handleSave is called correctly
+      try {
+        const result = await onSave(); // Assuming onSave returns a success response
+        if (result.success) {
+          notify.success("Order successfully created!");
+        } else {
+          notify.error("Order not saved. Please try again.");
+        }
+      } catch (error) {
+        notify.error("Order not saved due to an error. Please try again.");
+      }
+    } else {
+      notify.error("Please fill in all required fields."); // Single toast for empty fields
     }
   };
 
@@ -105,6 +117,11 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
 
   const totalQuantity = calculateTotalQuantity(orderDetails);
 
+  const handleAddSupplierWithNotification = () => {
+    handleAddSupplier(); // Calls the function that adds the supplier
+    notify.success("You can now add a new supplier!"); // Trigger the toast notification
+  };
+
   return (
     <Modal title="Add Supplier Order" onClose={onClose}>
       <Field>
@@ -115,7 +132,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
             onChange={(e) => handleSupplierInputChange(e.target.value)}
             placeholder="Search Supplier"
           />
-          <PIconButton onClick={handleAddSupplier}>
+          <PIconButton onClick={handleAddSupplierWithNotification}>
             <FaPlus className="icon" /> Supplier
           </PIconButton>
         </SupplierSearchContainer>
