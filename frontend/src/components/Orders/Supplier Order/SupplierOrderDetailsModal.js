@@ -144,15 +144,13 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
                       <TableCell>
                         {detail.PURCHASE_ORDER_DET_PROD_NAME}
                       </TableCell>
-                      <TableCell>
-                        {detail.PURCH_ORDER_QTY || 0}
-                      </TableCell>
-                      <TableCell>
+                      <TableCell>{detail.PURCH_ORDER_QTY || 0}</TableCell>
+                      {/* <TableCell>
                         {formatCurrency(detail.PURCH_ORDER_PRICE || 0)}
-                      </TableCell>
-                      <TableCell>
+                      </TableCell> */}
+                      {/* <TableCell>
                         {formatCurrency(lineTotal)} {/* Displaying line total */}
-                      </TableCell>
+                      {/* </TableCell> */}
                     </TableRow>
                   );
                 })

@@ -87,7 +87,8 @@ const SharedSupplierOrderPage = () => {
   // Rows for the table
   const rows = sortedOrders.map((order) => {
     return [
-      order.PURCHASE_ORDER_SUPPLIER_ID, // Display supplier ID
+      order.PURCHASE_ORDER_ID,
+      order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME, // Display supplier ID
       formatDate(order.PURCHASE_ORDER_DATE_CREATED),
       <Status status={order.PURCHASE_ORDER_STATUS || "Pending"}>
         {order.PURCHASE_ORDER_STATUS || "Pending"}
@@ -138,7 +139,7 @@ const SharedSupplierOrderPage = () => {
                   header === "Order Date"
                     ? "PURCHASE_ORDER_DATE"
                     : header === "Supplier Name"
-                    ? "SUPP_COMPANY_NAME" // Updated to SUPP_COMPANY_NAME
+                    ? "Supp_Company_Name" // Updated to SUPP_COMPANY_NAME
                     : "PURCHASE_ORDER_ID"
                 );
               }
