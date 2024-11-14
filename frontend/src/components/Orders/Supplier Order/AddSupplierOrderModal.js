@@ -51,7 +51,6 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
     handleQuantityChange,
     handleRemoveProduct,
     handleAddSupplier,
-    handleSave,
   } = useAddSupplierOrderModal(onSave, onClose);
 
   const [errors, setErrors] = useState({});
