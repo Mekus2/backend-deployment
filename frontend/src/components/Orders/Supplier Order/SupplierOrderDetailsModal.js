@@ -3,7 +3,6 @@ import styled from "styled-components";
 import Modal from "../../Layout/Modal"; // Assuming you have a modal component
 import { colors } from "../../../colors"; // Ensure the path to colors is correct
 import Button from "../../Layout/Button"; // Ensure you import the Button component
-
 import { fetchPurchaseDetailsById } from "../../../api/fetchPurchaseOrders";
 
 const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
@@ -77,9 +76,6 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
       .padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  // Find the order details associated with the selected order
-  // const orderDetails = order.ORDER_DETAILS || [];
-
   // Calculate total quantity
   const totalQuantity = orderDetails.reduce(
     (total, detail) => total + (detail.PURCH_ORDER_QTY || 0),
@@ -149,13 +145,14 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
                         {detail.PURCHASE_ORDER_DET_PROD_NAME}
                       </TableCell>
                       <TableCell>
-                        {detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0}
+                        {detail.PURCH_ORDER_QTY || 0}
                       </TableCell>
-                      {/* <TableCell>
+                      <TableCell>
                         {formatCurrency(detail.PURCH_ORDER_PRICE || 0)}
-                      </TableCell> */}
-                      {/* <TableCell>{formatCurrency(lineTotal)}</TableCell>{" "} */}
-                      {/* Display calculated line total */}
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrency(lineTotal)} {/* Displaying line total */}
+                      </TableCell>
                     </TableRow>
                   );
                 })
