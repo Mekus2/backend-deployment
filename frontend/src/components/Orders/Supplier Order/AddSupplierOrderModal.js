@@ -50,9 +50,11 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
     handleQuantityChange,
     handleRemoveProduct,
     handleAddSupplier,
+    handleSave,
   } = useAddSupplierOrderModal(onSave, onClose);
 
   const [errors, setErrors] = useState({});
+  const [inputStates, setInputStates] = useState({});
 
   const validateFields = () => {
     const newErrors = {};
@@ -81,7 +83,8 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
 
   const handleSaveWithValidation = () => {
     if (validateFields()) {
-      if (onSave) onSave(); // Ensure handleSave is called correctly
+      handleSave(); // Handle save, validate first
+      alert("Order created successfully!"); // Show success message
     }
   };
 
@@ -124,10 +127,10 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
             <SuggestionsList>
               {filteredSuppliers.map((supplier) => (
                 <SuggestionItem
-                  key={supplier.SUPP_COMPANY_NUM}
+                  key={supplier.Supp_Company_Name}
                   onClick={() => handleSupplierSelect(supplier)}
                 >
-                  {supplier.SUPP_COMPANY_NAME}
+                  {supplier.Supp_Company_Name}
                 </SuggestionItem>
               ))}
             </SuggestionsList>
@@ -218,8 +221,12 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                       display: "inline-block",
                       width: "calc(100% - 20px)",
                     }}
-                    value={orderDetail.productName}
+                    value={inputStates[index] || ""}
                     onChange={(e) => {
+                      setInputStates((prevStates) => ({
+                        ...prevStates,
+                        [index]: e.target.value,
+                      }));
                       handleProductInputChange(index, e.target.value);
                       clearError(`productName${index}`);
                     }}
@@ -235,11 +242,15 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                           {filteredProducts.map((product) => (
                             <SuggestionItem
                               key={product.id}
-                              onClick={() =>
-                                handleProductSelect(index, product)
-                              }
+                              onClick={() => {
+                                setInputStates((prevStates) => ({
+                                  ...prevStates,
+                                  [index]: product.PROD_NAME,
+                                }));
+                                handleProductSelect(index, product);
+                              }}
                             >
-                              {product.name}
+                              {product.PROD_NAME}
                             </SuggestionItem>
                           ))}
                         </SuggestionsList>

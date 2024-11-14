@@ -1,22 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   calculateLineTotal,
   calculateTotalQuantity,
   calculateTotalValue,
 } from "../utils/CalculationUtils";
-import { suppliers } from "../data/SupplierData";
+// import { suppliers } from "../data/SupplierData";
 import productData from "../data/ProductData"; // Adjust the path as needed
+import axios from "axios";
+// import { FaAviato } from "react-icons/fa";
+
+import { getProductByName } from "../api/fetchProducts";
 
 const useAddSupplierOrderModal = (onSave, onClose) => {
-  // Initialize products from product data
-  const products = productData.PRODUCT.map((product) => ({
-    id: product.PROD_ID,
-    name: product.PROD_NAME,
-    detailsCode: product.PROD_DETAILS_CODE,
-    price: 0, // This will be updated when a product is selected
-  }));
-
   // State variables
+  const [supplierData, setSupplierData] = useState([]);
+  const [supplierID, setSupplierID] = useState(0);
   const [supplierName, setSupplierName] = useState("");
   const [contactPersonName, setContactPersonName] = useState("");
   const [contactPersonNumber, setContactPersonNumber] = useState("");
@@ -29,16 +27,36 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
       productName: "",
       price: 0,
       quantity: 1,
-      discountValue: 0,
-      lineTotal: 0,
-      discountType: "amount", // Default to a fixed discount
     },
   ]);
   const [productSearch, setProductSearch] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState(products);
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [supplierSearch, setSupplierSearch] = useState("");
-  const [filteredSuppliers, setFilteredSuppliers] = useState(suppliers);
+  const [filteredSuppliers, setFilteredSuppliers] = useState([]);
   const [currentEditingIndex, setCurrentEditingIndex] = useState(null);
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const response = await axios.get(
+          "http://127.0.0.1:8000/supplier/suppliers/"
+        );
+        setSupplierData(response.data);
+        console.log("Supplier Data:", response.data);
+        setFilteredSuppliers(response.data);
+      } catch (err) {
+        console.log("Failed to fetch Suppliers:", err);
+      }
+    };
+
+    fetchSuppliers();
+
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Handlers
   const handleAddSupplier = () => {
@@ -55,81 +73,122 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
       {
         productId: "",
         productName: "",
-        price: 0,
         quantity: 1,
-        discountValue: 0,
-        lineTotal: 0,
-        discountType: "amount", // Ensure a default discount type
       },
     ]);
   };
 
   const handleProductInputChange = (index, value) => {
+    console.log(`Input changed at index ${index}: ${value}`); // Log the input change
     setCurrentEditingIndex(index);
-    setProductSearch(value);
+    setProductSearch(value); // Update immediately for input responsiveness
 
-    const lowerCaseValue = value.toLowerCase();
+    // Clear any previously set timeout to avoid multiple fetches
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+      console.log("Cleared previous debounce timeout"); // Log debounce timeout clearance
+    }
 
-    // Filter and sort products based on input
-    const filtered = products
-      .filter((product) => product.name.toLowerCase().includes(lowerCaseValue))
-      .sort((a, b) => {
-        const aStartsWith = a.name.toLowerCase().startsWith(lowerCaseValue);
-        const bStartsWith = b.name.toLowerCase().startsWith(lowerCaseValue);
-        if (aStartsWith && !bStartsWith) return -1;
-        if (!aStartsWith && bStartsWith) return 1;
-        return a.name.localeCompare(b.name);
-      });
-
-    setFilteredProducts(filtered);
-
-    // Update order details with the current product name
-    setOrderDetails((prevOrderDetails) => {
-      const updatedOrderDetails = [...prevOrderDetails];
-      updatedOrderDetails[index].productName = value;
-      return updatedOrderDetails;
-    });
+    // Set a new debounce timeout
+    debounceTimeoutRef.current = setTimeout(() => {
+      console.log(`Fetching products for: ${value}`); // Log before fetching
+      fetchFilteredProducts(value, index); // Fetch products after delay
+    }, 800); // Adjust delay as needed (e.g., 300ms)
   };
 
+  const fetchFilteredProducts = async (searchValue) => {
+    console.log(`Starting fetch for: ${searchValue}`); // Log the fetch initiation
+    try {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        console.log("Aborted previous fetch request"); // Log abort action
+      }
+
+      const newAbortController = new AbortController();
+      abortControllerRef.current = newAbortController;
+
+      // Fetch products from the API based on user input with signal for aborting
+      console.log("Calling API to get products..."); // Log API call initiation
+      const fetchedProducts = await getProductByName(
+        searchValue,
+        newAbortController.signal
+      );
+
+      console.log("Fetched products:", fetchedProducts); // Log the fetched products
+
+      // Filter and sort products based on input
+      const lowerCaseValue = searchValue.toLowerCase();
+      const filtered = fetchedProducts
+        .filter((product) =>
+          product.PROD_NAME.toLowerCase().includes(lowerCaseValue)
+        )
+        .sort((a, b) => {
+          const aStartsWith =
+            a.PROD_NAME.toLowerCase().startsWith(lowerCaseValue);
+          const bStartsWith =
+            b.PROD_NAME.toLowerCase().startsWith(lowerCaseValue);
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          return a.PROD_NAME.localeCompare(b.PROD_NAME);
+        });
+
+      console.log("Filtered and sorted products:", filtered); // Log filtered products
+      setFilteredProducts(filtered);
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.log("Fetch aborted"); // Log abort error
+      } else {
+        console.error("Failed to fetch products:", error); // Log general fetch failure
+      }
+    }
+  };
+
+  // Separate function to handle fetching products
+  const debounceTimeoutRef = useRef(null);
+  const abortControllerRef = useRef(null);
+
   const handleProductSelect = (index, product) => {
-    const productDetail = productData.PRODUCT_DETAILS.find(
-      (detail) => detail.PROD_DETAILS_CODE === product.detailsCode
-    );
+    console.log("Index in handleProductSelect:", index);
+    console.log("Selected product:", product);
 
     setOrderDetails((prevOrderDetails) => {
       const updatedOrderDetails = [...prevOrderDetails];
+
+      // Log for debugging
+      console.log(`Updating order details at index ${index} with product data`);
+      console.log(`Product ID: ${product.id}`);
+      console.log(`Product Name: ${product.PROD_NAME}`);
+
+      // Update the Order Details
       updatedOrderDetails[index].productId = product.id;
-      updatedOrderDetails[index].productName = product.name;
-      updatedOrderDetails[index].price = productDetail
-        ? productDetail.PROD_DETALS_PRICE
-        : 0;
-      updatedOrderDetails[index].lineTotal = calculateLineTotal(
-        updatedOrderDetails[index]
-      );
+      updatedOrderDetails[index].productName = product.PROD_NAME;
 
       return updatedOrderDetails;
     });
 
+    // Log for debuggging
+    console.log("Resetting product search and suggestions");
     setProductSearch("");
-    setFilteredProducts(products); // Reset product list
+    setFilteredProducts([]); // Reset product list
     setCurrentEditingIndex(null);
   };
 
   const handleSupplierInputChange = (value) => {
     setSupplierSearch(value);
 
-    const filtered = suppliers.filter((supplier) =>
-      supplier.SUPP_COMPANY_NAME.toLowerCase().includes(value.toLowerCase())
+    const filtered = supplierData.filter((supplier) =>
+      supplier.Supp_Company_Name.toLowerCase().includes(value.toLowerCase())
     );
     setFilteredSuppliers(filtered);
   };
 
   const handleSupplierSelect = (supplier) => {
-    setSupplierName(supplier.SUPP_CONTACT_NAME);
-    setContactPersonName(supplier.SUPP_CONTACT_NAME);
-    setContactPersonNumber(supplier.SUPP_CONTACT_PHNUM);
-    setSupplierCompanyName(supplier.SUPP_COMPANY_NAME);
-    setSupplierCompanyNum(supplier.SUPP_COMPANY_NUM);
+    console.log("Selected Supplier Details:", supplier);
+    setSupplierID(supplier.id);
+    setContactPersonName(supplier.Supp_Contact_Pname);
+    setContactPersonNumber(supplier.Supp_Contact_Num);
+    setSupplierCompanyName(supplier.Supp_Company_Name);
+    setSupplierCompanyNum(supplier.Supp_Company_Num);
 
     setSupplierSearch("");
     setFilteredSuppliers([]);
@@ -175,26 +234,31 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
   };
 
   const handleSave = () => {
-    const today = new Date().toISOString().split("T")[0];
-
     const newOrder = {
-      orderType: "Supplier Order",
-      supplierName: supplierCompanyName,
-      supplierNumber: supplierCompanyNum,
-      contactPersonName,
-      contactPersonNumber,
-      purchaseOrderDlvryDate: today,
-      purchaseOrderStatus: "Pending",
-      purchaseOrderTotQty: calculateTotalQuantity(orderDetails),
-      purchaseOrderTotal: calculateTotalValue(orderDetails),
-      clientId: "",
-      purchaseOrderDetails: orderDetails.map(({ lineTotal, ...rest }) => rest),
+      PURCHASE_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
+      PURCHASE_ORDER_SUPPLIER_ID: supplierID,
+      PURCHASE_ORDER_SUPPLIER_CMPNY_NUM: supplierCompanyNum,
+      PURCHASE_ORDER_SUPPLIER_CMPNY_NAME: supplierCompanyName,
+      PURCHASE_ORDER_CONTACT_PERSON: contactPersonName,
+      PURCHASE_ORDER_CONTACT_NUMBER: contactPersonNumber,
+      PURCHASE_ORDER_CREATEDBY_USER: 1,
+
+      details: orderDetails.map((item) => ({
+        PURCHASE_ORDER_DET_PROD_ID: item.productId,
+        PURCHASE_ORDER_DET_PROD_NAME: item.productName,
+        PURCHASE_ORDER_DET_PROD_LINE_QTY: item.quantity,
+      })),
     };
+    console.log("Final Data to be passed:", newOrder);
 
-    onSave(newOrder);
-    onClose();
+    if (onSave) {
+      onSave(newOrder); // Pass newOrder to onSave
+    }
+
+    if (onClose) {
+      onClose(); // Close modal after saving
+    }
   };
-
   const handleRemoveProduct = (index) => {
     setOrderDetails((prevOrderDetails) => {
       const updatedOrderDetails = [...prevOrderDetails];

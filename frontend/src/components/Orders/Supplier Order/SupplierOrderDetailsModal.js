@@ -133,16 +133,16 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
               <tr>
                 <TableHeader>Product Name</TableHeader>
                 <TableHeader>Quantity</TableHeader>
-                <TableHeader>Price</TableHeader>
-                <TableHeader>Total</TableHeader>
+                {/* <TableHeader>Price</TableHeader>
+                <TableHeader>Total</TableHeader> */}
               </tr>
             </thead>
             <tbody>
               {orderDetails.length > 0 ? (
                 orderDetails.map((detail) => {
-                  const lineTotal =
-                    (detail.PURCH_ORDER_QTY || 0) *
-                    (detail.PURCH_ORDER_PRICE || 0); // Calculate line total
+                  // const lineTotal =
+                  //   (detail.PURCH_ORDER_QTY || 0) *
+                  //   (detail.PURCH_ORDER_PRICE || 0); // Calculate line total
                   return (
                     <TableRow key={detail.PURCHASE_ORDER_DET_ID}>
                       <TableCell>
