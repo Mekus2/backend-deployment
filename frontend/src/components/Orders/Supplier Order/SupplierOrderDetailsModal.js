@@ -1,11 +1,63 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import Modal from "../../Layout/Modal"; // Assuming you have a modal component
 import { colors } from "../../../colors"; // Ensure the path to colors is correct
 import Button from "../../Layout/Button"; // Ensure you import the Button component
 
-const SupplierOrderDetailsModal = ({ order, onClose }) => {
+import { fetchPurchaseDetailsById } from "../../../api/fetchPurchaseOrders";
+
+const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
+  const abortControllerRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [orderDetails, setOrderDetails] = useState(null);
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      if (order.PURCHASE_ORDER_ID) {
+        setLoading(true);
+        setError(null);
+        try {
+          console.log(
+            `Fetching details for Order ID: ${order.PURCHASE_ORDER_ID}`
+          );
+          const details = await fetchPurchaseDetailsById(
+            order.PURCHASE_ORDER_ID,
+            controller.signal
+          );
+          console.log("Received Details:", details);
+          setOrderDetails(details);
+        } catch (err) {
+          if (err.name === "AbortError") {
+            console.log("Fetch aborted"); // Request was canceled
+          } else {
+            console.error("Failed to fetch order details:", err); // Improved debug line for errors
+            setError("Failed to fetch order details.");
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchDetails();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [order, userRole]);
+
   // Early return if order is not provided
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>{error}</p>;
+  if (!orderDetails) return null;
   if (!order) return null;
 
   // Function to format currency values safely
@@ -16,8 +68,17 @@ const SupplierOrderDetailsModal = ({ order, onClose }) => {
     return `₱${amount.toFixed(2)}`; // Format to two decimal places
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    if (isNaN(date)) return ""; // Return empty string if invalid date
+    return `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
   // Find the order details associated with the selected order
-  const orderDetails = order.ORDER_DETAILS || [];
+  // const orderDetails = order.ORDER_DETAILS || [];
 
   // Calculate total quantity
   const totalQuantity = orderDetails.reduce(
@@ -57,10 +118,11 @@ const SupplierOrderDetailsModal = ({ order, onClose }) => {
           <strong>Order ID:</strong> {order.PURCHASE_ORDER_ID}
         </p>
         <p>
-          <strong>Order Created Date:</strong> {order.PURCHASE_ORDER_DATE}
+          <strong>Order Created Date:</strong>{" "}
+          {formatDate(order.PURCHASE_ORDER_DATE_CREATED)}
         </p>
         <p>
-          <strong>Supplier ID:</strong> {order.SUPPLIER_ID}
+          <strong>Supplier ID:</strong> {order.PURCHASE_ORDER_SUPPLIER_ID}
         </p>{" "}
         {/* Displaying Supplier ID */}
       </Section>
@@ -82,13 +144,17 @@ const SupplierOrderDetailsModal = ({ order, onClose }) => {
                     (detail.PURCH_ORDER_QTY || 0) *
                     (detail.PURCH_ORDER_PRICE || 0); // Calculate line total
                   return (
-                    <TableRow key={detail.PURCH_ORDER_DET_ID}>
-                      <TableCell>{detail.PURCH_ORDER_PROD_NAME}</TableCell>
-                      <TableCell>{detail.PURCH_ORDER_QTY || 0}</TableCell>
+                    <TableRow key={detail.PURCHASE_ORDER_DET_ID}>
                       <TableCell>
-                        {formatCurrency(detail.PURCH_ORDER_PRICE || 0)}
+                        {detail.PURCHASE_ORDER_DET_PROD_NAME}
                       </TableCell>
-                      <TableCell>{formatCurrency(lineTotal)}</TableCell>{" "}
+                      <TableCell>
+                        {detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0}
+                      </TableCell>
+                      {/* <TableCell>
+                        {formatCurrency(detail.PURCH_ORDER_PRICE || 0)}
+                      </TableCell> */}
+                      {/* <TableCell>{formatCurrency(lineTotal)}</TableCell>{" "} */}
                       {/* Display calculated line total */}
                     </TableRow>
                   );

@@ -12,7 +12,7 @@ const pageTitles = {
   "/admin/orders": "Order",
   "/admin/request-order": "Request Order",
   "/admin/customer-order": "Customer Order",
-  "/admin/purchase-order": "Purchase Order",
+  "/admin/purchase-order": "Supplier Order",
   "/admin/delivery": "Delivery",
   "/admin/products": "Total Products",
   "/admin/categories": "Category",
@@ -26,14 +26,14 @@ const pageTitles = {
   "/admin/reports": "Reports",
   "/admin/profile": "Profile",
   "/admin/notifications": "Notifications",
-  "/admin/purchase": "Purchase Order",
+  "/admin/purchase": "Supplier Order",
 
   // SuperAdmin routes
   "/superadmin/dashboard": "Dashboard",
   "/superadmin/orders": "Order",
   "/superadmin/request-order": "Request Order",
   "/superadmin/customer-order": "Customer Order",
-  "/superadmin/purchase-order": "Purchase Order",
+  "/superadmin/purchase-order": "Supplier Order",
   "/superadmin/delivery": "Delivery",
   "/superadmin/products": "Total Products",
   "/superadmin/categories": "Category",
@@ -47,7 +47,7 @@ const pageTitles = {
   "/superadmin/reports": "Reports",
   "/superadmin/profile": "SuperAdmin Profile",
   "/superadmin/notifications": "Notifications",
-  "/superadmin/purchase": "Purchase Order",
+  "/superadmin/purchase": "Supplier Order",
 
   // Staff routes
   "/staff/dashboard": "Dashboard",

@@ -120,15 +120,18 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             <FaPlus className="icon" /> Client
           </PIconButton>
         </SupplierSearchContainer>
+        {console.log("Receive user list:", filteredClients)}
         {clientSearch && filteredClients.length > 0 && (
           <SuggestionsContainer>
+            {console.log("Rendering suggestions list")}
+
             <SuggestionsList>
               {filteredClients.map((client) => (
                 <SuggestionItem
-                  key={client.CLIENT_ID}
+                  key={client.id}
                   onClick={() => handleClientSelect(client)}
                 >
-                  {client.CLIENT_NAME}
+                  {client.name}
                 </SuggestionItem>
               ))}
             </SuggestionsList>

@@ -14,15 +14,15 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
     let newErrors = {};
 
     // Validate required fields
-    if (!editedClient.CLIENT_NAME) newErrors.CLIENT_NAME = "Customer name is required";
-    if (!editedClient.CLIENT_CITY) newErrors.CLIENT_CITY = "City is required";
-    if (!editedClient.CLIENT_PROVINCE) newErrors.CLIENT_PROVINCE = "Province is required";
+    if (!editedClient.name) newErrors.name = "Customer name is required";
+    if (!editedClient.address) newErrors.address = "Address is required"; // Changed from 'city' to 'address'
+    if (!editedClient.province) newErrors.province = "Province is required";
 
     // Validate phone number
-    if (!editedClient.CLIENT_PHONENUM) {
-      newErrors.CLIENT_PHONENUM = "Phone number is required";
-    } else if (!/^0\d{10}$/.test(editedClient.CLIENT_PHONENUM)) {
-      newErrors.CLIENT_PHONENUM = "Phone number must be 11 digits and start with '0'";
+    if (!editedClient.phoneNumber) {
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (!/^0\d{10}$/.test(editedClient.phoneNumber)) {
+      newErrors.phoneNumber = "Phone number must be 11 digits and start with '0'";
     }
 
     setErrors(newErrors);
@@ -31,15 +31,40 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
 
   const handleEdit = () => setIsEditing(true);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (validateFields()) {
-      const confirmSave = window.confirm(
-        "Are you sure you want to save the changes?"
-      );
+      const confirmSave = window.confirm("Are you sure you want to save the changes?");
       if (confirmSave) {
-        // Implement save logic here
-        alert("Customer details saved");
-        setIsEditing(false);
+        try {
+          // Create a new object with only the changed fields
+          const updatedClient = { ...editedClient };
+  
+          // Remove the errors field (if any) from the object before sending to backend
+          delete updatedClient.errors;
+  
+          // Send the PUT request with only the updated fields
+          const response = await fetch(`http://127.0.0.1:8000/customer/clients/${client.id}/`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatedClient), // Send the edited data (partial fields)
+          });
+  
+          if (!response.ok) {
+            // Handle error if the request fails
+            const errorData = await response.json();
+            alert(`Error: ${errorData.message || 'Failed to update customer details'}`);
+          } else {
+            // Handle success
+            alert("Customer details saved successfully!");
+            setIsEditing(false);
+            onClose(); // Close the modal after saving
+          }
+        } catch (error) {
+          // Handle network or other errors
+          alert(`Error: ${error.message}`);
+        }
       }
     }
   };
@@ -60,7 +85,7 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
       "Are you sure you want to remove this customer?"
     );
     if (confirmRemoval) {
-      onRemove(client.CLIENT_ID);
+      onRemove(client.id); // Make sure `client.id` exists
       onClose();
     }
   };
@@ -74,7 +99,7 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
       if (/^[0-9]*$/.test(value)) {
         setEditedClient({
           ...editedClient,
-          CLIENT_PHONENUM: value.length === 0 ? "0" : value, // Ensure leading zero
+          phoneNumber: value.length === 0 ? "0" : value, // Ensure leading zero
         });
       }
     }
@@ -82,7 +107,7 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
 
   return (
     <Modal
-      title={isEditing ? `Edit ${client.CLIENT_NAME}` : `Customer Details`}
+      title={isEditing ? `Edit ${client.name}` : `Customer Details`}
       onClose={onClose}
     >
       {isEditing ? (
@@ -92,55 +117,58 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
               <strong>Customer Name:</strong>
               <Input
                 type="text"
-                value={editedClient.CLIENT_NAME || ""} // Add fallback to empty string
+                value={editedClient.name || ""} // Adjusted to match API response
                 onChange={(e) =>
                   setEditedClient({
                     ...editedClient,
-                    CLIENT_NAME: e.target.value,
+                    name: e.target.value,
                   })
                 }
                 border
               />
-              {errors.CLIENT_NAME && <Error>{errors.CLIENT_NAME}</Error>}
+              {errors.name && <Error>{errors.name}</Error>}
             </DetailItem>
             <DetailItem>
               <strong>Location</strong>
               <LocationContainer>
-                <CityInput
+                <AddressInput
                   type="text"
-                  value={editedClient.CLIENT_CITY || ""}
+                  value={editedClient.address || ""} // Updated to 'address'
                   onChange={(e) =>
                     setEditedClient({
                       ...editedClient,
-                      CLIENT_CITY: e.target.value,
+                      address: e.target.value, // Updated to 'address'
                     })
                   }
                   border
+                  placeholder="Address" // Placeholder for the Address input
                 />
-                {errors.CLIENT_CITY && <Error>{errors.CLIENT_CITY}</Error>}
+                {errors.address && <Error>{errors.address}</Error>} {/* Updated validation */}
+                
                 <ProvinceInput
                   type="text"
-                  value={editedClient.CLIENT_PROVINCE || ""}
+                  value={editedClient.province || ""}
                   onChange={(e) =>
                     setEditedClient({
                       ...editedClient,
-                      CLIENT_PROVINCE: e.target.value,
+                      province: e.target.value,
                     })
                   }
                   border
+                  placeholder="Province" // Placeholder for the Province input
                 />
-                {errors.CLIENT_PROVINCE && <Error>{errors.CLIENT_PROVINCE}</Error>}
+                {errors.province && <Error>{errors.province}</Error>}
               </LocationContainer>
             </DetailItem>
             <DetailItem>
               <strong>Phone Number:</strong>
               <Input
                 type="tel"
-                value={editedClient.CLIENT_PHONENUM || "0"} // Default to "0"
+                value={editedClient.phoneNumber || "0"} // Default to "0"
                 onChange={handlePhoneNumberChange}
                 border
               />
-              {errors.CLIENT_PHONENUM && <Error>{errors.CLIENT_PHONENUM}</Error>}
+              {errors.phoneNumber && <Error>{errors.phoneNumber}</Error>}
             </DetailItem>
           </Details>
           <ButtonGroup>
@@ -157,15 +185,15 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
           <Section>
             <Detail>
               <DetailLabel>Client Name:</DetailLabel>{" "}
-              {client.CLIENT_NAME || "N/A"}
+              {client.name || "N/A"} {/* Adjust field name based on API response */}
             </Detail>
             <Detail>
               <DetailLabel>Location:</DetailLabel>{" "}
-              {`${client.CLIENT_CITY || "N/A"}, ${client.CLIENT_PROVINCE || "N/A"}`}
+              {`${client.address || "N/A"}, ${client.province || "N/A"}`} {/* Updated to address */}
             </Detail>
             <Detail>
               <DetailLabel>Phone:</DetailLabel>{" "}
-              {client.CLIENT_PHONENUM || "N/A"}
+              {client.phoneNumber || "N/A"}
             </Detail>
           </Section>
 
@@ -215,11 +243,11 @@ const Input = styled.input`
 
 const LocationContainer = styled.div`
   display: flex;
-  gap: 10px; /* Space between city and province */
+  gap: 10px; /* Space between address and province */
 `;
 
-const CityInput = styled(Input)`
-  flex: 1; /* Allows the city input to take available space */
+const AddressInput = styled(Input)`
+  flex: 1; /* Allows the address input to take available space */
 `;
 
 const ProvinceInput = styled(Input)`

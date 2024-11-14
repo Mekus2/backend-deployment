@@ -16,10 +16,4 @@ class CreateSupplierSerializer(serializers.ModelSerializer):
 class SupplierSerializer(serializers.ModelSerializer):
     class Meta:
         model = Supplier
-        fields = (
-            "id",
-            "Supp_Company_Name",
-            "Supp_Company_Num",
-            "Supp_Contact_Pname",
-            "Supp_Contact_Num",
-        )
+        fields = "__all__"

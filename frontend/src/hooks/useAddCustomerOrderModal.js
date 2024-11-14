@@ -60,11 +60,17 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       }
     };
 
+    // Fetch immediately on mount
     fetchClients();
 
+    // Set up a 20-second interval to refetch clients
+    const intervalId = setInterval(fetchClients, 20000);
+
+    // Clean-up function to clear interval on unmount
     return () => {
+      clearInterval(intervalId); // Clear the interval
       if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+        abortControllerRef.current.abort(); // Abort any ongoing fetch
       }
     };
   }, []);
