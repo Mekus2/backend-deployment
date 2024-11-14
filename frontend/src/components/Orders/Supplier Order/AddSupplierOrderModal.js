@@ -23,7 +23,8 @@ import {
 } from "../OrderStyles";
 import { FaPlus } from "react-icons/fa";
 import useAddSupplierOrderModal from "../../../hooks/useAddSupplierOrderModal";
-import { calculateTotalQuantity } from "../../../utils/CalculationUtils"; // Import total quantity calculation utility
+import { calculateTotalQuantity } from "../../../utils/CalculationUtils";
+import { notify } from "../../Layout/CustomToast"; // Import the toast notification utility
 
 const AddSupplierOrderModal = ({ onClose, onSave }) => {
   const {
@@ -50,7 +51,6 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
     handleQuantityChange,
     handleRemoveProduct,
     handleAddSupplier,
-    handleSave,
   } = useAddSupplierOrderModal(onSave, onClose);
 
   const [errors, setErrors] = useState({});
@@ -81,12 +81,20 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveWithValidation = () => {
+  const handleSaveWithValidation = async () => {
     if (validateFields()) {
-      handleSave(); // Handle save, validate first
-      alert("Order created successfully!"); // Show success message
+      try {
+        if (onSave) await onSave(); // Ensure onSave is called correctly, assuming it performs the saving action
+        notify.success("Order successfully created!"); // Success toast notification
+      } catch (error) {
+        // In case of an error during saving
+        notify.error("Order not saved. Please try again."); // Error toast for unsuccessful saving
+      }
+    } else {
+      notify.error("Please fill in all required fields."); // Error toast for empty fields
     }
   };
+  
 
   const clearError = (field) => {
     setErrors((prevErrors) => ({
@@ -108,6 +116,11 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
 
   const totalQuantity = calculateTotalQuantity(orderDetails);
 
+  const handleAddSupplierWithNotification = () => {
+    handleAddSupplier(); // Calls the function that adds the supplier
+    notify.success("You can now add a new supplier!"); // Trigger the toast notification
+  };
+
   return (
     <Modal title="Add Supplier Order" onClose={onClose}>
       <Field>
@@ -118,7 +131,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
             onChange={(e) => handleSupplierInputChange(e.target.value)}
             placeholder="Search Supplier"
           />
-          <PIconButton onClick={handleAddSupplier}>
+          <PIconButton onClick={handleAddSupplierWithNotification}>
             <FaPlus className="icon" /> Supplier
           </PIconButton>
         </SupplierSearchContainer>

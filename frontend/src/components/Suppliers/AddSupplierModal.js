@@ -3,6 +3,7 @@ import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
 import { addSupplier } from "../../api/SupplierApi"; // Import the addSupplier API function
+import { notify } from "../Layout/CustomToast"; // Import the toast notification utility
 
 const AddSupplierModal = ({ onClose, onAdd }) => {
   const [supplierName, setSupplierName] = useState("");
@@ -36,9 +37,16 @@ const AddSupplierModal = ({ onClose, onAdd }) => {
         onClose(); // Close the modal
       } catch (error) {
         console.error("Error adding supplier:", error);
+        notify.error("An error occurred while adding the supplier.");
       }
     } else {
       setErrors(newErrors);
+      
+      // Show toast notifications for each error
+      if (newErrors.supplierName) notify.error(newErrors.supplierName);
+      if (newErrors.supplierNumber) notify.error(newErrors.supplierNumber);
+      if (newErrors.contactPersonName) notify.error(newErrors.contactPersonName);
+      if (newErrors.contactPersonNumber) notify.error(newErrors.contactPersonNumber);
     }
   };
 
