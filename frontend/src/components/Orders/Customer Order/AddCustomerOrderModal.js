@@ -24,11 +24,9 @@ import {
 } from "../OrderStyles";
 import { FaPlus } from "react-icons/fa";
 import useAddCustomerOrderModal from "../../../hooks/useAddCustomerOrderModal";
-import {
-  calculateLineTotal,
-  // calculateTotalDiscount,
-} from "../../../utils/CalculationUtils"; // Import calculation utilities
-import "../../../styles.css"; // Import your custom styles
+import { calculateLineTotal } from "../../../utils/CalculationUtils";
+import { notify } from "../../Layout/CustomToast"; // Import the toast notification utility
+import "../../../styles.css";
 
 const AddCustomerOrderModal = ({ onClose, onSave }) => {
   const {
@@ -53,7 +51,6 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     handleProductInputChange,
     handleProductSelect,
     handleClientInputChange,
-    // handleDiscountChange,
     handleClientSelect,
     handleQuantityChange,
     handlePriceChange,
@@ -78,7 +75,6 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     if (!deliveryOption) newErrors.deliveryOption = true;
     if (!paymentTerms) newErrors.paymentTerms = true;
 
-    // Validate each order detail (especially Product Name)
     orderDetails.forEach((detail, index) => {
       if (!detail.productName) {
         newErrors[`productName${index}`] = true;
@@ -89,22 +85,32 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveWithValidation = () => {
+  const handleSaveWithValidation = async () => {
     if (validateFields()) {
-      handleSave(); // Proceed to save only if validation passes
+      try {
+        await handleSave(); // Assuming handleSave performs the API call and saves the order
+        notify.success("Order successfully created!"); // Success toast notification
+      } catch (error) {
+        // In case of an error during save
+        notify.error("Order not saved. Please try again."); // Error toast for unsuccessful saving
+      }
+    } else {
+      notify.error("Please fill in all required fields."); // Error toast for empty fields
     }
   };
+  
 
-  // Automatically clear error messages when input is valid
   const clearError = (field) => {
     setErrors((prevErrors) => ({
       ...prevErrors,
-      [field]: undefined, // Remove the specific error
+      [field]: undefined,
     }));
   };
 
-  // Calculate total discount
-  // const totalDiscount = calculateTotalDiscount(orderDetails);
+  const handleAddClientWithNotification = () => {
+    handleAddClient();
+    notify.success("You can now add a new client!"); // Add Client toast notification
+  };
 
   return (
     <Modal title="Add Customer Order" onClose={onClose}>
@@ -116,15 +122,12 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             onChange={(e) => handleClientInputChange(e.target.value)}
             placeholder="Search Client"
           />
-          <PIconButton onClick={handleAddClient}>
+          <PIconButton onClick={handleAddClientWithNotification}>
             <FaPlus className="icon" /> Client
           </PIconButton>
         </SupplierSearchContainer>
-        {console.log("Receive user list:", filteredClients)}
         {clientSearch && filteredClients.length > 0 && (
           <SuggestionsContainer>
-            {console.log("Rendering suggestions list")}
-
             <SuggestionsList>
               {filteredClients.map((client) => (
                 <SuggestionItem
@@ -148,7 +151,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           value={clientName}
           onChange={(e) => {
             setClientName(e.target.value);
-            clearError("clientName"); // Clear error on change
+            clearError("clientName");
           }}
           placeholder="Client Name"
           disabled={!editable}
@@ -162,7 +165,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             value={clientProvince}
             onChange={(e) => {
               setClientProvince(e.target.value);
-              clearError("clientProvince"); // Clear error on change
+              clearError("clientProvince");
             }}
             placeholder="Province"
             disabled={!editable}
@@ -175,7 +178,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             value={clientCity}
             onChange={(e) => {
               setClientCity(e.target.value);
-              clearError("clientCity"); // Clear error on change
+              clearError("clientCity");
             }}
             placeholder="City"
             disabled={!editable}
@@ -196,7 +199,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           value={deliveryOption}
           onChange={(e) => {
             setDeliveryOption(e.target.value);
-            clearError("deliveryOption"); // Clear error on change
+            clearError("deliveryOption");
           }}
         >
           <option value="">Select Delivery Option</option>
@@ -217,7 +220,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           value={paymentTerms}
           onChange={(e) => {
             setPaymentTerms(e.target.value);
-            clearError("paymentTerms"); // Clear error on change
+            clearError("paymentTerms");
           }}
         >
           <option value="">Select Payment Terms</option>
@@ -243,13 +246,13 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           <tbody>
             {orderDetails.map((orderDetail, index) => (
               <tr key={index}>
-                <td>
+                <td style={{ position: "relative" }}>
                   <Input
                     style={{
                       display: "inline-block",
                       width: "calc(100% - 10px)",
                     }}
-                    value={inputStates[index] || ""} // Use specific input state for each index
+                    value={inputStates[index] || ""}
                     onChange={(e) => {
                       setInputStates((prevStates) => ({
                         ...prevStates,
@@ -261,7 +264,17 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                     placeholder="Product Name"
                   />
                   {errors[`productName${index}`] && (
-                    <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+                    <span
+                      style={{
+                        color: "red",
+                        position: "absolute",
+                        right: "-10px", // Adjust as needed for spacing
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                      }}
+                    >
+                      *
+                    </span>
                   )}
                   {productSearch && index === currentEditingIndex && (
                     <SuggestionsContainer>
@@ -286,6 +299,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                     </SuggestionsContainer>
                   )}
                 </td>
+
                 <td>
                   <QuantityInput
                     type="number"
@@ -315,9 +329,8 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                       updatedOrderDetails[index] = {
                         ...updatedOrderDetails[index],
                         discountValue: value,
-                        // discountType: "amount", // Assuming fixed discount
                       };
-                      setOrderDetails(updatedOrderDetails); // Update the order details state
+                      setOrderDetails(updatedOrderDetails);
                     }}
                     placeholder="Discount"
                   />

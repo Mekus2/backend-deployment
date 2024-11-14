@@ -1,6 +1,9 @@
 // src/App.js
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+
 import { UserProvider } from "./context/UserContext";
 import { NotificationProvider } from "./context/NotificationContext";
 
@@ -65,6 +68,15 @@ import StaffNotification from "./pages/staff/StaffNotification";
 import StaffCategories from "./pages/staff/StaffCategories";
 
 import NotFoundPage from "./pages/NotFoundPage";
+
+// Toast notification utility
+export const notify = {
+  success: (message) => toast.success(message),
+  error: (message) => toast.error(message),
+  info: (message) => toast.info(message),
+  warning: (message) => toast.warning(message),
+  custom: (message) => toast(message)
+};
 
 function App() {
   return (
@@ -137,6 +149,19 @@ function App() {
             {/* Fallback Route */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+
+          {/* Toast Container */}
+          <ToastContainer 
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
         </Router>
       </NotificationProvider>
     </UserProvider>

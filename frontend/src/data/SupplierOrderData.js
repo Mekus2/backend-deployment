@@ -7,6 +7,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 120,
     PURCHASE_ORDER_TOTAL: 3450.0,
     SUPPLIER_ID: 101,
+    SUPP_COMPANY_NAME: "Pet Care",
     USER_ID: 201,
     ORDER_DETAILS: [
       {
@@ -48,12 +49,13 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 120,
     PURCHASE_ORDER_TOTAL: 3450.0,
     SUPPLIER_ID: 101,
+    SUPP_COMPANY_NAME: "AntiTicks Corporation",
     USER_ID: 201,
     ORDER_DETAILS: [
       {
         PURCH_ORDER_DET_ID: 1,
         PURCH_ORDER_PROD_ID: 1,
-        PURCH_ORDER_PROD_NAME: "Flea & Tick Treatment",
+        PURCH_ORDER_PROD_NAME: "Pet  Care",
         PURCH_ORDER_PROD_DESCRIPTION:
           "Topical treatment for dogs and cats to eliminate fleas and ticks.",
         PURCH_ORDER_QTY: 50,
@@ -89,6 +91,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 75,
     PURCHASE_ORDER_TOTAL: 2250.0,
     SUPPLIER_ID: 102,
+    SUPP_COMPANY_NAME: "Healthy Pets Co.",
     USER_ID: 202,
     ORDER_DETAILS: [
       {
@@ -129,6 +132,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 90,
     PURCHASE_ORDER_TOTAL: 2700.0,
     SUPPLIER_ID: 103,
+    SUPP_COMPANY_NAME: "Animal Health Corp.",
     USER_ID: 203,
     ORDER_DETAILS: [
       {
@@ -168,6 +172,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 25,
     PURCHASE_ORDER_TOTAL: 750.0,
     SUPPLIER_ID: 104,
+    SUPP_COMPANY_NAME: "Animal Health Corp.",
     USER_ID: 204,
     ORDER_DETAILS: [
       {
@@ -199,6 +204,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 40,
     PURCHASE_ORDER_TOTAL: 1200.0,
     SUPPLIER_ID: 105,
+    SUPP_COMPANY_NAME: "Pet Accessories",
     USER_ID: 205,
     ORDER_DETAILS: [
       {
@@ -229,6 +235,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 30,
     PURCHASE_ORDER_TOTAL: 900.0,
     SUPPLIER_ID: 106,
+    SUPP_COMPANY_NAME: "Pet Innovations",
     USER_ID: 206,
     ORDER_DETAILS: [
       {
@@ -259,6 +266,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 100,
     PURCHASE_ORDER_TOTAL: 3000.0,
     SUPPLIER_ID: 107,
+    SUPP_COMPANY_NAME: "Animal Health Corp.",
     USER_ID: 207,
     ORDER_DETAILS: [
       {
@@ -288,6 +296,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 25,
     PURCHASE_ORDER_TOTAL: 750.0,
     SUPPLIER_ID: 108,
+    SUPP_COMPANY_NAME: "Pet Accessories",
     USER_ID: 208,
     ORDER_DETAILS: [
       {
@@ -309,6 +318,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 45,
     PURCHASE_ORDER_TOTAL: 1350.0,
     SUPPLIER_ID: 109,
+    SUPP_COMPANY_NAME: "Animal Health Corp.",
     USER_ID: 209,
     ORDER_DETAILS: [
       {
@@ -338,6 +348,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 80,
     PURCHASE_ORDER_TOTAL: 2400.0,
     SUPPLIER_ID: 110,
+    SUPP_COMPANY_NAME: "Animal World",
     USER_ID: 210,
     ORDER_DETAILS: [
       {
@@ -368,6 +379,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 30,
     PURCHASE_ORDER_TOTAL: 900.0,
     SUPPLIER_ID: 111,
+    SUPP_COMPANY_NAME: "Animal World",
     USER_ID: 211,
     ORDER_DETAILS: [
       {
@@ -397,6 +409,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 20,
     PURCHASE_ORDER_TOTAL: 600.0,
     SUPPLIER_ID: 112,
+    SUPP_COMPANY_NAME: "Canine Care Solutions",
     USER_ID: 212,
     ORDER_DETAILS: [
       {
@@ -417,6 +430,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 35,
     PURCHASE_ORDER_TOTAL: 1050.0,
     SUPPLIER_ID: 113,
+    SUPP_COMPANY_NAME: "Canine Care Solutions",
     USER_ID: 213,
     ORDER_DETAILS: [
       {
@@ -446,6 +460,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 60,
     PURCHASE_ORDER_TOTAL: 1800.0,
     SUPPLIER_ID: 114,
+    SUPP_COMPANY_NAME: "Healthy Pets Co.",
     USER_ID: 214,
     ORDER_DETAILS: [
       {
@@ -475,6 +490,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 50,
     PURCHASE_ORDER_TOTAL: 1500.0,
     SUPPLIER_ID: 115,
+    SUPP_COMPANY_NAME: "Animal World",
     USER_ID: 215,
     ORDER_DETAILS: [
       {
@@ -505,6 +521,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 70,
     PURCHASE_ORDER_TOTAL: 2100.0,
     SUPPLIER_ID: 116,
+    SUPP_COMPANY_NAME: "Pet Accessories",
     USER_ID: 216,
     ORDER_DETAILS: [
       {
@@ -534,6 +551,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 80,
     PURCHASE_ORDER_TOTAL: 2400.0,
     SUPPLIER_ID: 117,
+    SUPP_COMPANY_NAME: "Pet Care",
     USER_ID: 217,
     ORDER_DETAILS: [
       {
@@ -563,6 +581,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 40,
     PURCHASE_ORDER_TOTAL: 1200.0,
     SUPPLIER_ID: 118,
+    SUPP_COMPANY_NAME: "Animal Health Corp.",
     USER_ID: 218,
     ORDER_DETAILS: [
       {
@@ -592,6 +611,7 @@ const PURCHASE_ORDERS = [
     PURCHASE_ORDER_TOT_QTY: 50,
     PURCHASE_ORDER_TOTAL: 1500.0,
     SUPPLIER_ID: 119,
+    SUPP_COMPANY_NAME: "Canine Care Solutions",
     USER_ID: 219,
     ORDER_DETAILS: [
       {

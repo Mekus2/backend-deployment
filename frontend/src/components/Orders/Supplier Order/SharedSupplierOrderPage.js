@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import SupplierOrderDetailsModal from "./SupplierOrderDetailsModal";
@@ -7,12 +7,13 @@ import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import CardTotalSupplierOrder from "../../../components/CardsData/CardTotalSupplierOrder";
 import Button from "../../Layout/Button";
-import PURCHASE_ORDERS from "../../../data/SupplierOrderData"; // Make sure this path is correct
+// import PURCHASE_ORDERS from "../../../data/SupplierOrderData"; // Make sure this path is correct
 import { FaPlus, FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { fetchPurchaseOrders } from "../../../api/fetchPurchaseOrders";
 
 const SharedSupplierOrderPage = () => {
   const navigate = useNavigate();
-  const [orders] = useState(PURCHASE_ORDERS); // Use PURCHASE_ORDERS directly
+  const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isAddingSupplierOrder, setIsAddingSupplierOrder] = useState(false);
@@ -21,21 +22,43 @@ const SharedSupplierOrderPage = () => {
     direction: "desc",
   });
 
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const data = await fetchPurchaseOrders();
+      setOrders(data);
+    };
+    fetchOrders();
+  }, []);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    if (isNaN(date)) return ""; // Return empty string if invalid date
+    return `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
   // Filter orders based on search term
   const filteredOrders = (orders || []).filter((order) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return (
-      order.SUPPLIER_ID.toString().includes(lowerCaseSearchTerm) ||
-      order.PURCHASE_ORDER_DATE.toLowerCase().includes(lowerCaseSearchTerm) ||
+      order.PURCHASE_ORDER_SUPPLIER_ID.toString().includes(
+        lowerCaseSearchTerm
+      ) ||
+      formatDate(order.PURCHASE_ORDER_DATE_CREATED)
+        .toLowerCase()
+        .includes(lowerCaseSearchTerm) ||
       order.PURCHASE_ORDER_STATUS.toLowerCase().includes(lowerCaseSearchTerm)
     );
   });
 
   // Sort the filtered orders based on sort configuration
   const sortedOrders = filteredOrders.sort((a, b) => {
-    if (sortConfig.key === "PURCHASE_ORDER_DATE") {
+    if (sortConfig.key === "PURCHASE_ORDER_DATE_CREATED") {
       return (
-        (new Date(b.PURCHASE_ORDER_DATE) - new Date(a.PURCHASE_ORDER_DATE)) *
+        (new Date(b.PURCHASE_ORDER_DATE) -
+          new Date(a.PURCHASE_ORDER_DATE_CREATED)) *
         (sortConfig.direction === "asc" ? 1 : -1)
       );
     }
@@ -45,7 +68,7 @@ const SharedSupplierOrderPage = () => {
         (sortConfig.direction === "asc" ? 1 : -1)
       );
     }
-    return a.SUPPLIER_ID - b.SUPPLIER_ID; // Sorting by Supplier ID
+    return a.PURCHASE_ORDER_SUPPLIER_ID - b.PURCHASE_ORDER_SUPPLIER_ID; // Sorting by Supplier ID
   });
 
   const openDetailsModal = (order) => setSelectedOrder(order);
@@ -53,13 +76,19 @@ const SharedSupplierOrderPage = () => {
   const openAddSupplierOrderModal = () => setIsAddingSupplierOrder(true);
   const closeAddSupplierOrderModal = () => setIsAddingSupplierOrder(false);
 
-  const headers = ["Supplier ID", "Order Date", "Order Status", "Action"];
+  const headers = [
+    "Order ID",
+    "Supplier Name",
+    "Order Date",
+    "Order Status",
+    "Action",
+  ];
 
   // Rows for the table
   const rows = sortedOrders.map((order) => {
     return [
-      order.SUPPLIER_ID, // Display supplier ID
-      order.PURCHASE_ORDER_DATE,
+      order.PURCHASE_ORDER_SUPPLIER_ID, // Display supplier ID
+      formatDate(order.PURCHASE_ORDER_DATE_CREATED),
       <Status status={order.PURCHASE_ORDER_STATUS || "Pending"}>
         {order.PURCHASE_ORDER_STATUS || "Pending"}
       </Status>, // Display status with styled status component
@@ -100,21 +129,29 @@ const SharedSupplierOrderPage = () => {
           <TableHeader
             key={index}
             onClick={() => {
-              if (header === "Order Date" || header === "Supplier ID") {
+              if (
+                header === "Order Date" ||
+                header === "Supplier Name" ||
+                header === "Order ID"
+              ) {
                 handleSort(
                   header === "Order Date"
                     ? "PURCHASE_ORDER_DATE"
+                    : header === "Supplier Name"
+                    ? "SUPP_COMPANY_NAME" // Updated to SUPP_COMPANY_NAME
                     : "PURCHASE_ORDER_ID"
                 );
               }
             }}
           >
             {header}
-            {(header === "Order Date" || header === "Supplier ID") && (
+            {(header === "Order Date" ||
+              header === "Supplier Name" ||
+              header === "Order ID") && (
               <>
                 {sortConfig.key ===
                 (header === "Order Date"
-                  ? "PURCHASE_ORDER_DATE"
+                  ? "PURCHASE_ORDER_DATE_CREATED"
                   : "PURCHASE_ORDER_ID") ? (
                   sortConfig.direction === "asc" ? (
                     <FaChevronUp
