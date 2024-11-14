@@ -83,9 +83,18 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
 
   const handleSaveWithValidation = async () => {
     if (validateFields()) {
-      if (onSave) onSave(); // Ensure handleSave is called correctly
+      try {
+        if (onSave) await onSave(); // Ensure onSave is called correctly, assuming it performs the saving action
+        notify.success("Order successfully created!"); // Success toast notification
+      } catch (error) {
+        // In case of an error during saving
+        notify.error("Order not saved. Please try again."); // Error toast for unsuccessful saving
+      }
+    } else {
+      notify.error("Please fill in all required fields."); // Error toast for empty fields
     }
   };
+  
 
   const clearError = (field) => {
     setErrors((prevErrors) => ({

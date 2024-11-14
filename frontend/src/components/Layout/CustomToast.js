@@ -1,14 +1,14 @@
 // CustomToast.js
-import React from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-
+import React from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Custom toast component
 const CustomToast = ({ message, closeToast }) => (
   <div style={toastStyles.container}>
-    <button style={toastStyles.closeButton} onClick={closeToast}>✖️</button>
+    <button style={toastStyles.closeButton} onClick={closeToast}>
+      ✖️
+    </button>
     <div style={toastStyles.content}>{message}</div>
   </div>
 );
@@ -31,35 +31,35 @@ export const ToastContainerSetup = () => (
     newestOnTop
     closeOnClick
     rtl={false}
-    pauseOnFocusLoss
+    // pauseOnFocusLoss
     draggable
     pauseOnHover
-    style={{ zIndex: 9999 }} // Ensures it appears on top of modals
+    style={{ zIndex: 9999 }}
   />
 );
 
 // Inline styles for the custom toast
 const toastStyles = {
-    container: {
-      display: 'flex',
-      alignItems: 'center',
-      backgroundColor: '#333',
-      color: '#fff',
-      padding: '10px',
-      borderRadius: '5px',
-      boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.3)',
-      fontSize: '14px',
-    },
-    closeButton: {
-      background: 'transparent',
-      border: 'none',
-      color: '#fff',
-      fontSize: '1.2em',
-      marginRight: '8px',
-      cursor: 'pointer',
-    },
-    content: {
-      flex: 1,
-    }
-  };
+  container: {
+    display: "flex",
+    alignItems: "center",
+    backgroundColor: "#333",
+    color: "#fff",
+    padding: "10px",
+    borderRadius: "5px",
+    boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.3)",
+    fontSize: "14px",
+  },
+  closeButton: {
+    background: "transparent",
+    border: "none",
+    color: "#fff",
+    fontSize: "1.2em",
+    marginRight: "8px",
+    cursor: "pointer",
+  },
+  content: {
+    flex: 1,
+  },
+};
 export default CustomToast;
