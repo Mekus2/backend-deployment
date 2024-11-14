@@ -38,6 +38,20 @@ class UserListView(APIView):
         users = User.objects.filter(isActive=True)
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
+    
+    def put(self, request, user_id=None):
+        if user_id is not None:
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+            serializer = UserSerializer(user, data=request.data, partial=True)  # partial=True allows partial updates
+            if serializer.is_valid():
+                serializer.save()  # Save the updated user data
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'User ID is required for update'}, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdateUserView(APIView):
     authentication_classes = [CookieJWTAuthentication]
@@ -129,10 +143,87 @@ class UserProfileImageView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, user_id):
-        user = get_object_or_404(User, id=user_id, isActive=True)
+        user = get_object_or_404(User, id=user_id)
 
         if user.image:
             image_url = request.build_absolute_uri(user.image.url)
             return Response({'image_url': image_url}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'User has no profile image'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class TotalStaffCount(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        total_staff = User.objects.count()
+        return Response({total_staff}, status=status.HTTP_200_OK)
+    
+
+class TotalActiveUserCount(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Count the number of active users
+        total_active_users = User.objects.filter(isActive=True).count()
+        return Response({ total_active_users}, status=status.HTTP_200_OK)
+    
+
+class UserListExcludeSuperAdminView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        """
+        Handle GET request to return a list of active users, excluding superadmin.
+        """
+        try:
+            # Query users and exclude those with accType='superadmin' or isActive=False
+            users = User.objects.exclude(accType='superadmin').exclude(isActive=False)
+            
+            # Serialize the users
+            serializer = UserSerializer(users, many=True)
+            
+            # Return the serialized data in the response
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle errors (e.g., database errors, etc.)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class DeactivateUserView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]  # Only authenticated admins can deactivate
+
+    def put(self, request, user_id):
+        """
+        Set isActive to False for a specified user by user_id.
+        """
+        user = get_object_or_404(User, id=user_id)
+
+        # Update isActive to False and set dateUpdated to the current time
+        user.isActive = False
+        user.dateUpdated = timezone.now()
+        user.save()
+
+        return Response({'message': 'User has been deactivated successfully'}, status=status.HTTP_200_OK)
+
+
+class ReactivateUserView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]  # Only authenticated admins can deactivate
+
+    def put(self, request, user_id):
+        """
+        Set isActive to False for a specified user by user_id.
+        """
+        user = get_object_or_404(User, id=user_id)
+
+        # Update isActive to False and set dateUpdated to the current time
+        user.isActive = True
+        user.dateUpdated = timezone.now()
+        user.save()
+
+        return Response({'message': 'User has been reactivated successfully'}, status=status.HTTP_200_OK)

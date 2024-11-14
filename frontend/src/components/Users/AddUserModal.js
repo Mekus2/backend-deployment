@@ -18,9 +18,8 @@ const AddUserModal = ({ onClose, onSave }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
   const [acctype, setAcctype] = useState("Staff");
-  const [image, setImage] = useState(null);
+  // [image, setImage] = useState(null);
   const [errors, setErrors] = useState({});
-
   const modalRef = useRef();
 
   useEffect(() => {
@@ -29,228 +28,180 @@ const AddUserModal = ({ onClose, onSave }) => {
         onClose();
       }
     };
-
     document.addEventListener("mousedown", handleOutsideClick);
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
-    };
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [onClose]);
 
   useEffect(() => {
     if (firstname && lastname && acctype) {
-      const generatedUsername = `${acctype.toLowerCase()}_${firstname.toLowerCase()}${lastname.toLowerCase()}`.replace(/\s/g, "");
-      setUsername(generatedUsername);
-    } else if (acctype) {
+      setUsername(`${acctype.toLowerCase()}_${firstname.toLowerCase()}${lastname.toLowerCase()}`.replace(/\s/g, ""));
+    } else {
       setUsername(`${acctype.toLowerCase()}_`);
     }
   }, [firstname, lastname, acctype]);
 
   const validateFields = () => {
     const newErrors = {};
-    
     if (!firstname) newErrors.firstname = "First name is required.";
     if (!lastname) newErrors.lastname = "Last name is required.";
-    if (!email) newErrors.email = "Email is required.";
-    else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) newErrors.email = "Please enter a valid email address.";
+    if (!email) {
+      newErrors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address.";
     }
     if (!password) newErrors.password = "Password is required.";
     if (password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match.";
-    if (!phoneNumber) newErrors.phoneNumber = "Phone number is required.";
-    else {
-      const phoneRegex = /^0\d{10}$/;
-      if (!phoneRegex.test(phoneNumber)) newErrors.phoneNumber = "Phone number must start with '0' and be 11 digits long.";
+    if (!phoneNumber) {
+      newErrors.phoneNumber = "Phone number is required.";
+    } else if (!/^0\d{10}$/.test(phoneNumber)) {
+      newErrors.phoneNumber = "Phone number must start with '0' and be 11 digits long.";
     }
     if (!address) newErrors.address = "Address is required.";
-    if (!image) newErrors.image = "Image is required.";
-    
+    //if (!image) newErrors.image = "Image is required.";
     return newErrors;
   };
 
   const handleSave = async () => {
+    // Validate fields
     const validationErrors = validateFields();
     setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) {
-      return;
-    }
-
-    // Prompt for confirmation
-    const confirmAddUser = window.confirm("Are you sure you want to add this user?");
-    if (!confirmAddUser) return; // If user cancels, exit early
-
-    const formData = new FormData();
-    formData.append("user_username", username);
-    formData.append("user_firstname", firstname);
-    formData.append("user_midinitial", midinitial);
-    formData.append("user_lastname", lastname);
-    formData.append("user_email", email);
-    formData.append("user_password", password);
-    formData.append("user_phone_number", phoneNumber);
-    formData.append("user_address", address);
-    formData.append("user_acctype", acctype);
-    if (image) {
-      formData.append("user_image", image);
-    }
-
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/staff/create/", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (response.ok) {
+  
+    // If there are validation errors, don't proceed
+    if (Object.keys(validationErrors).length > 0) return;
+  
+    // Confirm before submitting the data
+    if (window.confirm("Are you sure you want to add this user?")) {
+      const formData = new FormData();
+      formData.append("username", username);  // No "user_" prefix
+      formData.append("first_name", firstname);  // No "user_" prefix
+      formData.append("mid_initial", midinitial);  // No "user_" prefix
+      formData.append("last_name", lastname);  // No "user_" prefix
+      formData.append("email", email);  // No "user_" prefix
+      formData.append("password", password);  // No "user_" prefix
+      formData.append("phonenumber", phoneNumber);  // No "user_" prefix
+      formData.append("address", address);  // No "user_" prefix
+      formData.append("accType", acctype);  // No "user_" prefix
+     // if (image) formData.append("image", image);  // No "user_" prefix
+  
+      // Debugging: Log FormData to check the fields
+      console.log("FormData:", Object.fromEntries(formData.entries()));
+  
+      try {
+        // Make the API request to create the user
+        const response = await fetch("http://127.0.0.1:8000/account/register/", {
+          method: "POST",
+          body: formData,
+        });
+  
         const result = await response.json();
-        onSave(result);
-        onClose();
-      } else {
-        const result = await response.json();
-        alert(`Error: ${result.detail || "An error occurred"}`);
+        
+        console.log("Backend response:", result);  // Log the response for debugging
+  
+        if (response.ok) {
+          // On successful response
+          onSave(result);
+          onClose();
+        } else {
+          // Handle validation errors for each field
+          if (result.username) {
+            setErrors((prevErrors) => ({
+              ...prevErrors,
+              username: result.username[0], // Display error for username
+            }));
+            alert(`Error: Username "${username}" is already taken.`);
+          }
+  
+          if (result.email) {
+            setErrors((prevErrors) => ({
+              ...prevErrors,
+              email: result.email[0], // Display error for email
+            }));
+            alert(`Error: Email "${email}" is already taken.`);
+          }
+  
+          // Generic error handling if no specific username/email error exists
+          if (!result.username && !result.email && result.detail) {
+            alert(`Error: ${result.detail || "An error occurred"}`);
+          } else if (!result.username && !result.email) {
+            alert("An unknown error occurred. Please try again.");
+          }
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred. Please try again.");
       }
-    } catch (error) {
-      console.error("Error:", error);
-      alert("An error occurred. Please try again.");
     }
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const fileType = file.type.split('/')[0];
-      if (fileType === 'image') {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImage(reader.result);
-          setErrors((prev) => ({ ...prev, image: "" }));
-        };
-        reader.readAsDataURL(file);
-      } else {
-        setErrors((prev) => ({ ...prev, image: "Please upload a valid image file." }));
-      }
-    }
-  };
+  
+  
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  // const handleImageChange = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     if (file.type.split('/')[0] === 'image') {
+  //       const reader = new FileReader();
+  //       reader.onloadend = () => setImage(reader.result);
+  //       reader.readAsDataURL(file);
+  //     } else {
+  //       setErrors((prev) => ({ ...prev, image: "Please upload a valid image file." }));
+  //     }
+  //   }
+  // };
 
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(!showConfirmPassword);
-  };
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+  const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
 
   const isSuperadminPage = window.location.pathname.includes("/superadmin/users");
+  const isAdminPage = window.location.pathname.includes("/admin/users");
 
   return (
     <ModalOverlay>
       <ModalContent ref={modalRef}>
         <ModalHeader>
           <h2>Add User</h2>
-          <CloseButton onClick={onClose}>
-            <IoCloseCircle />
-          </CloseButton>
+          <CloseButton onClick={onClose}><IoCloseCircle /></CloseButton>
         </ModalHeader>
         <ModalBody>
-          <Field>
-            <Label>Image</Label>
-            <ImageContainer>
-              {image && <img src={image} alt="User" />}
-              <Input type="file" accept="image/*" onChange={handleImageChange} />
-            </ImageContainer>
-            {errors.image && <ErrorMessage>{errors.image}</ErrorMessage>} {/* Display image error */}
-          </Field>
-          <Field>
-            <Label>First Name</Label>
-            <Input value={firstname} onChange={(e) => setFirstname(e.target.value)} />
-            {errors.firstname && <ErrorMessage>{errors.firstname}</ErrorMessage>}
-          </Field>
-          <Field>
-            <Label>Middle Initial</Label>
-            <Input value={midinitial} onChange={(e) => setMidinitial(e.target.value)} />
-          </Field>
-          <Field>
-            <Label>Last Name</Label>
-            <Input value={lastname} onChange={(e) => setLastname(e.target.value)} />
-            {errors.lastname && <ErrorMessage>{errors.lastname}</ErrorMessage>}
-          </Field>
-          <Field>
-            <Label>Address</Label>
-            <Input value={address} onChange={(e) => setAddress(e.target.value)} />
-            {errors.address && <ErrorMessage>{errors.address}</ErrorMessage>}
-          </Field>
+          <Field><Label>First Name</Label><Input value={firstname} onChange={(e) => setFirstname(e.target.value)} />{errors.firstname && <ErrorMessage>{errors.firstname}</ErrorMessage>}</Field>
+          <Field><Label>Middle Name</Label><Input value={midinitial} onChange={(e) => setMidinitial(e.target.value)} /></Field>
+          <Field><Label>Last Name</Label><Input value={lastname} onChange={(e) => setLastname(e.target.value)} />{errors.lastname && <ErrorMessage>{errors.lastname}</ErrorMessage>}</Field>
+          <Field><Label>Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} />{errors.address && <ErrorMessage>{errors.address}</ErrorMessage>}</Field>
           <Field>
             <Label>Phone Number</Label>
             <Input
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))} // Allow only numbers
-              onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} // Further restrict input
-              maxLength={11} // Limit to 11 digits
+              onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+              maxLength={11}
             />
             {errors.phoneNumber && <ErrorMessage>{errors.phoneNumber}</ErrorMessage>}
           </Field>
-          <Field>
-            <Label>Email</Label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
-          </Field>
-          <Field>
-            <Label>Username</Label>
-            <Input value={username} readOnly />
-          </Field>
+          <Field><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />{errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}</Field>
+          <Field><Label>Username</Label><Input value={username} readOnly /></Field>
           <Field>
             <Label>Password</Label>
             <PasswordWrapper>
-              <Input
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => { 
-                  setPassword(e.target.value); 
-                  setErrors((prev) => ({ ...prev, password: "" })); 
-                }}
-              />
-              <TogglePasswordButton onClick={togglePasswordVisibility}>
-                {showPassword ? <FaEye /> : <FaEyeSlash />}
-              </TogglePasswordButton>
+              <Input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <TogglePasswordButton onClick={togglePasswordVisibility}>{showPassword ? <FaEye /> : <FaEyeSlash />}</TogglePasswordButton>
             </PasswordWrapper>
             {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
           </Field>
-          {/* Conditionally render Confirm Password field */}
           {password && (
             <Field>
               <Label>Confirm Password</Label>
               <PasswordWrapper>
-                <Input
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => { 
-                    setConfirmPassword(e.target.value); 
-                    setErrors((prev) => ({ ...prev, confirmPassword: "" })); 
-                  }}
-                />
-                <TogglePasswordButton onClick={toggleConfirmPasswordVisibility}>
-                  {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
-                </TogglePasswordButton>
+                <Input type={showConfirmPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                <TogglePasswordButton onClick={toggleConfirmPasswordVisibility}>{showConfirmPassword ? <FaEye /> : <FaEyeSlash />}</TogglePasswordButton>
               </PasswordWrapper>
               {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
             </Field>
           )}
-          {isSuperadminPage && (
-            <Field>
-              <Label>Account Type</Label>
-              <Select value={acctype} onChange={(e) => setAcctype(e.target.value)}>
-                <option value="Staff">Staff</option>
-                <option value="Admin">Admin</option>
-              </Select>
-            </Field>
-          )}
+          {isSuperadminPage && <Field><Label>Account Type</Label><Select value={acctype} onChange={(e) => setAcctype(e.target.value)}><option value="Staff">Staff</option><option value="Admin">Admin</option></Select></Field>}
+          {isAdminPage && <Field><Label>Account Type</Label><Select value={acctype} onChange={(e) => setAcctype(e.target.value)}><option value="Staff">Staff</option></Select></Field>}
         </ModalBody>
         <ModalFooter>
-          <Button variant="red" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleSave}>
-            Add User
-          </Button>
+          <Button variant="red" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" onClick={handleSave}>Add User</Button>
         </ModalFooter>
       </ModalContent>
     </ModalOverlay>
@@ -341,18 +292,18 @@ const Select = styled.select`
   border-radius: 4px;
 `;
 
-const ImageContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
+// const ImageContainer = styled.div`
+//   display: flex;
+//   align-items: center;
+//   gap: 10px;
 
-  img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 50%;
-  }
-`;
+//   img {
+//     width: 100px;
+//     height: 100px;
+//     object-fit: cover;
+//     border-radius: 50%;
+//   }
+// `;
 
 const ModalFooter = styled.div`
   display: flex;
