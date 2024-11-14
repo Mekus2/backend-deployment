@@ -76,7 +76,13 @@ const SharedSupplierOrderPage = () => {
   const openAddSupplierOrderModal = () => setIsAddingSupplierOrder(true);
   const closeAddSupplierOrderModal = () => setIsAddingSupplierOrder(false);
 
-  const headers = ["Supplier ID", "Order Date", "Order Status", "Action"];
+  const headers = [
+    "Order ID",
+    "Supplier Name",
+    "Order Date",
+    "Order Status",
+    "Action",
+  ];
 
   // Rows for the table
   const rows = sortedOrders.map((order) => {
@@ -123,17 +129,25 @@ const SharedSupplierOrderPage = () => {
           <TableHeader
             key={index}
             onClick={() => {
-              if (header === "Order Date" || header === "Supplier ID") {
+              if (
+                header === "Order Date" ||
+                header === "Supplier Name" ||
+                header === "Order ID"
+              ) {
                 handleSort(
                   header === "Order Date"
                     ? "PURCHASE_ORDER_DATE"
+                    : header === "Supplier Name"
+                    ? "SUPP_COMPANY_NAME" // Updated to SUPP_COMPANY_NAME
                     : "PURCHASE_ORDER_ID"
                 );
               }
             }}
           >
             {header}
-            {(header === "Order Date" || header === "Supplier ID") && (
+            {(header === "Order Date" ||
+              header === "Supplier Name" ||
+              header === "Order ID") && (
               <>
                 {sortConfig.key ===
                 (header === "Order Date"
