@@ -98,7 +98,6 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
       notify.error("Please fill in all required fields."); // Error toast for empty fields
     }
   };
-  
 
   const clearError = (field) => {
     setErrors((prevErrors) => ({
