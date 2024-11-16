@@ -27,6 +27,7 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
       setCustomer(data);
     };
     fetchData();
+    console.log(`Logged User Role: ${userRole}`);
   }, []);
 
   // Helper function to format date to mm/dd/yyyy

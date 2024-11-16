@@ -60,12 +60,12 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
   if (!order) return null;
 
   // Function to format currency values safely
-  const formatCurrency = (amount) => {
-    if (amount === undefined || amount === null) {
-      return "₱0.00"; // Default value if input is undefined or null
-    }
-    return `₱${amount.toFixed(2)}`; // Format to two decimal places
-  };
+  // const formatCurrency = (amount) => {
+  //   if (amount === undefined || amount === null) {
+  //     return "₱0.00"; // Default value if input is undefined or null
+  //   }
+  //   return `₱${amount.toFixed(2)}`; // Format to two decimal places
+  // };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -78,16 +78,17 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
 
   // Calculate total quantity
   const totalQuantity = orderDetails.reduce(
-    (total, detail) => total + (detail.PURCH_ORDER_QTY || 0),
+    (total, detail) => total + (detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0),
     0
   );
 
   // Calculate total amount by summing the total for each item
-  const totalAmount = orderDetails.reduce((total, detail) => {
-    const lineTotal =
-      (detail.PURCH_ORDER_QTY || 0) * (detail.PURCH_ORDER_PRICE || 0); // Calculate total for each item
-    return total + lineTotal; // Sum up the totals
-  }, 0);
+  // const totalAmount = orderDetails.reduce((total, detail) => {
+  //   const lineTotal =
+  //     (detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0) *
+  //     (detail.PURCH_ORDER_PRICE || 0); // Calculate total for each item
+  //   return total + lineTotal; // Sum up the totals
+  // }, 0);
 
   // Handlers for the buttons
   const handleAcceptOrder = () => {
@@ -144,7 +145,9 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
                       <TableCell>
                         {detail.PURCHASE_ORDER_DET_PROD_NAME}
                       </TableCell>
-                      <TableCell>{detail.PURCH_ORDER_QTY || 0}</TableCell>
+                      <TableCell>
+                        {detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0}
+                      </TableCell>
                       {/* <TableCell>
                         {formatCurrency(detail.PURCH_ORDER_PRICE || 0)}
                       </TableCell> */}
@@ -166,10 +169,10 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
           <SummaryItem>
             <strong>Total Quantity:</strong> {totalQuantity}
           </SummaryItem>
-          <SummaryItem>
+          {/* <SummaryItem>
             <strong>Total Amount:</strong>{" "}
             <HighlightedTotal>{formatCurrency(totalAmount)}</HighlightedTotal>
-          </SummaryItem>
+          </SummaryItem> */}
         </TotalSummary>
       </Section>
 
@@ -235,10 +238,10 @@ const SummaryItem = styled.div`
   margin-top: 10px; /* Add space between items */
 `;
 
-const HighlightedTotal = styled.span`
-  color: green; /* Highlight total amount in green */
-  font-size: 16px;
-`;
+// const HighlightedTotal = styled.span`
+//   color: green; /* Highlight total amount in green */
+//   font-size: 16px;
+// `;
 
 const ButtonGroup = styled.div`
   display: flex;

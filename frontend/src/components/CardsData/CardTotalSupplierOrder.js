@@ -1,12 +1,22 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Card from "../Layout/Card"; // Import the reusable Card component
 import PURCHASE_ORDERS from "../../data/SupplierOrderData"; // Import the purchase order data as default
 import styled from "styled-components";
 import { FaClipboardCheck } from "react-icons/fa"; // Keeping the existing icon for Supplier Orders
+import { fetchPurchaseOrders } from "../../api/fetchPurchaseOrders";
 
 const CardTotalSupplierOrder = () => {
-  // Calculation for total number of Supplier Orders
-  const purchaseOrderCount = PURCHASE_ORDERS.length; // Count total purchase orders
+  const [purchaseOrderCount, setPurchaseOrderCount] = useState(0);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const orders = await fetchPurchaseOrders();
+      setPurchaseOrderCount(orders.length);
+    };
+
+    fetchOrders();
+    const interValId = setInterval(fetchOrders, 20000);
+  }, []);
 
   return (
     <CardContainer>

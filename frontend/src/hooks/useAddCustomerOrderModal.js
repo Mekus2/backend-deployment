@@ -21,6 +21,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
   // }));
 
   // State variables
+  const [userId] = useState(localStorage.getItem("user_id") || "");
   const [clientName, setClientName] = useState("");
   const [clientCity, setClientCity] = useState("");
   const [clientProvince, setClientProvince] = useState("");
@@ -99,6 +100,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
 
   const handleProductInputChange = (index, value) => {
     console.log(`Input changed at index ${index}: ${value}`); // Log the input change
+    console.log(`Logged in User Id: ${userId}`);
     setCurrentEditingIndex(index);
     setProductSearch(value); // Update immediately for input responsiveness
 
@@ -271,7 +273,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
 
     const newOrder = {
       SALES_ORDER_STATUS: "Pending",
-      SALES_ORDER_CREATEDBY_USER: 1, // Replace with actual user ID if dynamic
+      SALES_ORDER_CREATEDBY_USER: userId, // Replace with actual user ID if dynamic
       CLIENT_ID: clientId,
       SALES_ORDER_CLIENT_NAME: clientName,
       SALES_ORDER_CLIENT_PROVINCE: clientProvince,
