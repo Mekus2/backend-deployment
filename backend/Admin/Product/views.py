@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.generics import get_object_or_404
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions
 from Admin.authentication import CookieJWTAuthentication
 from django.db.models import Q
@@ -15,22 +16,38 @@ from .serializers import (
 
 
 class ProductDetailsManager(APIView):
-    # authentication_classes = [CookieJWTAuthentication]
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request, pk=None):  # Ensure 'pk' is included as a parameter here
-        if pk:
-
+    def get(self, request, pk=None):
+        if pk is not None:
             try:
-                product = Product.objects.get(
-                    pk=pk
-                )  # Fetch the product by its primary key
-                serializer = ProductReadSerializer(product)
-                return Response(serializer.data)
-            except Product.DoesNotExist:
-                return Response(
-                    {"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND
-                )
+                # Query by PROD_DETAILS_CODE (which is the primary key)
+                details = ProductDetails.objects.get(PROD_DETAILS_CODE=pk)
+                serializer = ProductDetailsSerializer(details)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except ProductDetails.DoesNotExist:
+                return Response({"error": "Details not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # If no `pk` is provided, return all records
+        queryset = ProductDetails.objects.all()
+        serializer = ProductDetailsSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+       
+    def put(self, request, pk=None):
+        if pk:
+            try:
+                # Fetch the ProductDetails instance by its primary key
+                product_details = ProductDetails.objects.get(pk=pk)
+
+                # Serialize the ProductDetails instance to accept update data
+                serializer = ProductDetailsSerializer(product_details, data=request.data, partial=False)
+
+                if serializer.is_valid():
+                    serializer.save()  # Save the updated ProductDetails instance
+                    return Response(serializer.data, status=status.HTTP_200_OK)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            except ProductDetails.DoesNotExist:
+                return Response({"detail": "ProductDetails not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ProductListManager(APIView):
@@ -60,10 +77,19 @@ class ProductListManager(APIView):
 
 
 class ProductCategoryManager(APIView):
-    # authentication_classes = [CookieJWTAuthentication]
     permission_classes = [permissions.AllowAny]
 
-    def get(self, request):
+    def get(self, request, pk=None):
+        # If pk is provided, fetch a single product category
+        if pk is not None:
+            try:
+                category = ProductCategory.objects.get(pk=pk)
+                serializer = ProductCategorySerializer(category)
+                return Response(serializer.data)
+            except ProductCategory.DoesNotExist:
+                return Response({"error": "Category not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        # If no pk is provided, return all categories
         queryset = ProductCategory.objects.all()
         serializer = ProductCategorySerializer(queryset, many=True)
         return Response(serializer.data)
@@ -80,9 +106,7 @@ class ProductCategoryManager(APIView):
             # Get the category instance to update
             category = ProductCategory.objects.get(pk=pk)
         except ProductCategory.DoesNotExist:
-            return Response(
-                {"error": "Category not found."}, status=status.HTTP_404_NOT_FOUND
-            )
+            return Response({"error": "Category not found."}, status=status.HTTP_404_NOT_FOUND)
 
         # Deserialize and update the instance
         serializer = ProductCategorySerializer(
@@ -109,6 +133,7 @@ class ProductCategoryManager(APIView):
         )  # Return success message
 
 
+
 class ProductCategoryFilterView(APIView):
     # authentication_classes = [CookieJWTAuthentication]
     permission_classes = [permissions.AllowAny]
@@ -126,9 +151,7 @@ class ProductCategoryFilterView(APIView):
             queryset = queryset.filter(PROD_CAT_NAME__icontains=prod_cat_name)
 
         if prod_cat_subcategory:
-            queryset = queryset.filter(
-                PROD_CAT_SUBCATEGORY__icontains=prod_cat_subcategory
-            )
+            queryset = queryset.filter(PROD_CAT_SUBCATEGORY__icontains=prod_cat_subcategory)
 
         serializer = ProductCategorySerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -205,9 +228,7 @@ class ProductDetailsManager(APIView):  # noqa:F811
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = ProductDetailsSerializer(
-            product_detail, data=request.data, partial=True
-        )
+        serializer = ProductDetailsSerializer(product_detail, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -242,3 +263,19 @@ class ProductSearchView(APIView):
         # Serialize the filtered product list
         serializer = ProductReadSerializer(products, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class ProductCountView(APIView):
+    authenticaton_classes = [CookieJWTAuthentication]
+    permission_classes = [permissions.AllowAny]  # Optional: limit access to authenticated users
+
+    def get(self, request):
+        total_products = Product.objects.count()
+        return Response({ total_products})
+    
+class CategoryCountView(APIView):
+    authentication_classes  = [CookieJWTAuthentication]
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        total_categories = ProductCategory.objects.count()
+        return Response({total_categories})

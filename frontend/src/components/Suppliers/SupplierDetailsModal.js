@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import PropTypes from "prop-types";
-import styled from "styled-components";
 import Modal from "../Layout/Modal";
+import styled from "styled-components";
 import Button from "../Layout/Button";
 
 const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
@@ -9,40 +8,70 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
   const [editedSupplier, setEditedSupplier] = useState(supplier || {});
   const [errors, setErrors] = useState({});
 
-  if (!supplier) return null;
+  if (!supplier) return null; // Ensure modal doesn't render if supplier is undefined
 
-  const handleEdit = () => setIsEditing(true);
-
-  const validateInputs = () => {
+  const validateFields = () => {
     let newErrors = {};
 
-    if (!editedSupplier.SUPP_COMPANY_NAME) {
-      newErrors.SUPP_COMPANY_NAME = "Company name is required";
+    // Validate required fields
+    if (!editedSupplier.Supp_Company_Name) {
+      newErrors.Supp_Company_Name = "Company name is required";
     }
-    if (!editedSupplier.SUPP_COMPANY_NUM) {
-      newErrors.SUPP_COMPANY_NUM = "Company number is required";
+    if (!editedSupplier.Supp_Company_Num) {
+      newErrors.Supp_Company_Num = "Company number is required";
     }
-    if (!editedSupplier.SUPP_CONTACT_NAME) {
-      newErrors.SUPP_CONTACT_NAME = "Contact name is required";
+    if (!editedSupplier.Supp_Contact_Pname) {
+      newErrors.Supp_Contact_Pname = "Contact name is required";
     }
-    if (!editedSupplier.SUPP_CONTACT_PHNUM) {
-      newErrors.SUPP_CONTACT_PHNUM = "Contact number is required";
-    } else if (!/^0\d{10}$/.test(editedSupplier.SUPP_CONTACT_PHNUM)) {
-      newErrors.SUPP_CONTACT_PHNUM = "Phone number must be 11 digits and start with '0'";
+    if (!editedSupplier.Supp_Contact_Num) {
+      newErrors.Supp_Contact_Num
+      = "Contact number is required";
+    } else if (!/^0\d{10}$/.test(editedSupplier.Supp_Contact_Num
+    )) {
+      newErrors.Supp_Contact_Num
+      =
+        "Phone number must be 11 digits and start with '0'";
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0; // Return true if no errors
   };
 
-  const handleSave = () => {
-    if (validateInputs()) {
+  const handleEdit = () => setIsEditing(true);
+
+  const handleSave = async () => {
+    if (validateFields()) {
       const confirmSave = window.confirm(
         "Are you sure you want to save the changes?"
       );
       if (confirmSave) {
-        alert("Supplier details saved");
-        setIsEditing(false);
+        try {
+          const updatedSupplier = { ...editedSupplier };
+          const response = await fetch(
+            `http://127.0.0.1:8000/supplier/suppliers/${supplier.id}/`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(updatedSupplier),
+            }
+          );
+          console.log('updated:', updatedSupplier );
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            alert(
+              `Error: ${errorData.message || "Failed to update supplier details"}`
+            );
+          } else {
+            alert("Supplier details saved successfully!");
+            setIsEditing(false);
+            onClose();
+          }
+        } catch (error) {
+          alert(`Error: ${error.message}`);
+        }
       }
     }
   };
@@ -54,6 +83,7 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
     if (confirmCancel) {
       setIsEditing(false);
       setEditedSupplier(supplier);
+      setErrors({});
     }
   };
 
@@ -62,47 +92,17 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
       "Are you sure you want to remove this supplier?"
     );
     if (confirmRemoval) {
-      if (typeof onRemove === "function") {
-        onRemove(supplier.SUPP_ID);
-      } else {
-        console.error("onRemove is not a function");
-      }
+      onRemove(supplier.SUPP_ID);
       onClose();
     }
   };
 
   const handlePhoneNumberChange = (e) => {
     const value = e.target.value;
-
-    if (value === "" || value.startsWith("0")) {
-      if (/^\d*$/.test(value) && value.length <= 11) {
-        setEditedSupplier({
-          ...editedSupplier,
-          SUPP_CONTACT_PHNUM: value,
-        });
-      }
-    } else if (value.length > 0 && !value.startsWith("0")) {
+    if (/^[0-9]*$/.test(value) && value.length <= 11) {
       setEditedSupplier({
         ...editedSupplier,
-        SUPP_CONTACT_PHNUM: "0" + value.replace(/^0*/, ""),
-      });
-    }
-  };
-
-  const handleCompanyNumberChange = (e) => {
-    const value = e.target.value;
-
-    if (value === "" || value.startsWith("0")) {
-      if (/^\d*$/.test(value) && value.length <= 11) {
-        setEditedSupplier({
-          ...editedSupplier,
-          SUPP_COMPANY_NUM: value,
-        });
-      }
-    } else if (value.length > 0 && !value.startsWith("0")) {
-      setEditedSupplier({
-        ...editedSupplier,
-        SUPP_COMPANY_NUM: "0" + value.replace(/^0*/, ""),
+        Supp_Contact_Num: value,
       });
     }
   };
@@ -110,9 +110,7 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
   return (
     <Modal
       title={
-        isEditing
-          ? `Edit ${supplier.SUPP_COMPANY_NAME}`
-          : `${supplier.SUPP_COMPANY_NAME} Details`
+        isEditing ? `Edit ${supplier.Supp_Company_Name}` : "Supplier Details"
       }
       onClose={onClose}
     >
@@ -121,74 +119,70 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
           <Details>
             <DetailItem>
               <Label>Company Name:</Label>
-              {errors.SUPP_COMPANY_NAME && (
-                <Error>{errors.SUPP_COMPANY_NAME}</Error>
-              )}
               <Input
                 type="text"
-                value={editedSupplier.SUPP_COMPANY_NAME || ""}
+                value={editedSupplier.Supp_Company_Name || ""}
                 onChange={(e) =>
                   setEditedSupplier({
                     ...editedSupplier,
-                    SUPP_COMPANY_NAME: e.target.value,
+                    Supp_Company_Name: e.target.value,
                   })
                 }
-                border
               />
+              {errors.Supp_Company_Name && (
+                <Error>{errors.Supp_Company_Name}</Error>
+              )}
             </DetailItem>
-
             <DetailItem>
               <Label>Company Number:</Label>
-              {errors.SUPP_COMPANY_NUM && (
-                <Error>{errors.SUPP_COMPANY_NUM}</Error>
-              )}
               <Input
                 type="text"
-                value={editedSupplier.SUPP_COMPANY_NUM || "0"}
-                onChange={handleCompanyNumberChange}
-                border
-              />
-            </DetailItem>
-
-            <DetailItem>
-              <Label>Contact Name:</Label>
-              {errors.SUPP_CONTACT_NAME && (
-                <Error>{errors.SUPP_CONTACT_NAME}</Error>
-              )}
-              <Input
-                type="text"
-                value={editedSupplier.SUPP_CONTACT_NAME || ""}
+                value={editedSupplier.Supp_Company_Num || ""}
                 onChange={(e) =>
                   setEditedSupplier({
                     ...editedSupplier,
-                    SUPP_CONTACT_NAME: e.target.value,
+                    Supp_Company_Num: e.target.value,
                   })
                 }
-                border
               />
-
-            </DetailItem>
-
-            <DetailItem>
-              <Label>Contact Number:</Label>
-              {errors.SUPP_CONTACT_PHNUM && (
-                <Error>{errors.SUPP_CONTACT_PHNUM}</Error>
+              {errors.Supp_Company_Num && (
+                <Error>{errors.Supp_Company_Num}</Error>
               )}
+            </DetailItem>
+            <DetailItem>
+              <Label>Contact Name:</Label>
               <Input
                 type="text"
-                value={editedSupplier.SUPP_CONTACT_PHNUM || "0"}
-                onChange={handlePhoneNumberChange}
-                border
+                value={editedSupplier.Supp_Contact_Pname || ""}
+                onChange={(e) =>
+                  setEditedSupplier({
+                    ...editedSupplier,
+                    Supp_Contact_Pname: e.target.value,
+                  })
+                }
               />
- 
+              {errors.Supp_Contact_Name && (
+                <Error>{errors.Supp_Contact_Name}</Error>
+              )}
+            </DetailItem>
+            <DetailItem>
+              <Label>Contact Number:</Label>
+              <Input
+                type="tel"
+                value={editedSupplier.Supp_Contact_Num || ""}
+                onChange={handlePhoneNumberChange}
+              />
+              {errors.Supp_Contact_Num && (
+                <Error>{errors.Supp_Contact_Num}</Error>
+              )}
             </DetailItem>
           </Details>
           <ButtonGroup>
-            <Button variant="primary" onClick={handleSave}>
-              Save
-            </Button>
             <Button variant="red" onClick={handleCancel}>
               Cancel
+            </Button>
+            <Button variant="primary" onClick={handleSave}>
+              Save Edit
             </Button>
           </ButtonGroup>
         </>
@@ -197,19 +191,19 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
           <Section>
             <Detail>
               <DetailLabel>Company Name:</DetailLabel>{" "}
-              {supplier.SUPP_COMPANY_NAME}
+              {supplier.Supp_Company_Name || "N/A"}
             </Detail>
             <Detail>
               <DetailLabel>Company Number:</DetailLabel>{" "}
-              {supplier.SUPP_COMPANY_NUM}
+              {supplier.Supp_Company_Num || "N/A"}
             </Detail>
             <Detail>
               <DetailLabel>Contact Name:</DetailLabel>{" "}
-              {supplier.SUPP_CONTACT_NAME}
+              {supplier.Supp_Contact_Pname || "N/A"}
             </Detail>
             <Detail>
               <DetailLabel>Contact Number:</DetailLabel>{" "}
-              {supplier.SUPP_CONTACT_PHNUM}
+              {supplier.Supp_Contact_Num  || "N/A"}
             </Detail>
           </Section>
           <ButtonGroup>
@@ -226,47 +220,39 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
   );
 };
 
-SupplierDetailsModal.propTypes = {
-  supplier: PropTypes.shape({
-    SUPP_ID: PropTypes.string.isRequired,
-    SUPP_COMPANY_NAME: PropTypes.string,
-    SUPP_COMPANY_NUM: PropTypes.string,
-    SUPP_CONTACT_NAME: PropTypes.string,
-    SUPP_CONTACT_PHNUM: PropTypes.string,
-  }),
-  onClose: PropTypes.func.isRequired,
-  onRemove: PropTypes.func.isRequired,
-};
-
 // Styled Components
+const Section = styled.div`
+  margin-bottom: 20px;
+`;
+
+const Detail = styled.div`
+  margin-bottom: 10px;
+`;
+
+const DetailLabel = styled.span`
+  font-weight: bold;
+  margin-right: 10px;
+`;
+
 const Details = styled.div`
   margin-bottom: 20px;
 `;
 
 const DetailItem = styled.div`
   margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 `;
 
 const Label = styled.label`
+  display: block;
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 `;
 
 const Input = styled.input`
-  border: ${(props) => (props.border ? "1px solid #ddd" : "none")};
-  border-radius: 4px;
-  padding: 8px;
   width: 100%;
-  box-sizing: border-box;
-`;
-
-const Error = styled.p`
-  color: red;
-  font-size: 12px;
-  margin: 4px 0 0;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
 `;
 
 const ButtonGroup = styled.div`
@@ -275,22 +261,10 @@ const ButtonGroup = styled.div`
   gap: 10px;
 `;
 
-const Section = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-`;
-
-const Detail = styled.div`
-  margin-bottom: 10px;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-`;
-
-const DetailLabel = styled.span`
-  font-weight: bold;
-  margin-right: 8px;
+const Error = styled.p`
+  color: red;
+  font-size: 12px;
+  margin-top: 5px;
 `;
 
 export default SupplierDetailsModal;
