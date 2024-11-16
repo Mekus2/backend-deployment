@@ -27,8 +27,10 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import MainLayout from "../../components/Layout/MainLayout";
 import Loading from "../../components/Layout/Loading";
 import ResetLayout from "../../utils/ResetLayout";
+import { checkUserAccess } from "../../api/authUtils";
 
 const SuperAdminDashboard = () => {
+  checkUserAccess();
   const navigate = useNavigate();
   const [currentCardOrder, setCurrentCardOrder] = useState([
     "CardTotalProducts",

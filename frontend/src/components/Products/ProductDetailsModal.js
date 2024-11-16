@@ -1,30 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import styled from "styled-components";
-import Modal from "../Layout/Modal"; // Import the reusable Modal component
-import productData from "../../data/ProductData";
+import Modal from "../Layout/Modal";
 import Button from "../Layout/Button";
-import PRICE_HISTORY_DATA from "../../data/PriceHistoryData"; // Import Price History Data
-import PriceHistoryDetails from "./PriceHistory/PriceHistoryDetails"; // Import PriceHistoryDetails component
-import { USER } from '../../data/UserData'; // Import User Data
+// import PriceHistoryDetails from "./PriceHistory/PriceHistoryDetails"; 
+// import { USER } from '../../data/UserData'; // Import User Data
+
 
 const ProductDetailsModal = ({ productId, onClose }) => {
-  const product = productData.PRODUCT.find((p) => p.PROD_ID === productId);
-  const productDetail = productData.PRODUCT_DETAILS.find(
-    (d) => d.PROD_DETAILS_CODE === product.PROD_DETAILS_CODE
-  );
-  const category = productData.PRODUCT_CATEGORY.find(
-    (c) => c.PROD_CAT_CODE === product.PROD_CAT_CODE
-  );
-
+  const [product, setProduct] = useState(null); // Store the product data
   const [isEditing, setIsEditing] = useState(false);
-  const [showPriceHistory, setShowPriceHistory] = useState(false); // State for Price History Modal
+  const [ setShowPriceHistory] = useState(false); // State for Price History Modal
 
-  if (!product || !productDetail || !category) {
-    return null; // Or show a loading spinner/error message
+  // Fetch product details when the component is mounted
+  useEffect(() => {
+    const fetchProductDetails = async () => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/items/productList/${productId}/`);
+        setProduct(response.data); // Set the fetched product data
+      } catch (error) {
+        console.error("Error fetching product data:", error);
+      }
+    };
+
+    fetchProductDetails();
+  }, [productId]); // Run this effect only when productId changes
+
+  if (!product) {
+    return <p>Loading...</p>; // Show a loading message while the data is being fetched
   }
 
-  const handleEdit = () => setIsEditing(true);
+  // Extract product details and category data
+  const productDetail = product.PROD_DETAILS;
+  const category = product.PROD_CAT_CODE; // Assuming this is an ID or similar; adjust if needed
 
+  const handleEdit = () => setIsEditing(true);
 
   const handleRemove = () => {
     const confirmRemoval = window.confirm(
@@ -41,22 +51,22 @@ const ProductDetailsModal = ({ productId, onClose }) => {
     setShowPriceHistory(true); // Open the price history modal
   };
 
-  const closePriceHistoryModal = () => {
-    setShowPriceHistory(false); // Close the price history modal
-  };
+  // const closePriceHistoryModal = () => {
+  //   setShowPriceHistory(false); // Close the price history modal
+  // };
 
   // Filter the price history for the current product
-  const priceHistoryEntries = PRICE_HISTORY_DATA.filter(
-    (entry) => entry.PROD_ID === productId
-  );
+  // const priceHistoryEntries = PRICE_HISTORY_DATA.filter(
+  //   (entry) => entry.PROD_ID === productId
+  // );
 
-  // Create user mapping from USER data
-  const userMapping = Object.fromEntries(
-    USER.map((user) => [
-      user.USER_ID,
-      `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`
-    ])
-  );
+  // // Create user mapping from USER data
+  // const userMapping = Object.fromEntries(
+  //   USER.map((user) => [
+  //     user.USER_ID,
+  //     `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`
+  //   ])
+  // );
 
   return (
     <Modal
@@ -72,12 +82,12 @@ const ProductDetailsModal = ({ productId, onClose }) => {
       ) : (
         <>
           <Section>
-            <Image src={product.PROD_IMAGE} alt={product.PROD_NAME} />
+            <Image src={product.PROD_IMAGE || '/path/to/default/image.jpg'} alt={product.PROD_NAME} />
             <Detail>
               <DetailLabel>Name:</DetailLabel> {product.PROD_NAME}
             </Detail>
             <Detail>
-              <DetailLabel>Category:</DetailLabel> {category.PROD_CAT_NAME}
+              <DetailLabel>Category:</DetailLabel> {category}
             </Detail>
             <Detail>
               <DetailLabel>Size:</DetailLabel> {productDetail.PROD_DETAILS_SIZE}
@@ -88,7 +98,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             </Detail>
             <Detail>
               <DetailLabel>Price:</DetailLabel> ₱
-              {productDetail.PROD_DETALS_PRICE}
+              {productDetail.PROD_DETAILS_PRICE}
               <MoreInfoButton onClick={handleMoreInfoClick}>
                 More Info
               </MoreInfoButton>
@@ -107,13 +117,13 @@ const ProductDetailsModal = ({ productId, onClose }) => {
               <DetailLabel>Quantity on Hand:</DetailLabel> {product.PROD_QOH}
             </Detail>
             <Detail>
-              <DetailLabel>Date Created:</DetailLabel>{" "}
-              {product.PROD_DATECREATED}
+            <DetailLabel>Date Created:</DetailLabel>{" "}
+            {new Date(product.PROD_DATECREATED).toISOString().split("T")[0]}
             </Detail>
-            <Detail>
-              <DetailLabel>Date Updated:</DetailLabel>{" "}
-              {product.PROD_DATEUPDATED}
-            </Detail>
+             <Detail>
+            <DetailLabel>Date Updated:</DetailLabel>{" "}
+            {new Date(product.PROD_DATEUPDATED).toISOString().split("T")[0]}
+           </Detail>
           </Section>
 
           <ButtonGroup>
@@ -127,12 +137,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
         </>
       )}
 
-      {/* Price History Modal */}
-      {showPriceHistory && (
-        <Modal onClose={closePriceHistoryModal} title={`${product.PROD_NAME} Price History`}>
-          <PriceHistoryDetails priceHistory={priceHistoryEntries} userMapping={userMapping} />
-        </Modal>
-      )}
+      
     </Modal>
   );
 };

@@ -5,7 +5,7 @@ import {
   calculateTotalValue,
 } from "../utils/CalculationUtils";
 // import { suppliers } from "../data/SupplierData";
-import productData from "../data/ProductData"; // Adjust the path as needed
+//import productData from "../data/ProductData"; // Adjust the path as needed
 import axios from "axios";
 // import { FaAviato } from "react-icons/fa";
 

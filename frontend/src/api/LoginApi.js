@@ -8,8 +8,14 @@ export const loginUser = async (credentials) => {
     try {
         const response = await axios.post(`${API_URL}login/`, credentials);
         console.log(response.data); // Check response data
+
         // Destructure response data to get the tokens and other user information
-        const { access, refresh, id, type, first_name } = response.data;
+        const { access, refresh, id, type, first_name, isActive } = response.data;
+
+        // Check if the account is active
+        if (isActive) {
+            throw new Error('Account is inactive. Please contact support.');
+        }
 
         // Store the access token in cookies with an 8-hour expiration
         if (access) {
@@ -29,8 +35,8 @@ export const loginUser = async (credentials) => {
         console.log("Login successful! Tokens and user data stored.");
         return response.data; // Return user data if needed
     } catch (error) {
-        console.error("Error during login:", error.response ? error.response.data : error);
-        throw error.response ? error.response.data : error;
+        console.error("Error during login:", error.response ? error.response.data : error.message);
+        throw error.response ? error.response.data : { detail: error.message };
     }
 };
 

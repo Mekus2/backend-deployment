@@ -21,8 +21,10 @@ import CardTotalSupplierOrder from "../../components/CardsData/CardTotalSupplier
 import { getLayout } from "../../utils/indexedDB";
 import MainLayout from "../../components/Layout/MainLayout";
 import Loading from "../../components/Layout/Loading";
+import { checkUserAccess } from "../../api/authUtils";
 
 const AdminDashboard = () => {
+  checkUserAccess();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 

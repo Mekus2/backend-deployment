@@ -1,4 +1,3 @@
-# Login/views.py
 from django.core.mail import send_mail
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -8,7 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from .serializers import *
+from .serializers import LoginSerializer, MyTokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
 
 class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
@@ -19,6 +19,12 @@ class LoginView(TokenObtainPairView):
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data['user']
+
+        # Check if the account is active
+        if not user.isActive:
+            raise AuthenticationFailed("Account is inactive. Please contact support.")
+
+        # Generate tokens using the custom token serializer
         token_serializer = MyTokenObtainPairSerializer.get_token(user)
 
         # Prepare the response data
@@ -26,23 +32,34 @@ class LoginView(TokenObtainPairView):
             'id': user.id,
             'type': user.accType,
             'username': user.username,
-            'first_name': user.first_name,  # Corrected spelling here
+            'first_name': user.first_name,
             'message': 'Login Successful',
             'access': str(token_serializer.access_token),
             'refresh': str(token_serializer),
         }
+
+        # Check the user type (accType) and prepare a role-specific URL
+        if user.accType == 'superadmin':
+            response_data['redirect_url'] = "http://localhost:3000/superadmin/"
+        elif user.accType == 'admin':
+            response_data['redirect_url'] = "http://localhost:3000/admin/"
+        elif user.accType == 'staff':
+            response_data['redirect_url'] = "http://localhost:3000/staff/"
+        else:
+            raise AuthenticationFailed("Unauthorized access")
 
         # Create the response and set the access token as an HTTP-only cookie
         response = Response(response_data, status=status.HTTP_200_OK)
         response.set_cookie(
             key='access_token',
             value=str(token_serializer.access_token),
-            httponly=True,  # Makes the cookie inaccessible via JavaScript
-            secure=True,    # Ensures cookie is only sent over HTTPS
-            samesite='Lax'  # Restricts cookie sending to prevent CSRF attacks
+            httponly=True,
+            secure=True,
+            samesite='Lax',
         )
 
         return response
+
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]  # Only authenticated users can access this view
