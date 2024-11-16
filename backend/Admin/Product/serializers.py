@@ -7,46 +7,10 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         model = ProductCategory
         fields = "__all__"
 
-
-class ProductDetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductDetails  # Use your actual model name
-        fields = (
-            "PROD_DETAILS_CODE",
-            "PROD_DETAILS_DESCRIPTION",
-            "PROD_DETAILS_PRICE",
-            "PROD_DETAILS_BRAND",
-            "PROD_DETAILS_QUANTITY",
-            "PROD_DETAILS_UNIT",
-            "PROD_DETAILS_PACKAGING",
-            "PROD_CAT_CODE",
-        )
-        extra_kwargs = {
-            "PROD_DETAILS_CODE": {
-                "read_only": True
-            },  # Make it read-only if it's auto-generated
-        }
-
-
 class ProductDetailsSerializer(serializers.ModelSerializer):  # noqa:F811
     class Meta:
         model = ProductDetails
-        fields = (
-            "PROD_DETAILS_CODE",
-            "PROD_DETAILS_DESCRIPTION",
-            "PROD_DETAILS_PRICE",
-            "PROD_DETAILS_BRAND",
-            "PROD_DETAILS_QUANTITY",
-            "PROD_DETAILS_UNIT",
-            "PROD_DETAILS_PACKAGING",
-            "PROD_CAT_CODE",
-        )
-        extra_kwargs = {
-            "PROD_DETAILS_CODE": {
-                "read_only": True
-            },  # Make it read-only if it's auto-generated
-        }
-
+        fields = "__all__"
 
 class ProductSerializer(serializers.ModelSerializer):
     PROD_IMAGE = serializers.ImageField(
@@ -107,6 +71,9 @@ class ProductReadSerializer(serializers.ModelSerializer):
             "PROD_RO_QTY",
             "PROD_QOH",
             "PROD_IMAGE",
+            "PROD_DATECREATED",
+            "PROD_DATEUPDATED",
+            "PROD_DETAILS_CODE",
             "PROD_DETAILS",  # Include PROD_DETAILS for read
         ]
 
