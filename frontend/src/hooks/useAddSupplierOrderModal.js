@@ -10,6 +10,7 @@ import axios from "axios";
 // import { FaAviato } from "react-icons/fa";
 
 import { getProductByName } from "../api/fetchProducts";
+import { addNewPurchaseOrder } from "../api/fetchPurchaseOrders";
 
 const useAddSupplierOrderModal = (onSave, onClose) => {
   // State variables
@@ -233,39 +234,40 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
     });
   };
 
-  const handleSave = () => {
-    return new Promise((resolve, reject) => {
-      try {
-        const newOrder = {
-          PURCHASE_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
-          PURCHASE_ORDER_SUPPLIER_ID: supplierID,
-          PURCHASE_ORDER_SUPPLIER_CMPNY_NUM: supplierCompanyNum,
-          PURCHASE_ORDER_SUPPLIER_CMPNY_NAME: supplierCompanyName,
-          PURCHASE_ORDER_CONTACT_PERSON: contactPersonName,
-          PURCHASE_ORDER_CONTACT_NUMBER: contactPersonNumber,
-          PURCHASE_ORDER_CREATEDBY_USER: 1,
-          details: orderDetails.map((item) => ({
-            PURCHASE_ORDER_DET_PROD_ID: item.productId,
-            PURCHASE_ORDER_DET_PROD_NAME: item.productName,
-            PURCHASE_ORDER_DET_PROD_LINE_QTY: item.quantity,
-          })),
-        };
+  const handleSave = async () => {
+    try {
+      const newOrder = {
+        PURCHASE_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
+        PURCHASE_ORDER_SUPPLIER_ID: supplierID,
+        PURCHASE_ORDER_SUPPLIER_CMPNY_NUM: supplierCompanyNum,
+        PURCHASE_ORDER_SUPPLIER_CMPNY_NAME: supplierCompanyName,
+        PURCHASE_ORDER_CONTACT_PERSON: contactPersonName,
+        PURCHASE_ORDER_CONTACT_NUMBER: contactPersonNumber,
+        PURCHASE_ORDER_CREATEDBY_USER: 1,
+        details: orderDetails.map((item) => ({
+          PURCHASE_ORDER_DET_PROD_ID: item.productId,
+          PURCHASE_ORDER_DET_PROD_NAME: item.productName,
+          PURCHASE_ORDER_DET_PROD_LINE_QTY: item.quantity,
+        })),
+      };
 
-        console.log("Final Data to be passed:", newOrder);
+      console.log("Final Data to be passed:", newOrder);
 
-        if (onSave) {
-          onSave(newOrder); // Call onSave with order data
-        }
+      // Call API to save order
+      const createdOrder = await addNewPurchaseOrder(newOrder);
+      console.log("Order Saved:", createdOrder);
 
-        if (onClose) {
-          onClose(); // Close modal after save
-        }
-
-        resolve(); // Resolve promise for success
-      } catch (error) {
-        reject(error); // Reject promise on error
+      // Optionally, trigger a state update or re-fetch to reflect new order without reloading page
+      if (onSave) {
+        onSave(newOrder); // Call onSave with order data
       }
-    });
+
+      if (onClose) {
+        onClose(); // Close modal after save
+      }
+    } catch (error) {
+      console.error("Error saving order:", error);
+    }
   };
   const handleRemoveProduct = (index) => {
     setOrderDetails((prevOrderDetails) => {
