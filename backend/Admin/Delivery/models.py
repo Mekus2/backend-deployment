@@ -90,7 +90,7 @@ class InboundDelivery(models.Model):
     INBOUND_DEL_SUPP_NAME = models.CharField(max_length=50, null=True, blank=True)
     INBOUND_DEL_DATE_RCVD = models.DateTimeField(auto_now=True, null=True, blank=True)
     INBOUND_DEL_STATUS = models.CharField(
-        max_length=15, choices=INBOUND_DELIVERY_STATUS_CHOICES
+        max_length=15, choices=INBOUND_DELIVERY_STATUS_CHOICES, default="Pending"
     )
     INBOUND_DEL_RCVD_QTY = models.PositiveIntegerField(null=False, default=0)
     INBOUND_DEL_TOTAL_PRICE = models.DecimalField(
@@ -116,10 +116,10 @@ class InboundDeliveryDetails(models.Model):
     INBOUND_DEL_DETAIL_LINE_PRICE = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
-    INBOUND_DEL_DETAIL_LINE_QTY = models.PositiveIntegerField(null=False)
-    INBOUND_DEL_DETAIL_PROD_EXP_DATE = models.DateField(null=False, blank=False)
+    INBOUND_DEL_DETAIL_LINE_QTY = models.PositiveIntegerField(null=False, default=0)
+    INBOUND_DEL_DETAIL_PROD_EXP_DATE = models.DateField(null=True, blank=True)
     INBOUND_DEL_DETAIL_BATCH_ID = models.CharField(
-        max_length=30, blank=True, editable=False
+        max_length=30, null=True, blank=True, editable=False
     )
 
     def save(self, *args, **kwargs):
