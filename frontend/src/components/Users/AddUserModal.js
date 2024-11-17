@@ -196,8 +196,8 @@ const AddUserModal = ({ onClose, onSave }) => {
               {errors.confirmPassword && <ErrorMessage>{errors.confirmPassword}</ErrorMessage>}
             </Field>
           )}
-          {isSuperadminPage && <Field><Label>Account Type</Label><Select value={acctype} onChange={(e) => setAcctype(e.target.value)}><option value="Staff">Staff</option><option value="Admin">Admin</option></Select></Field>}
-          {isAdminPage && <Field><Label>Account Type</Label><Select value={acctype} onChange={(e) => setAcctype(e.target.value)}><option value="Staff">Staff</option></Select></Field>}
+          {isSuperadminPage && <Field><Label>Account Type</Label><Select value={acctype} onChange={(e) => setAcctype(e.target.value)}><option value="staff">Staff</option><option value="admin">Admin</option></Select></Field>}
+          {isAdminPage && <Field><Label>Account Type</Label><Select value={acctype} onChange={(e) => setAcctype(e.target.value)}><option value="staff">Staff</option></Select></Field>}
         </ModalBody>
         <ModalFooter>
           <Button variant="red" onClick={onClose}>Cancel</Button>
