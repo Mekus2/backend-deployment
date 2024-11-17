@@ -82,7 +82,7 @@ export const superadminSidebarItems = [
   { icon: MdOutlineInventory2, label: "Inventory", link: "/superadmin/inventory" },
   { icon: LuWarehouse, label: "Supplier", link: "/superadmin/suppliers" },
   { icon: TbUserDollar, label: "Customer", link: "/superadmin/customers" },
-  { icon: GrGroup, label: "Staff", link: "/superadmin/users" },
+  { icon: GrGroup, label: "User", link: "/superadmin/users" },
   { icon: TbBasketDollar, label: "Sales", link: "/superadmin/sales" },
   { icon: TbTruckReturn, label: "Return", link: "/superadmin/returns" },
   { icon: TbHistory, label: "Logs", link: "/superadmin/logs" },

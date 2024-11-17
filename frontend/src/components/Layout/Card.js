@@ -25,8 +25,8 @@ const CardContainer = styled.div`
   padding: 14px;
   border-radius: 8px;
   flex: 1;
-  min-width: 150px;
-  max-width: 100%; // Allow card to expand up to its container width
+  min-width: 160px;
+  max-width: 160px; // Allow card to expand up to its container width
   text-align: left;
   display: flex;
   align-items: center;
