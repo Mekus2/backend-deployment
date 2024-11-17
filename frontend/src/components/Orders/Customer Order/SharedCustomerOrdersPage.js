@@ -17,7 +17,7 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const [isAddingCustomerOrder, setIsAddingCustomerOrder] = useState(false);
   const [sortConfig, setSortConfig] = useState({
     key: "SALES_ORDER_DATE_CREATED",
-    direction: "desc",
+    direction: "desc", // Default to descending
   });
 
   // Fetch data from API when component mounts
@@ -56,8 +56,7 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const sortedSales = filteredSales.sort((a, b) => {
     if (sortConfig.key === "SALES_ORDER_DATE_CREATED") {
       return (
-        (new Date(b.SALES_ORDER_DATE_CREATED) -
-          new Date(a.SALES_ORDER_DATE_CREATED)) *
+        (new Date(b.SALES_ORDER_DATE_CREATED) - new Date(a.SALES_ORDER_DATE_CREATED)) *
         (sortConfig.direction === "asc" ? 1 : -1)
       );
     }

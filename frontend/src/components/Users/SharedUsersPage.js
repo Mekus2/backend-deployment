@@ -5,69 +5,69 @@ import AddUserModal from "../../components/Users/AddUserModal";
 import UserDetailsModal from "../../components/Users/UserDetailsModal";
 import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
-import CardTotalStaffs from "../../components/CardsData/CardTotalStaffs";
 import Button from "../../components/Layout/Button";
+import Card from "../../components/Layout/Card"; // Import the new Card component
 import { FaPlus } from "react-icons/fa";
-import { fetchTotalStaff, fetchStaff } from "../../api/StaffApi"; // Import API functions
-import axios from "axios"; // Import axios for HTTP requests
-import profilePic from "../../assets/profile.png"; // Import the default image
+import { fetchTotalStaff, fetchStaff } from "../../api/StaffApi";
+import axios from "axios";
+import profilePic from "../../assets/profile.png";
 
 const SharedUsersPage = () => {
   const [userType, setUserType] = useState(null);
-  const [staffData, setStaffData] = useState([]); // State to store fetched staff data
-  const [totalStaff, setTotalStaff] = useState(0); // State for total staff count
+  const [staffData, setStaffData] = useState([]);
+  const [totalStaff, setTotalStaff] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [imageUrls, setImageUrls] = useState({}); // State to store image URLs for staff
+  const [imageUrls, setImageUrls] = useState({});
+  const [showInactive, setShowInactive] = useState(false);
 
   useEffect(() => {
-    // Fetch user type from local storage
     const storedUserType = localStorage.getItem("user_type");
     setUserType(storedUserType);
 
-    // Fetch total staff count
     fetchTotalStaff()
       .then((data) => setTotalStaff(data.total))
       .catch((error) => console.error(error));
 
-    // Fetch all staff data
     fetchStaff()
       .then((data) => {
         setStaffData(data);
-
-        // Fetch images for each user
         const fetchImages = async () => {
           const newImageUrls = {};
           for (const member of data) {
             try {
-              // Fetch the image for each user by user ID
-              const imageResponse = await axios.get(`http://127.0.0.1:8000/account/users/${member.id}/image/`);
+              const imageResponse = await axios.get(
+                `http://127.0.0.1:8000/account/users/${member.id}/image/`
+              );
               const imageUrl = imageResponse.data.image_url;
-              // Use profilePic as fallback if imageUrl is null
-              newImageUrls[member.id] = imageUrl || profilePic; 
+              newImageUrls[member.id] = imageUrl || profilePic;
             } catch (error) {
               console.error("Failed to fetch image for user:", member.id);
-              newImageUrls[member.id] = profilePic; // Fallback to profilePic on error
+              newImageUrls[member.id] = profilePic;
             }
           }
-          setImageUrls(newImageUrls); // Store image URLs in state
+          setImageUrls(newImageUrls);
         };
 
-        fetchImages(); // Call the function to fetch images
+        fetchImages();
       })
       .catch((error) => console.error(error));
   }, []);
 
-  // Filter staff data based on search term
   const filteredStaff = staffData.filter((member) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const isActiveFilter = showInactive
+      ? member.USER_ISACTIVE
+      : !member.USER_ISACTIVE;
+
     return (
-      member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
-      member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
-      member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
-      member.username.toLowerCase().includes(lowerCaseSearchTerm)
+      isActiveFilter &&
+      (member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
+        member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
+        member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
+        member.username.toLowerCase().includes(lowerCaseSearchTerm))
     );
   });
 
@@ -85,25 +85,25 @@ const SharedUsersPage = () => {
     );
   };
 
-  // Fetch user details by ID and open details modal
   const openDetailsModal = async (user) => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/account/users/${user.id}/`);
-      console.log('API Response:', response.data); // Log the response to check if the data is correct
-      setSelectedUser(response.data); // Set the fetched data into state
-      setIsDetailsModalOpen(true); // Open the modal
+      const response = await axios.get(
+        `http://127.0.0.1:8000/account/users/${user.id}/`
+      );
+      console.log("API Response:", response.data);
+      setSelectedUser(response.data);
+      setIsDetailsModalOpen(true);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
   };
 
-  const headers = ["Image", "Name", "Role",  "Actions"];
+  const headers = ["Image", "Name", "Role", "Actions"];
 
   const rows = filteredStaff.map((member) => [
     <ImageContainer key={member.id}>
-      {/* Fetch and display the image from the imageUrls state */}
       <img
-        src={imageUrls[member.id]} // Use the fetched image URL or profilePic as fallback
+        src={imageUrls[member.id]}
         alt={`${member.first_name} ${member.last_name}`}
         width="50"
         height="50"
@@ -111,7 +111,6 @@ const SharedUsersPage = () => {
     </ImageContainer>,
     `${member.first_name} ${member.last_name}`,
     member.accType,
-
     <Button
       backgroundColor={colors.primary}
       hoverColor={colors.primaryHover}
@@ -125,26 +124,45 @@ const SharedUsersPage = () => {
     <>
       <Controls>
         <SearchBar
-          placeholder={`Search / Filter ${userType === "admin" ? "staff..." : "users..."}`}
+          placeholder={`Search / Filter ${
+            userType === "admin" ? "staff..." : "users..."
+          }`}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
-        <StyledButton
-          backgroundColor={colors.primary}
-          hoverColor={colors.primaryHover}
-          onClick={() => setIsAddModalOpen(true)}
-        >
-          <FaPlus className="icon" /> User
-        </StyledButton>
+        <ButtonGroup>
+          <StyledButton
+            backgroundColor={colors.primary}
+            hoverColor={colors.primaryHover}
+            onClick={() => setIsAddModalOpen(true)}
+          >
+            <FaPlus className="icon" /> User
+          </StyledButton>
+          <Button
+            backgroundColor={showInactive ? colors.green : colors.red}
+            hoverColor={showInactive ? colors.greenHover : colors.redHover}
+            onClick={() => setShowInactive(!showInactive)}
+          >
+            {showInactive ? "Show Active" : "Show Inactive"}
+          </Button>
+        </ButtonGroup>
       </Controls>
       <AnalyticsContainer>
         {(userType === "admin" || userType === "superadmin") && (
-          <CardTotalStaffs total={totalStaff} /> // Display total staff count for admin and superadmin
+          <Card
+            label="Users"
+            value={`${filteredStaff.length}`}
+            bgColor={colors.primary}
+            icon={<FaPlus />}
+          />
         )}
       </AnalyticsContainer>
       <Table headers={headers} rows={rows} />
       {isAddModalOpen && (
-        <AddUserModal onClose={() => setIsAddModalOpen(false)} onSave={handleAddUser} />
+        <AddUserModal
+          onClose={() => setIsAddModalOpen(false)}
+          onSave={handleAddUser}
+        />
       )}
       {isDetailsModalOpen && selectedUser && (
         <UserDetailsModal
@@ -174,6 +192,10 @@ const StyledButton = styled(Button)`
     font-size: 20px;
     margin-right: 8px;
   }
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
 `;
 
 const AnalyticsContainer = styled.div`
