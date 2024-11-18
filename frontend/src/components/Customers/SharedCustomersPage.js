@@ -11,6 +11,7 @@ import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { colors } from "../../colors";
 import { fetchCustomers } from "../../api/CustomerApi"; // Import the fetchCustomers function
 import axios from "axios"; // Import axios for making requests
+import Loading from "../Layout/Loading"; // Import Loading component
 
 const SharedCustomersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -23,15 +24,19 @@ const SharedCustomersPage = () => {
     key: "name",
     direction: "asc",
   });
+  const [isLoading, setIsLoading] = useState(false); // Track loading state
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true); // Show the loading spinner
       try {
         const data = await fetchCustomers();
         setCustomers(data);
         setFilteredCustomers(data);
       } catch (error) {
         console.error("Failed to fetch customers", error);
+      } finally {
+        setIsLoading(false); // Hide the loading spinner
       }
     };
     fetchData();
@@ -56,22 +61,20 @@ const SharedCustomersPage = () => {
     setShowAddModal(true);
   };
 
-
   useEffect(() => {
     console.log('Selected Customer:', selectedCustomer);
   }, [selectedCustomer]);
 
-  // Fetch customer by ID and open details modal
   const openDetailsModal = async (customer) => {
-  try {
-    const response = await axios.get(`http://127.0.0.1:8000/customer/clients/${customer.id}/`);
-    console.log('API Response:', response.data); // Log the response to check if the data is correct
-    setSelectedCustomer(response.data); // Set the fetched data into state
-    setShowDetailsModal(true);
-  } catch (error) {
-    console.error("Error fetching customer data:", error);
-  }
-};
+    try {
+      const response = await axios.get(`http://127.0.0.1:8000/customer/clients/${customer.id}/`);
+      console.log('API Response:', response.data);
+      setSelectedCustomer(response.data);
+      setShowDetailsModal(true);
+    } catch (error) {
+      console.error("Error fetching customer data:", error);
+    }
+  };
 
   const closeModals = () => {
     setShowAddModal(false);
@@ -126,65 +129,71 @@ const SharedCustomersPage = () => {
 
   return (
     <>
-      <Controls>
-        <SearchBar
-          placeholder="Search / Filter customer..."
-          value={searchTerm}
-          onChange={handleSearch}
-        />
-        <StyledButton onClick={openAddCustomerModal}>
-          <FaPlus className="icon" /> Customer
-        </StyledButton>
-      </Controls>
-      <SummarySection>
-        <CardTotalCustomers />
-      </SummarySection>
-      <Table
-        headers={headers.map((header, index) => (
-          <TableHeader
-            key={index}
-            onClick={() => {
-              if (header === "Customer Name") handleSort("name");
-            }}
-          >
-            {header}
-            {header === "Customer Name" && (
-              <>
-                {sortConfig.key === "name" ? (
-                  sortConfig.direction === "asc" ? (
-                    <FaChevronUp
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                  ) : (
-                    <FaChevronDown
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                  )
-                ) : (
-                  <span style={{ opacity: 0.5 }}>
-                    <FaChevronUp
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                    <FaChevronDown
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                  </span>
+      {isLoading ? ( // Display the Loading spinner if data is still being fetched
+        <Loading />
+      ) : (
+        <>
+          <Controls>
+            <SearchBar
+              placeholder="Search / Filter customer..."
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+            <StyledButton onClick={openAddCustomerModal}>
+              <FaPlus className="icon" /> Customer
+            </StyledButton>
+          </Controls>
+          <SummarySection>
+            <CardTotalCustomers />
+          </SummarySection>
+          <Table
+            headers={headers.map((header, index) => (
+              <TableHeader
+                key={index}
+                onClick={() => {
+                  if (header === "Customer Name") handleSort("name");
+                }}
+              >
+                {header}
+                {header === "Customer Name" && (
+                  <>
+                    {sortConfig.key === "name" ? (
+                      sortConfig.direction === "asc" ? (
+                        <FaChevronUp
+                          style={{ marginLeft: "5px", fontSize: "12px" }}
+                        />
+                      ) : (
+                        <FaChevronDown
+                          style={{ marginLeft: "5px", fontSize: "12px" }}
+                        />
+                      )
+                    ) : (
+                      <span style={{ opacity: 0.5 }}>
+                        <FaChevronUp
+                          style={{ marginLeft: "5px", fontSize: "12px" }}
+                        />
+                        <FaChevronDown
+                          style={{ marginLeft: "5px", fontSize: "12px" }}
+                        />
+                      </span>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </TableHeader>
-        ))}
-        rows={rows}
-      />
-      {showAddModal && (
-        <AddCustomerModal onClose={closeModals} onAdd={handleAddCustomer} />
-      )}
-      {showDetailsModal && selectedCustomer && (
-        <CustomerDetailsModal
-          client={selectedCustomer}
-          onClose={closeModals}
-          onRemove={handleRemoveCustomer}
-        />
+              </TableHeader>
+            ))}
+            rows={rows}
+          />
+          {showAddModal && (
+            <AddCustomerModal onClose={closeModals} onAdd={handleAddCustomer} />
+          )}
+          {showDetailsModal && selectedCustomer && (
+            <CustomerDetailsModal
+              client={selectedCustomer}
+              onClose={closeModals}
+              onRemove={handleRemoveCustomer}
+            />
+          )}
+        </>
       )}
     </>
   );

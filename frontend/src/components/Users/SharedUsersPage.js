@@ -6,30 +6,27 @@ import UserDetailsModal from "../../components/Users/UserDetailsModal";
 import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
 import Button from "../../components/Layout/Button";
-import Card from "../../components/Layout/Card"; // Import the new Card component
+import Card from "../../components/Layout/Card";
 import { FaPlus } from "react-icons/fa";
-import { fetchTotalStaff, fetchStaff } from "../../api/StaffApi";
+import { fetchStaff } from "../../api/StaffApi";
 import axios from "axios";
 import profilePic from "../../assets/profile.png";
+import Loading from "../../components/Layout/Loading"; // Add your Loading component
 
 const SharedUsersPage = () => {
   const [userType, setUserType] = useState(null);
   const [staffData, setStaffData] = useState([]);
-  const [totalStaff, setTotalStaff] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [imageUrls, setImageUrls] = useState({});
   const [showInactive, setShowInactive] = useState(false);
+  const [loading, setLoading] = useState(true); // Loading state
 
   useEffect(() => {
     const storedUserType = localStorage.getItem("user_type");
     setUserType(storedUserType);
-
-    fetchTotalStaff()
-      .then((data) => setTotalStaff(data.total))
-      .catch((error) => console.error(error));
 
     fetchStaff()
       .then((data) => {
@@ -49,11 +46,15 @@ const SharedUsersPage = () => {
             }
           }
           setImageUrls(newImageUrls);
+          setLoading(false); // Set loading to false once data is ready
         };
 
         fetchImages();
       })
-      .catch((error) => console.error(error));
+      .catch((error) => {
+        console.error(error);
+        setLoading(false); // Stop loading if there is an error
+      });
   }, []);
 
   const filteredStaff = staffData.filter((member) => {
@@ -119,6 +120,10 @@ const SharedUsersPage = () => {
       Details
     </Button>,
   ]);
+
+  if (loading) {
+    return <Loading />; // Show loading spinner while fetching data
+  }
 
   return (
     <>

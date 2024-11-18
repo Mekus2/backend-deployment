@@ -13,7 +13,7 @@ import { FaPlus } from "react-icons/fa";
 import { colors } from "../../colors";
 import { fetchCategory } from "../../api/CategoryApi";
 import axios from 'axios';
-
+import Loading from "../Layout/Loading"; // Import the Loading component
 
 const SharedProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,9 +24,10 @@ const SharedProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rows, setRows] = useState([]);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
+
   useEffect(() => {
     const loadProductsAndCategories = async () => {
       try {
@@ -34,24 +35,24 @@ const SharedProductsPage = () => {
         const fetchedProducts = await fetchProductList();
         console.log('fetchedProducts:', fetchedProducts);
         setProducts(fetchedProducts);
-        
+
         // Filter products based on search term
-        const filteredProducts = fetchedProducts.filter((products) =>
-          products.PROD_NAME.toLowerCase().includes(searchTerm.toLowerCase())
+        const filteredProducts = fetchedProducts.filter((product) =>
+          product.PROD_NAME.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
         // Get unique category codes
         const uncachedCategoryCodes = [...new Set(
           filteredProducts.map((product) => product.PROD_DETAILS["PROD_CAT_CODE"])
         )];
-        
+
         console.log("uncachedCategoryCodes:", uncachedCategoryCodes);
-        
+
         // Fetch categories if uncached codes are found
         const uncachedCategories = uncachedCategoryCodes.length > 0 
           ? await Promise.all(uncachedCategoryCodes.map(fetchCategory)) 
           : [];
-        
+
         // Map products to rows
         const rowsData = filteredProducts.map((product) => {
           console.log('Product ID:', product.id); // Log product IDs for debugging
@@ -116,15 +117,14 @@ const SharedProductsPage = () => {
       setIsProductDetailsModalOpen(true);
     } catch (error) {
       console.error("Error fetching product data:", error);
-    } 
+    }
   };
-  
 
   const closeProductDetailsModal = () => {
     setSelectedProductId(null);
     setIsProductDetailsModalOpen(false);
   };
-  
+
   const handleCardClick = () => {
     let path;
     if (location.pathname.includes("/superadmin")) {
@@ -141,11 +141,15 @@ const SharedProductsPage = () => {
   };
 
   if (loading) {
-    return <div>Loading products...</div>;
+    return <Loading />;  // Use the Loading component while loading
   }
 
   if (error) {
-    return <div>{error}</div>;
+    return (
+      <ErrorContainer>
+        <div>{error}</div>
+      </ErrorContainer>
+    );
   }
 
   const headers = [
@@ -169,14 +173,12 @@ const SharedProductsPage = () => {
         <ButtonGroup>
           <StyledButton onClick={openAddProductModal}>
             <FaPlus className="icon" /> Product
-            <p value={product}></p>
           </StyledButton>
         </ButtonGroup>
       </Controls>
       <AnalyticsContainer>
         <CardTotalProducts />
         <ClickableCard onClick={handleCardClick}>
-          
           <CardTotalCategories />
         </ClickableCard>
       </AnalyticsContainer>
@@ -239,6 +241,13 @@ const ActionButton = styled(Button)`
     font-size: 20px;
     margin-right: 8px;
   }
+`;
+
+const ErrorContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 `;
 
 export default SharedProductsPage;
