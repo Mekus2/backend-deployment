@@ -9,6 +9,7 @@ import { fetchCustomerOrders } from "../../../api/fetchCustomerOrders";
 import { FaPlus } from "react-icons/fa";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import CustomerOrderDetailsModal from "./CustomerOrderDetailsModal";
+import Loading from "../../../components/Layout/Loading"; // Import the Loading component
 
 const SharedCustomerOrdersPage = ({ userRole }) => {
   const [customer, setCustomer] = useState([]); // Use customer data instead of orders
@@ -19,17 +20,24 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
     key: "SALES_ORDER_DATE_CREATED",
     direction: "desc", // Default to descending
   });
+  const [loading, setLoading] = useState(true); // Add loading state
 
-  // Fetch data from API when component mounts
   useEffect(() => {
     const fetchData = async () => {
-      const data = await fetchCustomerOrders();
-      setCustomer(data);
+      try {
+        setLoading(true); // Start loading
+        const data = await fetchCustomerOrders();
+        setCustomer(data);
+        setLoading(false); // Stop loading once data is fetched
+      } catch (error) {
+        setLoading(false); // Stop loading if there is an error
+        console.error("Error fetching customer orders:", error);
+      }
     };
     fetchData();
     console.log(`Logged User Role: ${userRole}`);
-  }, []);
-
+  }, [userRole]); // Include userRole as a dependency
+  
   // Helper function to format date to mm/dd/yyyy
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -98,6 +106,10 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
     }
     setSortConfig({ key, direction });
   };
+
+  if (loading) {
+    return <Loading />;  // Show the loading component when data is being fetched
+  }
 
   return (
     <>

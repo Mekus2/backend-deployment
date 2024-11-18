@@ -7,9 +7,9 @@ import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import CardTotalSupplierOrder from "../../../components/CardsData/CardTotalSupplierOrder";
 import Button from "../../Layout/Button";
-// import PURCHASE_ORDERS from "../../../data/SupplierOrderData"; // Make sure this path is correct
 import { FaPlus, FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { fetchPurchaseOrders } from "../../../api/fetchPurchaseOrders";
+import Loading from "../../../components/Layout/Loading"; // Import the Loading component
 
 const SharedSupplierOrderPage = () => {
   const navigate = useNavigate();
@@ -21,11 +21,19 @@ const SharedSupplierOrderPage = () => {
     key: "PURCHASE_ORDER_DATE",
     direction: "desc",
   });
+  const [loading, setLoading] = useState(true); // Add loading state
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const data = await fetchPurchaseOrders();
-      setOrders(data);
+      setLoading(true); // Start loading
+      try {
+        const data = await fetchPurchaseOrders();
+        setOrders(data);
+      } catch (error) {
+        console.error("Error fetching purchase orders:", error);
+      } finally {
+        setLoading(false); // Stop loading when done
+      }
     };
     fetchOrders();
   }, []);
@@ -107,6 +115,10 @@ const SharedSupplierOrderPage = () => {
     }
     setSortConfig({ key, direction });
   };
+
+  if (loading) {
+    return <Loading />; // Show the loading component when data is being fetched
+  }
 
   return (
     <>

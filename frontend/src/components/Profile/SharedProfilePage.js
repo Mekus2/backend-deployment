@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"; 
+import React, { useState, useEffect } from "react";
 import ChangePassModal from "./ChangePassModal";
 import {
   ProfileContainer,
@@ -20,9 +20,11 @@ import {
   ChangePasswordText,
 } from "./ProfileStyles";
 import { FaPencilAlt } from "react-icons/fa";
-import profilePic from "../../assets/profile.png"; // Default image if none exists
+import profilePic from "../../assets/profile.png"; // Default image
 import { fetchUserData, updateUserData } from "../../api/ProfileApi";
 import axios from "axios";
+import { notify } from "../Layout/CustomToast"; // Toast integration
+import Loading from "../Layout/Loading"; // Spinner component
 
 const SharedProfilePage = () => {
   const [email, setEmail] = useState("");
@@ -31,14 +33,25 @@ const SharedProfilePage = () => {
   const [firstName, setFirstName] = useState("");
   const [middleInitial, setMiddleInitial] = useState("");
   const [lastName, setLastName] = useState("");
-  const [profileImage, setProfileImage] = useState(profilePic); // Default profile picture
-  const [image, setImage] = useState(null); 
+  const [profileImage, setProfileImage] = useState(profilePic);
+  const [image, setImage] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
-  const [saveClicked, setSaveClicked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isChangePassModalOpen, setChangePassModalOpen] = useState(false);
+  const [lastToastTime, setLastToastTime] = useState(0); // Track the last toast time
+
+  // Edit mode tracking
+  const [editMode, setEditMode] = useState({
+    firstName: false,
+    middleInitial: false,
+    lastName: false,
+    email: false,
+    contact: false,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       const userId = localStorage.getItem("user_id");
       if (userId) {
         try {
@@ -49,31 +62,80 @@ const SharedProfilePage = () => {
           setMiddleInitial(userData.mid_initial);
           setLastName(userData.last_name);
 
-          // Fetch the user profile image
-          const imageResponse = await axios.get(`http://127.0.0.1:8000/account/users/${userId}/image/`);
-          const imageUrl = imageResponse.data.image_url;
-          setProfileImage(imageUrl || profilePic);  
-          console.log('image:', imageUrl);
+          const imageResponse = await axios.get(
+            `http://127.0.0.1:8000/account/users/${userId}/image/`
+          );
+          setProfileImage(imageResponse.data.image_url || profilePic);
         } catch (error) {
           console.error("Failed to load user data:", error);
+          notify.error("Failed to load user data.");
         }
       }
+      setIsLoading(false);
     };
 
     fetchData();
   }, []);
 
-  const handleChange = (setter) => (e) => {
-    setter(e.target.value);
-    setHasChanges(true);
+  const handleChange = (field, e) => {
+    const value = e.target.value;
 
-    // Email validation example
-    if (e.target.name === "email") {
-      const emailValue = e.target.value;
-      if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(emailValue)) {
-        alert("Invalid email address");
+    if (field === "contact" && !/^\d{0,11}$/.test(value)) return;
+
+    switch (field) {
+      case "firstName":
+        setFirstName(value);
+        break;
+      case "middleInitial":
+        setMiddleInitial(value);
+        break;
+      case "lastName":
+        setLastName(value);
+        break;
+      case "email":
+        setEmail(value);
+        break;
+      case "contact":
+        setContact(value);
+        break;
+      default:
+        break;
+    }
+
+    if (
+      value !==
+      (field === "firstName"
+        ? firstName
+        : field === "middleInitial"
+        ? middleInitial
+        : field === "lastName"
+        ? lastName
+        : field === "email"
+        ? email
+        : contact)
+    ) {
+      setHasChanges(true);
+      const currentTime = Date.now();
+      
+      // Show toast only if 5 seconds have passed since the last toast
+      if (currentTime - lastToastTime >= 5000) {
+        notify.info("Make sure to save changes!");  // Display toast when changes are made
+        setLastToastTime(currentTime);  // Update the last toast time
       }
     }
+  };
+
+  const toggleEditMode = (field) => {
+    setEditMode((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const handleBlur = (field) => {
+    setEditMode((prev) => ({ ...prev, [field]: false }));
+  };
+
+  const validateContactNumber = (contactNumber) => {
+    const regex = /^0\d{10}$/;
+    return regex.test(contactNumber);
   };
 
   const handleImageChange = (e) => {
@@ -81,9 +143,17 @@ const SharedProfilePage = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setProfileImage(reader.result); // Temporarily display selected image
-        setImage(file); // Store file for upload
+        setProfileImage(reader.result);
+        setImage(file);
         setHasChanges(true);
+        
+        const currentTime = Date.now();
+        
+        // Show toast only if 5 seconds have passed since the last toast
+        if (currentTime - lastToastTime >= 5000) {
+          notify.info("Make sure to save changes!");  // Display toast when image changes
+          setLastToastTime(currentTime);  // Update the last toast time
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -92,10 +162,18 @@ const SharedProfilePage = () => {
   const handleSaveChanges = async () => {
     const userId = localStorage.getItem("user_id");
     if (!userId) {
-      console.error("User ID is missing.");
+      notify.error("User ID is missing.");
       return;
     }
 
+    if (contact && !validateContactNumber(contact)) {
+      notify.error(
+        "Please enter a valid contact number (11 digits, starting with 0)."
+      );
+      return;
+    }
+
+    setIsLoading(true);
     try {
       const userData = new FormData();
       if (email) userData.append("email", email);
@@ -107,162 +185,105 @@ const SharedProfilePage = () => {
       if (image) userData.append("image", image);
 
       const { status } = await updateUserData(userData);
-      
+
       if (status === 200) {
-        console.log("Profile updated successfully");
-        console.log("FORM DATA:", userData);
-        setSaveClicked(true);
-        setHasChanges(false); // Reset changes flag
-        setPassword(""); // Clear password field after update
-        setImage(null);  // Clear temporary image
-        alert("Your profile has been updated successfully.");
+        notify.success("Profile updated successfully.");
+        setHasChanges(false);
+        setPassword("");
+        setImage(null);
       } else {
-        console.warn("Unexpected response status:", status);
-        alert("Something went wrong. Please try again.");
+        notify.error("Something went wrong. Please try again.");
       }
     } catch (error) {
       console.error("Failed to save changes:", error);
-      if (error.response) {
-        alert(`Error: ${error.response.data.detail || "Could not update profile."}`);
-      } else {
-        alert("An error occurred. Please check your network connection and try again.");
-      }
+      notify.error("Failed to save changes.");
+    } finally {
+      setIsLoading(false);
     }
   };
-        
 
-        return (
-          <ProfileContainer>
-        <LeftPanel>
-          <ProfileImageWrapper>
-            <ProfileImage src={profileImage} alt="Profile" />
-            <EditProfilePicButton htmlFor="upload-photo">
-              <FaPencilAlt />
-            </EditProfilePicButton>
+  if (isLoading) return <Loading />;
 
-            <input
-              type="file"
-              id="upload-photo"
-              name="profileImage"
-              style={{ display: "none" }}
-              accept="image/*"
-              onChange={handleImageChange}  // Update flag when image changes
-            />
-          </ProfileImageWrapper>
+  return (
+    <ProfileContainer>
+      <LeftPanel>
+        <ProfileImageWrapper>
+          <ProfileImage src={profileImage} alt="Profile" />
+          <EditProfilePicButton htmlFor="upload-photo">
+            <FaPencilAlt />
+          </EditProfilePicButton>
 
-          <ProfileInfo>
-            <AdminText>{/* Admin Text Placeholder */}</AdminText>
-            <NameText>{`${firstName} ${middleInitial} ${lastName}`}</NameText>
-            <EmailText>{email}</EmailText>
-          </ProfileInfo>
-        </LeftPanel>
-
-        <RightPanel>
-          {/* User Profile Fields */}
-          <ProfileField>
-            <Label htmlFor="firstName">First Name</Label>
-            <FieldContainer>
-              <InputField
-                type="text"
-                id="firstName"
-                name="firstName"
-                value={firstName}
-                onChange={handleChange(setFirstName)}
-              />
-              <EditButton onClick={() => setHasChanges(true)}>
-                <FaPencilAlt />
-              </EditButton>
-            </FieldContainer>
-          </ProfileField>
-
-          <ProfileField>
-            <Label htmlFor="middleInitial">Middle Name</Label>
-            <FieldContainer>
-              <InputField
-                type="text"
-                id="middleInitial"
-                name="middleInitial"
-                value={middleInitial}
-                onChange={handleChange(setMiddleInitial)}
-              />
-              <EditButton onClick={() => setHasChanges(true)}>
-                <FaPencilAlt />
-              </EditButton>
-            </FieldContainer>
-          </ProfileField>
-
-          <ProfileField>
-            <Label htmlFor="lastName">Last Name</Label>
-            <FieldContainer>
-              <InputField
-                type="text"
-                id="lastName"
-                name="lastName"
-                value={lastName}
-                onChange={handleChange(setLastName)}
-              />
-              <EditButton onClick={() => setHasChanges(true)}>
-                <FaPencilAlt />
-              </EditButton>
-            </FieldContainer>
-          </ProfileField>
-
-          <ProfileField>
-          <Label htmlFor="email">Email</Label>
-          <FieldContainer>
-            <InputField
-              type="email"
-              id="email"
-              name="email"
-              value={email}
-              onChange={handleChange(setEmail)}
-              autoComplete="email"
-            />
-            <EditButton onClick={() => setHasChanges(true)}>
-              <FaPencilAlt />
-            </EditButton>
-          </FieldContainer>
-        </ProfileField>
-
-          <ProfileField>
-            <Label htmlFor="contact">Contact</Label>
-            <FieldContainer>
-              <InputField
-                type="tel"
-                id="contact"
-                name="contact"
-                value={contact}
-                onChange={handleChange(setContact)}
-                autoComplete="tel"
-              />
-              <EditButton onClick={() => setHasChanges(true)}>
-                <FaPencilAlt />
-              </EditButton>
-            </FieldContainer>
-          </ProfileField>
-
-          {hasChanges && !saveClicked && (
-            <SaveChangesButton onClick={handleSaveChanges}>
-              Save Changes
-            </SaveChangesButton>
-          )}
-
-          <ChangePasswordText onClick={() => setChangePassModalOpen(true)}>
-            Change Password
-          </ChangePasswordText>
-        </RightPanel>
-
-        {isChangePassModalOpen && (
-          <ChangePassModal
-            onClose={() => setChangePassModalOpen(false)}
-            onSave={(newPassword) => {
-              setPassword(newPassword);
-              setChangePassModalOpen(false);
-            }}
+          <input
+            type="file"
+            id="upload-photo"
+            name="profileImage"
+            style={{ display: "none" }}
+            accept="image/*"
+            onChange={handleImageChange}
           />
-        )}
-      </ProfileContainer>
-      );
-      };
+        </ProfileImageWrapper>
 
-      export default SharedProfilePage;
+        <ProfileInfo>
+          <AdminText>{/* Admin Text Placeholder */}</AdminText>
+          <NameText>{`${firstName} ${middleInitial} ${lastName}`}</NameText>
+          <EmailText>{email}</EmailText>
+        </ProfileInfo>
+      </LeftPanel>
+
+      <RightPanel>
+        {["firstName", "middleInitial", "lastName", "email", "contact"].map(
+          (field) => (
+            <ProfileField key={field}>
+              <Label htmlFor={field}>
+                {field
+                  .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // Add space before capital letters
+                  .replace(/^./, (str) => str.toUpperCase())} {/* Capitalize the first letter */}
+              </Label>
+              <FieldContainer>
+                <InputField
+                  type={field === "email" ? "email" : "text"}
+                  id={field}
+                  name={field}
+                  value={field === "firstName" ? firstName : field === "middleInitial" ? middleInitial : field === "lastName" ? lastName : field === "email" ? email : contact}
+                  onChange={(e) => handleChange(field, e)}
+                  onBlur={() => handleBlur(field)}
+                  disabled={!editMode[field]} // Use disabled when not in edit mode
+                  className={editMode[field] ? "highlight" : ""}
+                  style={{
+                    border: editMode[field]
+                      ? "2px solid #ccc"
+                      : "1px solid #fff",
+                  }}
+                />
+
+                <EditButton onClick={() => toggleEditMode(field)}>
+                  <FaPencilAlt />
+                </EditButton>
+              </FieldContainer>
+            </ProfileField>
+          )
+        )}
+        {hasChanges && (
+          <SaveChangesButton onClick={handleSaveChanges}>
+            Save Changes
+          </SaveChangesButton>
+        )}
+        <ChangePasswordText onClick={() => setChangePassModalOpen(true)}>
+          Change Password
+        </ChangePasswordText>
+      </RightPanel>
+
+      {isChangePassModalOpen && (
+        <ChangePassModal
+          onClose={() => setChangePassModalOpen(false)}
+          onSave={(newPassword) => {
+            setPassword(newPassword);
+            setChangePassModalOpen(false);
+          }}
+        />
+      )}
+    </ProfileContainer>
+  );
+};
+
+export default SharedProfilePage;

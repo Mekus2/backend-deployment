@@ -1,4 +1,3 @@
-// ProfileStyles.js
 import styled from "styled-components";
 import { colors } from "../../colors";
 
@@ -32,6 +31,14 @@ export const RightPanel = styled.div`
   background-color: #f9f9f9;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  
+  // Responsive width for smaller screens
+  @media (max-width: 768px) {
+    flex: 1;
+    padding: 15px;
+  }
 `;
 
 export const ProfileImageWrapper = styled.div`
@@ -111,9 +118,14 @@ export const InputField = styled.input`
   margin-right: 10px;
   border: ${({ showBorder }) => (showBorder ? "1px solid #ccc" : "none")};
   border-radius: 8px;
-  width: 100%;
-  max-width: 500px;
+  width: 100%;  // Full width for responsiveness
+  max-width: 100%;  // Removed the fixed max-width to make the field adjust based on screen width
   box-sizing: border-box;
+
+  // On smaller screens, allow more flexibility
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
 `;
 
 export const EditButton = styled.button`
@@ -140,7 +152,7 @@ export const InputContainer = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -175,6 +187,7 @@ export const SaveChangesButton = styled.button`
   margin-left: auto;
   margin-right: auto;
 `;
+
 export const ChangePasswordText = styled.p`
   text-align: center;
   cursor: pointer;
