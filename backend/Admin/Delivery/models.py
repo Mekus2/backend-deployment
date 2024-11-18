@@ -1,7 +1,9 @@
 # Create your models here.
 from django.db import models
 from Admin.Order.Sales_Order.models import SalesOrder
+from Admin.Order.Purchase.models import PurchaseOrder
 from Admin.Supplier.models import Supplier
+from Admin.Product.models import Product
 from django.conf import settings
 from django.utils.text import slugify
 
@@ -14,6 +16,7 @@ class OutboundDelivery(models.Model):
         ("Returned", "Returned"),
         ("Cancelled", "Cancelled"),
         ("Pending", "Pending"),
+        ("Delivered", "Delivered"),
     ]
 
     OUTBOUND_DEL_ID = models.AutoField(primary_key=True)
@@ -83,16 +86,22 @@ class InboundDelivery(models.Model):
         ("Returned", "Returned"),
         ("Cancelled", "Cancelled"),
         ("Pending", "Pending"),
+        ("Delivered", "Delivered"),
     ]
 
     INBOUND_DEL_ID = models.AutoField(primary_key=True)
+    PURCHASE_ORDER_ID = models.ForeignKey(
+        PurchaseOrder, on_delete=models.CASCADE, null=True
+    )
     INBOUND_DEL_SUPP_ID = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     INBOUND_DEL_SUPP_NAME = models.CharField(max_length=50, null=True, blank=True)
-    INBOUND_DEL_DATE_RCVD = models.DateTimeField(auto_now=True, null=True, blank=True)
+    INBOUND_DEL_DATE_DELIVERED = models.DateTimeField(
+        auto_now=True, null=True, blank=True
+    )
     INBOUND_DEL_STATUS = models.CharField(
         max_length=15, choices=INBOUND_DELIVERY_STATUS_CHOICES, default="Pending"
     )
-    INBOUND_DEL_RCVD_QTY = models.PositiveIntegerField(null=False, default=0)
+    INBOUND_DEL_RCVD_QTY = models.PositiveIntegerField(null=True, default=0)
     INBOUND_DEL_TOTAL_PRICE = models.DecimalField(
         max_digits=10, default=0, decimal_places=2
     )
@@ -112,11 +121,18 @@ class InboundDeliveryDetails(models.Model):
 
     INBOUND_DEL_DETAIL_ID = models.AutoField(primary_key=True)
     INBOUND_DEL_ID = models.ForeignKey(InboundDelivery, on_delete=models.CASCADE)
+    INBOUND_DEL_DETAIL_PROD_ID = models.ForeignKey(
+        Product, on_delete=models.CASCADE, null=True
+    )
     INBOUND_DEL_DETAIL_PROD_NAME = models.CharField(max_length=60, null=False)
     INBOUND_DEL_DETAIL_LINE_PRICE = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
+    INBOUND_DEL_DETAIL_ORDERED_QTY = models.PositiveIntegerField(null=False, default=0)
     INBOUND_DEL_DETAIL_LINE_QTY = models.PositiveIntegerField(null=False, default=0)
+    INBOUND_DEL_DETAIL_LINE_QTY_DEFECT = models.PositiveIntegerField(
+        null=False, default=0
+    )
     INBOUND_DEL_DETAIL_PROD_EXP_DATE = models.DateField(null=True, blank=True)
     INBOUND_DEL_DETAIL_BATCH_ID = models.CharField(
         max_length=30, null=True, blank=True, editable=False
@@ -128,7 +144,9 @@ class InboundDeliveryDetails(models.Model):
             prod_name_slug = slugify(
                 self.INBOUND_DEL_DETAIL_PROD_NAME
             )  # Slugify the product name
-            delivery_date = self.INBOUND_DEL_ID.INBOUND_DEL_DATE_RCVD.strftime("%Y%m%d")
+            delivery_date = self.INBOUND_DEL_ID.INBOUND_DEL_DATE_DELIVERED.strftime(
+                "%Y%m%d"
+            )
             self.INBOUND_DEL_DETAIL_BATCH_ID = f"{prod_name_slug}-{delivery_date}"
         super().save(*args, **kwargs)
 

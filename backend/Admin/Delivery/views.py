@@ -77,10 +77,39 @@ class InboundDeliveryListCreateAPIView(APIView):
 
     def post(self, request):
         """Create a new Inbound Delivery with details."""
-        serializer = InboundDeliverySerializer(data=request.data)
+        print("Incoming Data: ", request.data)
+
+        # Extract main inbound delivery data and details data
+        inbound_delivery_data = request.data.copy()
+        details_data = inbound_delivery_data.pop("details", [])
+
+        if not details_data:
+            return Response(
+                {"error": "No order details provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate and save InboundDelivery data
+        serializer = InboundDeliverySerializer(data=inbound_delivery_data)
         if serializer.is_valid():
             with transaction.atomic():
-                inbound_delivery = serializer.save()  # noqa:F841
+                # Save the inbound delivery instance
+                inbound_delivery = serializer.save()
+
+                # Prepare and save details
+                for detail in details_data:
+                    detail["INBOUND_DEL_ID"] = inbound_delivery.INBOUND_DEL_ID
+                    detail_serializer = InboundDeliveryDetailsSerializer(data=detail)
+                    if detail_serializer.is_valid():
+                        detail_serializer.save()
+                    else:
+                        transaction.set_rollback(True)
+                        return Response(
+                            {"error": detail_serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+            # Respond with the created data
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
