@@ -95,16 +95,15 @@ class InboundDelivery(models.Model):
     )
     INBOUND_DEL_SUPP_ID = models.ForeignKey(Supplier, on_delete=models.CASCADE)
     INBOUND_DEL_SUPP_NAME = models.CharField(max_length=50, null=True, blank=True)
-    INBOUND_DEL_DATE_DELIVERED = models.DateTimeField(
-        auto_now=True, null=True, blank=True
-    )
+    INBOUND_DEL_DATE_DELIVERED = models.DateTimeField(null=True, blank=True)
     INBOUND_DEL_STATUS = models.CharField(
         max_length=15, choices=INBOUND_DELIVERY_STATUS_CHOICES, default="Pending"
     )
-    INBOUND_DEL_RCVD_QTY = models.PositiveIntegerField(null=True, default=0)
+    INBOUND_DEL_TOTAL_RCVD_QTY = models.PositiveIntegerField(null=True, default=0)
     INBOUND_DEL_TOTAL_PRICE = models.DecimalField(
         max_digits=10, default=0, decimal_places=2
     )
+    INBOUND_DEL_RCVD_BY_USER_NAME = models.CharField(max_length=60, null=True)
 
     def __str__(self):
         return (

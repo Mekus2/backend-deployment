@@ -4,6 +4,7 @@ from .views import (
     InboundDeliveryDetailsAPIView,
     OutboundDeliveryDetailsAPIView,
     OutboundDeliveryListCreateAPIView,
+    InboundDeliveryRetrieveUpdateAPIView,
 )
 
 urlpatterns = [
@@ -21,5 +22,15 @@ urlpatterns = [
         "supplier",
         InboundDeliveryListCreateAPIView.as_view(),
         name="supplier-delivery-list-create",
+    ),
+    path(
+        "supplier/<int:pk>/",
+        InboundDeliveryRetrieveUpdateAPIView.as_view(),
+        name="supplier-delivery-retrieve-update",
+    ),
+    path(
+        "supplier/<int:pk>/details",
+        InboundDeliveryDetailsAPIView.as_view(),
+        name="supplier-delivery-details",
     ),
 ]
