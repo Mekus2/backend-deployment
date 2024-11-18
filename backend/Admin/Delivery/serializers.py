@@ -60,31 +60,38 @@ class OutboundDeliverySerializer(serializers.ModelSerializer):
         return outbound_delivery
 
 
-class InboundDeliverySerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = InboundDelivery
-        fields = [
-            "INBOUND_DEL_ID",
-            "INBOUND_DEL_SUPP_ID",
-            "INBOUND_DEL_SUPP_NAME",
-            "INBOUND_DEL_DATE_RCVD",
-            "INBOUND_DEL_STATUS",
-            "INBOUND_DEL_RCVD_QTY",
-            "INBOUND_DEL_TOTAL_PRICE",
-            "details",
-        ]
-
-
 class InboundDeliveryDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = InboundDeliveryDetails
         fields = [
             "INBOUND_DEL_DETAIL_ID",
             "INBOUND_DEL_ID",
+            "INBOUND_DEL_DETAIL_PROD_ID",
             "INBOUND_DEL_DETAIL_PROD_NAME",
             "INBOUND_DEL_DETAIL_LINE_PRICE",
+            "INBOUND_DEL_DETAIL_ORDERED_QTY",
             "INBOUND_DEL_DETAIL_LINE_QTY",
+            "INBOUND_DEL_DETAIL_LINE_QTY_DEFECT",
             "INBOUND_DEL_DETAIL_PROD_EXP_DATE",
             "INBOUND_DEL_DETAIL_BATCH_ID",
+        ]
+
+        extra_kwargs = {"INBOUND_DEL_ID": {"required": False}}
+
+
+class InboundDeliverySerializer(serializers.ModelSerializer):
+    details = InboundDeliveryDetailsSerializer(many=True, required=False)
+
+    class Meta:
+        model = InboundDelivery
+        fields = [
+            "INBOUND_DEL_ID",
+            "PURCHASE_ORDER_ID",
+            "INBOUND_DEL_SUPP_ID",
+            "INBOUND_DEL_SUPP_NAME",
+            "INBOUND_DEL_DATE_DELIVERED",
+            "INBOUND_DEL_STATUS",
+            "INBOUND_DEL_RCVD_QTY",
+            "INBOUND_DEL_TOTAL_PRICE",
+            "details",
         ]

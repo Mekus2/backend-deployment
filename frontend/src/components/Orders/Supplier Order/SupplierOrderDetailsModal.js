@@ -121,6 +121,10 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
         <p>
           <strong>Supplier ID:</strong> {order.PURCHASE_ORDER_SUPPLIER_ID}
         </p>{" "}
+        <p>
+          <strong>Supplier Name:</strong>{" "}
+          {order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME}
+        </p>
         {/* Displaying Supplier ID */}
       </Section>
       <Section>
