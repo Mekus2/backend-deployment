@@ -1,4 +1,3 @@
-// src/components/SharedCategoryPage.js
 import React, { useState } from "react";
 import styled from "styled-components";
 import { colors } from "../../../colors";
@@ -6,10 +5,9 @@ import productData from "../../../data/ProductData";
 import AddCategoryModal from "../../Products/Category/AddCategoryModal";
 import CategoryDetailsModal from "../../Products/Category/CategoryDetailsModal";
 import SearchBar from "../../Layout/SearchBar";
-import Table from "../../Layout/Table";
-import CardTotalCategories from "../../CardsData/CardTotalCategories";
+import Card from "../../Layout/Card";
 import Button from "../../Layout/Button";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaBox } from "react-icons/fa"; // FaBox as a constant product icon
 
 const SharedCategoryPage = () => {
   const [categories, setCategories] = useState(productData.PRODUCT_CATEGORY);
@@ -25,31 +23,19 @@ const SharedCategoryPage = () => {
       .length;
   };
 
-  const filteredCategories = categories.filter((category) => {
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return category.PROD_CAT_NAME.toLowerCase().includes(lowerCaseSearchTerm);
-  });
+  // Filter categories based on search term
+  const filteredCategories = categories.filter((category) =>
+    category.PROD_CAT_NAME.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleCardClick = (category) => {
+    setSelectedCategory(category);
+    setIsDetailsModalOpen(true);
+  };
 
   const handleAddCategory = (newCategory) => {
     setCategories((prevCategories) => [...prevCategories, newCategory]);
   };
-
-  const headers = ["Category Name", "Products", "Actions"];
-
-  const rows = filteredCategories.map((category) => [
-    category.PROD_CAT_NAME,
-    countProductsByCategory(category.PROD_CAT_CODE), // Count products by category
-    <Button
-      backgroundColor={colors.primary}
-      hoverColor={colors.primaryHover}
-      onClick={() => {
-        setIsDetailsModalOpen(true);
-        setSelectedCategory(category); // Set the selected category for viewing details
-      }}
-    >
-      Details
-    </Button>,
-  ]);
 
   return (
     <>
@@ -70,16 +56,36 @@ const SharedCategoryPage = () => {
         </ButtonGroup>
       </Controls>
       <AnalyticsContainer>
-        <CardTotalCategories /> {/* Display Total Categories */}
+        {/* Display Total Categories Card */}
+        <Card
+          label="Total Categories"
+          value={categories.length}
+          bgColor={colors.secondary}
+          icon={<FaBox />}
+        />
       </AnalyticsContainer>
-      <Table headers={headers} rows={rows} />
+      <CategoriesContainer>
+        {filteredCategories.map((category) => (
+          <CardWrapper
+            key={category.PROD_CAT_CODE}
+            onClick={() => handleCardClick(category)}
+          >
+            <Card
+              label={category.PROD_CAT_NAME}
+              value={countProductsByCategory(category.PROD_CAT_CODE)}
+              bgColor={colors.primary}
+              icon={<FaBox />}
+            />
+          </CardWrapper>
+        ))}
+      </CategoriesContainer>
       {isAddModalOpen && (
         <AddCategoryModal
           onClose={() => setIsAddModalOpen(false)}
           onSave={handleAddCategory}
         />
       )}
-      {isDetailsModalOpen && (
+      {isDetailsModalOpen && selectedCategory && (
         <CategoryDetailsModal
           category={selectedCategory} // Pass the selected category to the modal
           products={products.filter(
@@ -94,13 +100,11 @@ const SharedCategoryPage = () => {
 };
 
 // Styled Components
-
 const Controls = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  padding: 0 1px;
 `;
 
 const ButtonGroup = styled.div`
@@ -121,7 +125,21 @@ const AnalyticsContainer = styled.div`
   display: flex;
   gap: 16px;
   margin-bottom: 16px;
-  padding: 0 1px;
+`;
+
+const CategoriesContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+`;
+
+const CardWrapper = styled.div`
+  cursor: pointer;
+  &:hover {
+    transform: scale(1.02);
+    transition: transform 0.2s ease;
+  }
 `;
 
 export default SharedCategoryPage;

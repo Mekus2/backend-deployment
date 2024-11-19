@@ -1,4 +1,65 @@
 //ProductData.js
+// const productData = {
+//   PRODUCT_INVENTORY: [
+//     {
+//       PROD_INV_ID: "",
+//       PROD_INV_BATCH_NO: "",
+//       PROD_INV_DATE_RCVD: "",
+//       PROD_INV_EXP_DATE: "",
+//       PROD_INV_QTY_ON_HAND: 0,
+//       PROD_INV_QTY_DLVRD: 0,
+//       PROD_ID: "",
+//       INBOUND_DEL_DETAIL_ID: "",
+//     },
+//   ],
+
+//   PRODUCT: [
+//     {
+//       PROD_ID: "",
+//       PROD_IMAGE: "",
+//       PROD_NAME: "",
+//       PROD_DETAILS_CODE: "",
+//       PROD_RO_LEVEL: 0,
+//       PROD_RO_QTY: 0,
+//       PROD_QOH: 0,
+//       PROD_IMG: "",
+//       PROD_DATECREATED: "",
+//       PROD_DATEUPDATED: "",
+//       PROD_CAT_CODE: "",
+//     },
+//   ],
+//   PRODUCT_DETAILS: [
+//     {
+//       PROD_DETAILS_CODE: "",
+//       PROD_DETAILS_DESCRIPTION: "",
+//       PROD_DETALS_PRICE: 0.0,
+//       PROD_DETAILS_BRAND: "",
+//       PROD_DETAILS_SIZE: "",
+//       PROD_DETAILS_MEASUREMENT: "",
+//       PROD_CAT_CODE: "",
+//     },
+//   ],
+//   PRODUCT_CATEGORY: [
+//     {
+//       PROD_CAT_CODE: "",
+//       PROD_CAT_NAME: "",
+//       PROD_CAT_SUBCATEGORY: [
+//         {
+//           PROD_SUBCAT_ID: "",
+//           PROD_SUBCAT_NAME: "",
+//           PRODUCT: [
+//             { PROD_ID: "" },
+//           ]
+//         },
+//       ]
+//     },
+//   ]
+// };
+
+// export default productData;
+
+
+//ProductData.js
 const productData = {
   PRODUCT_INVENTORY: [
     {
@@ -487,33 +548,119 @@ const productData = {
     },
   ],
 
+  
   PRODUCT_CATEGORY: [
     {
       PROD_CAT_CODE: "C001",
       PROD_CAT_NAME: "Antibiotics",
-      PROD_CAT_SUBCATEGORY: "Medication",
+      PROD_CAT_SUBCATEGORY: [
+        {
+          PROD_SUBCAT_ID: "C001_1",
+          PROD_SUBCAT_NAME: "Penicillins",
+          PRODUCT: [
+            { PROD_ID: "P001" },
+            { PROD_ID: "P006" }
+          ]
+        },
+        {
+          PROD_SUBCAT_ID: "C001_2",
+          PROD_SUBCAT_NAME: "Fluoroquinolones",
+          PRODUCT: [
+            { PROD_ID: "P007" }
+          ]
+        }
+      ]
     },
     {
       PROD_CAT_CODE: "C002",
       PROD_CAT_NAME: "Flea & Tick Control",
-      PROD_CAT_SUBCATEGORY: "Topical Treatments",
+      PROD_CAT_SUBCATEGORY: [
+        {
+          PROD_SUBCAT_ID: "C002_1",
+          PROD_SUBCAT_NAME: "Shampoos",
+          PRODUCT: [
+            { PROD_ID: "P002" }
+          ]
+        },
+        {
+          PROD_SUBCAT_ID: "C002_2",
+          PROD_SUBCAT_NAME: "Collars",
+          PRODUCT: [
+            { PROD_ID: "P009" }
+          ]
+        }
+      ]
     },
     {
       PROD_CAT_CODE: "C003",
       PROD_CAT_NAME: "Syringes",
-      PROD_CAT_SUBCATEGORY: "Medical Supplies",
+      PROD_CAT_SUBCATEGORY: [
+        {
+          PROD_SUBCAT_ID: "C003_1",
+          PROD_SUBCAT_NAME: "General Syringes",
+          PRODUCT: [
+            { PROD_ID: "P003" },
+            { PROD_ID: "P012" }
+          ]
+        },
+        {
+          PROD_SUBCAT_ID: "C003_2",
+          PROD_SUBCAT_NAME: "Specialty Syringes",
+          PRODUCT: [
+            { PROD_ID: "P013" }
+          ]
+        }
+      ]
     },
     {
       PROD_CAT_CODE: "C004",
       PROD_CAT_NAME: "Thermometers",
-      PROD_CAT_SUBCATEGORY: "Medical Equipment",
+      PROD_CAT_SUBCATEGORY: [
+        {
+          PROD_SUBCAT_ID: "C004_1",
+          PROD_SUBCAT_NAME: "Digital Thermometers",
+          PRODUCT: [
+            { PROD_ID: "P004" }
+          ]
+        },
+        {
+          PROD_SUBCAT_ID: "C004_2",
+          PROD_SUBCAT_NAME: "Infrared Thermometers",
+          PRODUCT: [
+            { PROD_ID: "P014" }
+          ]
+        }
+      ]
+    },
+    {
+      PROD_CAT_CODE: "C006",
+      PROD_CAT_NAME: "Miscellaneous",
+      PROD_CAT_SUBCATEGORY: [], // No subcategories
+      PRODUCT: [
+        { PROD_ID: "P018" } // Product without a subcategory
+      ]
     },
     {
       PROD_CAT_CODE: "C005",
       PROD_CAT_NAME: "Wound Care",
-      PROD_CAT_SUBCATEGORY: "Treatment Ointments",
-    },
-  ],
+      PROD_CAT_SUBCATEGORY: [
+        {
+          PROD_SUBCAT_ID: "C005_1",
+          PROD_SUBCAT_NAME: "Ointments",
+          PRODUCT: [
+            { PROD_ID: "P005" }
+          ]
+        },
+        {
+          PROD_SUBCAT_ID: "C005_2",
+          PROD_SUBCAT_NAME: "Gauze",
+          PRODUCT: [
+            { PROD_ID: "P017" }
+          ]
+        }
+      ]
+    }
+  ]
 };
 
 export default productData;

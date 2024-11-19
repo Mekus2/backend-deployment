@@ -33,11 +33,12 @@ const AddSupplierModal = ({ onClose, onAdd }) => {
 
       try {
         const addedSupplier = await addSupplier(newSupplier); // Call API function to add supplier
+        notify.success("Supplier added successfully!"); // Success toast notification
         onAdd(addedSupplier); // Pass the added supplier data to the parent
         onClose(); // Close the modal
       } catch (error) {
         console.error("Error adding supplier:", error);
-        notify.error("An error occurred while adding the supplier.");
+        notify.error("An error occurred while adding the supplier."); // General error toast notification
       }
     } else {
       setErrors(newErrors);
