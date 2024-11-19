@@ -100,10 +100,14 @@ class InboundDelivery(models.Model):
         max_length=15, choices=INBOUND_DELIVERY_STATUS_CHOICES, default="Pending"
     )
     INBOUND_DEL_TOTAL_RCVD_QTY = models.PositiveIntegerField(null=True, default=0)
+    INBOUND_DEL_TOTAL_ORDERED_QTY = models.PositiveIntegerField(null=False, default=0)
     INBOUND_DEL_TOTAL_PRICE = models.DecimalField(
-        max_digits=10, default=0, decimal_places=2
+        max_digits=10, default=0, decimal_places=2, null=True
     )
     INBOUND_DEL_RCVD_BY_USER_NAME = models.CharField(max_length=60, null=True)
+    INBOUND_DEL_ORDER_APPRVDBY_USER = models.CharField(
+        max_length=60, null=False, default="Admin"
+    )
 
     def __str__(self):
         return (
@@ -137,17 +141,27 @@ class InboundDeliveryDetails(models.Model):
         max_length=30, null=True, blank=True, editable=False
     )
 
-    def save(self, *args, **kwargs):
-        if not self.INBOUND_DEL_DETAIL_BATCH_ID:
-            # Generate batch ID if it doesn't exist
-            prod_name_slug = slugify(
-                self.INBOUND_DEL_DETAIL_PROD_NAME
-            )  # Slugify the product name
-            delivery_date = self.INBOUND_DEL_ID.INBOUND_DEL_DATE_DELIVERED.strftime(
-                "%Y%m%d"
-            )
-            self.INBOUND_DEL_DETAIL_BATCH_ID = f"{prod_name_slug}-{delivery_date}"
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.INBOUND_DEL_DETAIL_BATCH_ID:
+    #         # Ensure the related InboundDelivery instance exists
+    #         inbound_delivery = (
+    #             self.INBOUND_DEL_ID
+    #         )  # This retrieves the related instance
+
+    #         if not inbound_delivery:
+    #             raise ValueError("Inbound Delivery instance does not exist.")
+
+    #         if not inbound_delivery.INBOUND_DEL_DATE_DELIVERED:
+    #             raise ValueError("Inbound Delivery date delivered is not set.")
+
+    #         # Generate batch ID using the product name and delivery date
+    #         prod_name_slug = slugify(self.INBOUND_DEL_DETAIL_PROD_NAME)
+    #         delivery_date = inbound_delivery.INBOUND_DEL_DATE_DELIVERED.strftime(
+    #             "%Y%m%d"
+    #         )
+    #         self.INBOUND_DEL_DETAIL_BATCH_ID = f"{prod_name_slug}-{delivery_date}"
+
+    #     super().save(*args, **kwargs)
 
     class Meta:
         db_table = "INBOUND_DELIVERY_DETAILS"

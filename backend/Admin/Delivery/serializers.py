@@ -96,6 +96,37 @@ class InboundDeliverySerializer(serializers.ModelSerializer):
         ]
 
 
+class CreateInboundDeliveryDetailsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InboundDeliveryDetails
+        fields = [
+            "INBOUND_DEL_DETAIL_ID",
+            "INBOUND_DEL_ID",
+            "INBOUND_DEL_DETAIL_PROD_ID",
+            "INBOUND_DEL_DETAIL_PROD_NAME",
+            "INBOUND_DEL_DETAIL_ORDERED_QTY",
+        ]
+
+        extra_kwargs = {"INBOUND_DEL_ID": {"required": False}}
+
+
+class CreateInboundDeliverySerializer(serializers.ModelSerializer):
+    details = CreateInboundDeliveryDetailsSerializer(many=True, required=False)
+
+    class Meta:
+        model = InboundDelivery
+        fields = [
+            "INBOUND_DEL_ID",
+            "PURCHASE_ORDER_ID",
+            "INBOUND_DEL_SUPP_ID",
+            "INBOUND_DEL_SUPP_NAME",
+            "INBOUND_DEL_TOTAL_ORDERED_QTY",
+            "INBOUND_DEL_ORDER_APPRVDBY_USER",
+            "details",
+        ]
+
+
 class UpdateInboundDeliverySerializer(serializers.ModelSerializer):
 
     class Meta:

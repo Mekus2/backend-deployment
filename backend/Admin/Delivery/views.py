@@ -14,8 +14,11 @@ from .serializers import (
     InboundDeliveryDetailsSerializer,
     UpdateInboundDeliveryDetailsSerializer,
     UpdateInboundDeliverySerializer,
+    CreateInboundDeliverySerializer,
+    CreateInboundDeliveryDetailsSerializer,
 )
 from django.db import transaction
+from Admin.Order.Purchase.models import PurchaseOrder
 
 
 class OutboundDeliveryListCreateAPIView(APIView):
@@ -79,40 +82,57 @@ class InboundDeliveryListCreateAPIView(APIView):
 
     def post(self, request):
         """Create a new Inbound Delivery with details."""
-        print("Incoming Data: ", request.data)
+        print("Incoming Data:", request.data)
 
-        # Extract main inbound delivery data and details data
+        # Extract inbound delivery data and associated details
         inbound_delivery_data = request.data.copy()
         details_data = inbound_delivery_data.pop("details", [])
 
-        if not details_data:
-            return Response(
-                {"error": "No order details provided."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Validate and save InboundDelivery data
-        serializer = InboundDeliverySerializer(data=inbound_delivery_data)
+        # Validate and save inbound delivery data
+        serializer = CreateInboundDeliverySerializer(data=inbound_delivery_data)
         if serializer.is_valid():
             with transaction.atomic():
-                # Save the inbound delivery instance
+                # Save the inbound delivery
                 inbound_delivery = serializer.save()
 
-                # Prepare and save details
+                # Validate and save the details
+                detail_errors = []
                 for detail in details_data:
+                    # Update the status of the related Purchase Order
+                    purchase_order = inbound_delivery.PURCHASE_ORDER_ID
+                    if purchase_order:
+                        purchase_order.PURCHASE_ORDER_STATUS = (
+                            "Accepted"  # Update the status
+                        )
+                        purchase_order.save()
+
+                    # Attach the INBOUND_DEL_ID to each detail
                     detail["INBOUND_DEL_ID"] = inbound_delivery.INBOUND_DEL_ID
-                    detail_serializer = InboundDeliveryDetailsSerializer(data=detail)
+                    detail_serializer = CreateInboundDeliveryDetailsSerializer(
+                        data=detail
+                    )
+
                     if detail_serializer.is_valid():
                         detail_serializer.save()
                     else:
-                        transaction.set_rollback(True)
-                        return Response(
-                            {"error": detail_serializer.errors},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
+                        # Collect errors for all invalid details
+                        detail_errors.append(detail_serializer.errors)
 
-            # Respond with the created data
+                if detail_errors:
+                    # Rollback if any detail is invalid
+                    transaction.set_rollback(True)
+                    return Response(
+                        {
+                            "error": "Some details are invalid.",
+                            "details_errors": detail_errors,
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            # Respond with the created inbound delivery data
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        # Respond with errors for the main serializer
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
