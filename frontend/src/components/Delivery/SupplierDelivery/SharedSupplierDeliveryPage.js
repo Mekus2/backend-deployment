@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import SupplierDeliveryDetails from "./SupplierDeliveryDetails";
 import { colors } from "../../../colors";
@@ -8,6 +8,7 @@ import Table from "../../Layout/Table";
 import CardTotalSupplierDelivery from "../../CardsData/CardTotalSupplierDelivery";
 import Button from "../../Layout/Button";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import { fetchSupplierDelivery } from "../../../api/SupplierDeliveryApi";
 
 // Function to get Supplier Name by ID
 function getSupplierNameById(id) {
@@ -30,26 +31,66 @@ function getUserNameById(userId) {
 }
 
 const SharedSupplierDeliveryPage = () => {
+  const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [sortConfig, setSortConfig] = useState({
-    key: "INBOUND_DEL_DATECREATED",
-    direction: "asc", // default to ascending
+    key: "INBOUND_DEL_ORDER_DATE_CREATED",
+    direction: "desc", // default to Descending
   });
+  const [loading, setLoading] = useState(true);
 
-  const filteredDeliveries = INBOUND_DELIVERY.INBOUND_DELIVERY.filter((delivery) => {
+  // Function to fetch supplier deliveries
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchSupplierDelivery();
+        setOrders(data);
+        console.log("Data:", data);
+      } catch (error) {
+        console.error("Error fetching purchase orders:", error);
+      } finally {
+        setLoading(false); // Stop loading when done
+      }
+    };
+    fetchOrders();
+  }, []);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    if (isNaN(date)) return ""; // Return empty string if invalid date
+    return `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
+  const filteredDeliveries = (orders || []).filter((delivery) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
     return (
-      delivery.INBOUND_DEL_DATECREATED.toLowerCase().includes(lowerCaseSearchTerm) ||
-      delivery.INBOUND_DEL_STATUS.toLowerCase().includes(lowerCaseSearchTerm) ||
-      delivery.SUPPLIER.SUPP_NAME.toLowerCase().includes(lowerCaseSearchTerm) ||
-      getUserNameById(delivery.INBOUND_DEL_RCVD_BY_USER_ID).toLowerCase().includes(lowerCaseSearchTerm)
+      // Use formatDate to format the date before checking
+      (
+        formatDate(delivery.INBOUND_DEL_ORDER_DATE_CREATED)?.toLowerCase() || ""
+      ).includes(lowerCaseSearchTerm) ||
+      (delivery.INBOUND_DEL_STATUS?.toLowerCase() || "").includes(
+        lowerCaseSearchTerm
+      ) ||
+      (delivery.INBOUND_DEL_SUPP_NAME?.toLowerCase() || "").includes(
+        lowerCaseSearchTerm
+      ) ||
+      (
+        getUserNameById(
+          delivery.INBOUND_DEL_RCVD_BY_USER_NAME
+        )?.toLowerCase() || ""
+      ).includes(lowerCaseSearchTerm)
     );
   });
 
   const sortedDeliveries = filteredDeliveries.sort((a, b) => {
     const key = sortConfig.key;
-    if (key === "INBOUND_DEL_DATECREATED") {
+    if (key === "INBOUND_DEL_ORDER_DATE_CREATED") {
       const dateA = a[key] ? new Date(a[key]) : null;
       const dateB = b[key] ? new Date(b[key]) : null;
       return (dateB - dateA) * (sortConfig.direction === "asc" ? 1 : -1);
@@ -75,18 +116,20 @@ const SharedSupplierDeliveryPage = () => {
   };
 
   const headers = [
-    { title: "Date Created", key: "INBOUND_DEL_DATECREATED" },
+    { title: "Date Created", key: "INBOUND_DEL_ORDER_DATE_CREATED" },
     { title: "Status", key: "INBOUND_DEL_STATUS" },
     { title: "Supplier", key: "SUPPLIER_ID" },
-    { title: "Received By", key: "INBOUND_DEL_RCVD_BY_USER_ID" },
+    { title: "Approved By", key: "INBOUND_DEL_ORDER_APPRVDBY_USER" },
     { title: "Action", key: "action" },
   ];
 
   const rows = sortedDeliveries.map((delivery) => [
-    delivery.INBOUND_DEL_DATECREATED,
-    <Status status={delivery.INBOUND_DEL_STATUS}>{delivery.INBOUND_DEL_STATUS}</Status>,
-    getSupplierNameById(delivery.SUPP_ID),
-    getUserNameById(delivery.INBOUND_DEL_RCVD_BY_USER_ID),
+    formatDate(delivery.INBOUND_DEL_ORDER_DATE_CREATED),
+    <Status status={delivery.INBOUND_DEL_STATUS}>
+      {delivery.INBOUND_DEL_STATUS}
+    </Status>,
+    delivery.INBOUND_DEL_SUPP_NAME,
+    delivery.INBOUND_DEL_ORDER_APPRVDBY_USER,
     <Button
       data-cy="details-button"
       backgroundColor={colors.primary}
@@ -114,21 +157,33 @@ const SharedSupplierDeliveryPage = () => {
         headers={headers.map((header) => (
           <TableHeader
             key={header.key}
-            onClick={header.key === "INBOUND_DEL_DATECREATED" ? () => handleSort(header.key) : undefined}
+            onClick={
+              header.key === "INBOUND_DEL_ORDER_DATE_CREATED"
+                ? () => handleSort(header.key)
+                : undefined
+            }
           >
             {header.title}
-            {header.key === "INBOUND_DEL_DATECREATED" && (
+            {header.key === "INBOUND_DEL_ORDER_DATE_CREATED" && (
               <>
                 {sortConfig.key === header.key ? (
                   sortConfig.direction === "asc" ? (
-                    <FaChevronUp style={{ marginLeft: "5px", fontSize: "12px" }} />
+                    <FaChevronUp
+                      style={{ marginLeft: "5px", fontSize: "12px" }}
+                    />
                   ) : (
-                    <FaChevronDown style={{ marginLeft: "5px", fontSize: "12px" }} />
+                    <FaChevronDown
+                      style={{ marginLeft: "5px", fontSize: "12px" }}
+                    />
                   )
                 ) : (
                   <span style={{ opacity: 0.5 }}>
-                    <FaChevronUp style={{ marginLeft: "5px", fontSize: "12px" }} />
-                    <FaChevronDown style={{ marginLeft: "5px", fontSize: "12px" }} />
+                    <FaChevronUp
+                      style={{ marginLeft: "5px", fontSize: "12px" }}
+                    />
+                    <FaChevronDown
+                      style={{ marginLeft: "5px", fontSize: "12px" }}
+                    />
                   </span>
                 )}
               </>
