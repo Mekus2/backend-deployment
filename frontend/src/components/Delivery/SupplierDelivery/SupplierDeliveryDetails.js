@@ -1,14 +1,39 @@
 import React, { useState } from "react";
-import styled from "styled-components";
 import Modal from "../../Layout/Modal";
-import { colors } from "../../../colors";
 import INBOUND_DELIVERY from "../../../data/InboundData"; // Import the data
+
+// Import the styles
+import { 
+  DetailsContainer, 
+  Column, 
+  FormGroup, 
+  Label, 
+  Value, 
+  ProgressSection, 
+  ProgressBar, 
+  ProgressFiller, 
+  ProgressText, 
+  ProductTable, 
+  TableHeader, 
+  TableRow, 
+  TableCell, 
+  TotalSummary, 
+  SummaryItem, 
+  HighlightedTotal, 
+  ModalFooter, 
+  StatusButton, 
+  InputContainer, 
+  Asterisk 
+} from './SupplierDeliveryStyles'; // Adjust the import path as needed
 
 const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
   const [status, setStatus] = useState(delivery.INBOUND_DEL_STATUS); // Use state to track the status
   const [receivedDate, setReceivedDate] = useState(delivery.INBOUND_DEL_DATE_RCVD || "Not yet Received"); // Use state for received date
   const [expiryDates, setExpiryDates] = useState(
     Array(deliveryDetails.length).fill("") // Track expiry dates as an array
+  );
+  const [qtyAccepted, setQtyAccepted] = useState(
+    Array(deliveryDetails.length).fill(0) // Track accepted quantities, initialized to 0
   );
   const [receivedClicked, setReceivedClicked] = useState(false); // Track if the Mark as Received button was clicked
   const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
@@ -39,6 +64,24 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
       setReceivedDate(currentDate);
       delivery.INBOUND_DEL_DATE_RCVD = currentDate; // Set the current date as received date in the data
     }
+  };
+
+  // Function to handle Qty Accepted input change
+  const handleQtyAcceptedChange = (index, value) => {
+    const qtyOrdered = deliveryDetails[index].INBOUND_DEL_DETAIL_QTY_DLVRD;
+    const newQtyAccepted = [...qtyAccepted];
+    const parsedValue = parseInt(value, 10);
+
+    // If value is empty, we reset to 0, otherwise we set the new value
+    if (value === "") {
+      newQtyAccepted[index] = 0;
+    } else if (isNaN(parsedValue) || parsedValue < 0 || parsedValue > qtyOrdered) {
+      newQtyAccepted[index] = 0;
+    } else {
+      newQtyAccepted[index] = parsedValue;
+    }
+
+    setQtyAccepted(newQtyAccepted);
   };
 
   // Get progress percentage for each status
@@ -83,6 +126,13 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
     handleStatusChange("Received");
   };
 
+  // Calculate Qty Defect (Difference between Delivered Quantity and Accepted Quantity)
+  const calculateQtyDefect = (index) => {
+    const qtyDelivered = deliveryDetails[index].INBOUND_DEL_DETAIL_QTY_DLVRD;
+    const qtyAcceptedForItem = qtyAccepted[index];
+    return qtyAcceptedForItem ? qtyDelivered - qtyAcceptedForItem : 0; // Show defect as 0 if not accepted
+  };
+
   return (
     <Modal
       data-cy="inbound-delivery-details-modal"
@@ -104,10 +154,8 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
             <Label>Received Date:</Label>
             <Value>{receivedDate}</Value>
           </FormGroup>
-
         </Column>
         <Column>
-
           <FormGroup>
             <Label>Date Created:</Label>
             <Value>{delivery.INBOUND_DEL_DATECREATED}</Value>
@@ -128,7 +176,9 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
         <thead>
           <tr>
             <TableHeader>Product Name</TableHeader>
-            <TableHeader>Quantity Delivered</TableHeader>
+            <TableHeader>Qty Ordered</TableHeader>
+            <TableHeader>Qty Accepted</TableHeader> {/* Added column for Qty Accepted */}
+            <TableHeader>Qty Defect</TableHeader> {/* Added column for Qty Defect */}
             <TableHeader>Expiry Date</TableHeader>
             <TableHeader>Price</TableHeader>
             <TableHeader>Total</TableHeader>
@@ -140,19 +190,50 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
               <TableCell>{item.PROD_NAME}</TableCell>
               <TableCell>{item.INBOUND_DEL_DETAIL_QTY_DLVRD}</TableCell>
               <TableCell>
+                <input
+                  type="number"
+                  min="0"
+                  max={item.INBOUND_DEL_DETAIL_QTY_DLVRD}
+                  value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
+                  onChange={(e) =>
+                    handleQtyAcceptedChange(index, e.target.value)
+                  }
+                  style={{
+                    border: "1px solid #ccc",
+                    padding: "5px",
+                    borderRadius: "4px",
+                  }}
+                />
+              </TableCell>
+              <TableCell>
+                {/* Calculate the Qty Defect, show 0 if not accepted */}
+                {calculateQtyDefect(index)}
+              </TableCell>
+              <TableCell>
                 <InputContainer>
                   <input
                     type="date"
                     min={today} // Set min date to today for future validation
                     value={expiryDates[index] || ""} // Access individual expiry date
                     onChange={(e) => handleExpiryDateChange(index, e.target.value)} // Handle change for specific index
+                    style={{
+                      border: "1px solid #ccc",
+                      padding: "5px",
+                      borderRadius: "4px",
+                    }}
                   />
-                  {/* Show asterisk if the button is clicked and expiry date is empty */}
-                  {receivedClicked && expiryDates[index] === "" && <Asterisk>*</Asterisk>}
+                  {receivedClicked && expiryDates[index] === "" && (
+                    <Asterisk>*</Asterisk>
+                  )}
                 </InputContainer>
               </TableCell>
               <TableCell>₱{item.PRICE_PER_UNIT.toFixed(2)}</TableCell>
-              <TableCell>₱{calculateItemTotal(item.INBOUND_DEL_DETAIL_QTY_DLVRD, item.PRICE_PER_UNIT).toFixed(2)}</TableCell>
+              <TableCell>
+                ₱
+                {(
+                  item.INBOUND_DEL_DETAIL_QTY_DLVRD * item.PRICE_PER_UNIT
+                ).toFixed(2)}
+              </TableCell>
             </TableRow>
           ))}
         </tbody>
@@ -197,136 +278,5 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
     </Modal>
   );
 };
-
-// Styled components (no changes here)
-const DetailsContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-`;
-
-const Column = styled.div`
-  width: 48%;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-`;
-
-const Label = styled.div`
-  font-weight: bold;
-  color: black;
-`;
-
-const Value = styled.div`
-  color: ${colors.text};
-`;
-
-const ProgressSection = styled.div`
-  margin-top: 20px;
-  text-align: center;
-`;
-
-const ProgressBar = styled.div`
-  width: 100%;
-  height: 20px;
-  background-color: #e0e0e0;
-  border-radius: 10px;
-  margin: 10px 0;
-`;
-
-const ProgressFiller = styled.div`
-  height: 100%;
-  width: ${(props) => props.progress}%;
-  background-color: ${colors.primary};
-  border-radius: 10px;
-  transition: width 0.5s ease;
-`;
-
-const ProgressText = styled.div`
-  font-size: 1.1em;
-  font-weight: bold;
-  color: ${colors.primary};
-`;
-
-const ProductTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-  margin-top: 15px;
-  margin-bottom: 20px;
-`;
-
-const TableHeader = styled.th`
-  background-color: ${colors.primary};
-  color: white;
-  padding: 10px;
-  text-align: center;
-`;
-
-const TableRow = styled.tr`
-  &:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-`;
-
-const TableCell = styled.td`
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-`;
-
-const TotalSummary = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  margin-top: 20px;
-  font-weight: bold;
-`;
-
-const SummaryItem = styled.div`
-  margin-top: 10px;
-`;
-
-const HighlightedTotal = styled.span`
-  color: green;
-  font-size: 16px;
-`;
-
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-`;
-
-const StatusButton = styled.button`
-  background-color: ${colors.primary};
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: ${colors.primaryDark};
-  }
-
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const InputContainer = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const Asterisk = styled.span`
-  color: red;
-  margin-left: 5px;
-  font-size: 18px;
-`;
 
 export default SupplierDeliveryDetails;
