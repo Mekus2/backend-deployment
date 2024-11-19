@@ -89,9 +89,34 @@ class InboundDeliverySerializer(serializers.ModelSerializer):
             "PURCHASE_ORDER_ID",
             "INBOUND_DEL_SUPP_ID",
             "INBOUND_DEL_SUPP_NAME",
-            "INBOUND_DEL_DATE_DELIVERED",
             "INBOUND_DEL_STATUS",
-            "INBOUND_DEL_RCVD_QTY",
+            "INBOUND_DEL_TOTAL_RCVD_QTY",
             "INBOUND_DEL_TOTAL_PRICE",
             "details",
+        ]
+
+
+class UpdateInboundDeliverySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InboundDelivery
+        fields = [
+            "INBOUND_DEL_DATE_DELIVERED",
+            "INBOUND_DEL_STATUS",
+            "INBOUND_DEL_TOTAL_RCVD_QTY",
+            "INBOUND_DEL_TOTAL_PRICE",
+            "INBOUND_DEL_RCVD_BY_USER_NAME",
+        ]
+
+
+class UpdateInboundDeliveryDetailsSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = InboundDeliveryDetails
+        fields = [
+            "INBOUND_DEL_DETAIL_LINE_PRICE",
+            "INBOUND_DEL_DETAIL_LINE_QTY",
+            "INBOUND_DEL_DETAIL_LINE_QTY_DEFECT",
+            "INBOUND_DEL_DETAIL_PROD_EXP_DATE",
+            "INBOUND_DEL_DETAIL_BATCH_ID",
         ]

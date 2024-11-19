@@ -12,6 +12,8 @@ from .serializers import (
     OutboundDeliveryDetailsSerializer,
     InboundDeliverySerializer,
     InboundDeliveryDetailsSerializer,
+    UpdateInboundDeliveryDetailsSerializer,
+    UpdateInboundDeliverySerializer,
 )
 from django.db import transaction
 
@@ -112,6 +114,96 @@ class InboundDeliveryListCreateAPIView(APIView):
             # Respond with the created data
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class InboundDeliveryRetrieveUpdateAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, pk):
+        # Retrieve a specific inbound delivery
+        try:
+            delivery = InboundDelivery.objects.get(pk=pk)
+        except InboundDelivery.DoesNotExist:
+            return Response({"error": "Not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = InboundDeliverySerializer(delivery)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        """Update an existing Inbound Delivery and its details."""
+        try:
+            # Fetch the inbound delivery instance
+            inbound_delivery = InboundDelivery.objects.get(pk=pk)
+
+            # Extract main delivery data and details data from the request
+            inbound_delivery_data = request.data.get("inbound_delivery", {})
+            details_data = request.data.get("details", [])
+
+            if not inbound_delivery_data and not details_data:
+                return Response(
+                    {"error": "No data provided to update."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            with transaction.atomic():
+                # Update the InboundDelivery instance
+                if inbound_delivery_data:
+                    delivery_serializer = UpdateInboundDeliverySerializer(
+                        inbound_delivery, data=inbound_delivery_data, partial=True
+                    )
+                    if delivery_serializer.is_valid():
+                        delivery_serializer.save()
+                    else:
+                        transaction.set_rollback(True)
+                        return Response(
+                            {"error": delivery_serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                # Update the InboundDeliveryDetails instances
+                for detail in details_data:
+                    detail_id = detail.get("id")  # Ensure each detail has an ID
+                    if not detail_id:
+                        transaction.set_rollback(True)
+                        return Response(
+                            {"error": "Detail ID is required for updates."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                    # Fetch the detail instance and update it
+                    try:
+                        inbound_detail = InboundDeliveryDetails.objects.get(
+                            pk=detail_id
+                        )
+                    except InboundDeliveryDetails.DoesNotExist:
+                        transaction.set_rollback(True)
+                        return Response(
+                            {"error": f"Detail with ID {detail_id} not found."},
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
+
+                    detail_serializer = UpdateInboundDeliveryDetailsSerializer(
+                        inbound_detail, data=detail, partial=True
+                    )
+                    if detail_serializer.is_valid():
+                        detail_serializer.save()
+                    else:
+                        transaction.set_rollback(True)
+                        return Response(
+                            {"error": detail_serializer.errors},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+            return Response(
+                {"message": "Inbound Delivery updated successfully."},
+                status=status.HTTP_200_OK,
+            )
+
+        except InboundDelivery.DoesNotExist:
+            return Response(
+                {"error": f"Inbound Delivery with ID {pk} not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
 
 class InboundDeliveryDetailsAPIView(APIView):
