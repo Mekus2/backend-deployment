@@ -80,10 +80,6 @@ class PurchaseOrderListCreateView(APIView):
 
             print(f"Using product ID: {product.id} and name: {product.PROD_NAME}")
 
-            # Update the product ID in the order details and product name consistency
-            # product_name = product.PROD_NAME  # Ensure consistency in the name
-            # product_id = product.id
-
             # Append the validated or created product to the order details to be saved
             order_details_to_create.append(
                 {

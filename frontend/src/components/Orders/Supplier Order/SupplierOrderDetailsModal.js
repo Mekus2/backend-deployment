@@ -4,6 +4,7 @@ import Modal from "../../Layout/Modal"; // Assuming you have a modal component
 import { colors } from "../../../colors"; // Ensure the path to colors is correct
 import Button from "../../Layout/Button"; // Ensure you import the Button component
 import { fetchPurchaseDetailsById } from "../../../api/fetchPurchaseOrders";
+import { addNewSupplierDelivery } from "../../../api/SupplierDeliveryApi";
 
 const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
   const abortControllerRef = useRef(null);
@@ -82,19 +83,37 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
     0
   );
 
-  // Calculate total amount by summing the total for each item
-  // const totalAmount = orderDetails.reduce((total, detail) => {
-  //   const lineTotal =
-  //     (detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0) *
-  //     (detail.PURCH_ORDER_PRICE || 0); // Calculate total for each item
-  //   return total + lineTotal; // Sum up the totals
-  // }, 0);
-
   // Handlers for the buttons
-  const handleAcceptOrder = () => {
-    // Logic to accept the order
-    console.log("Supplier order accepted");
-    onClose(); // Close modal after action
+  const handleAcceptOrder = async () => {
+    const newDelivery = {
+      PURCHASE_ORDER_ID: order.PURCHASE_ORDER_ID,
+      INBOUND_DEL_SUPP_ID: order.PURCHASE_ORDER_SUPPLIER_ID,
+      INBOUND_DEL_SUPP_NAME: order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME,
+      // INBOUND_DEL_DATE_DELIVERED: new Date().toISOString(), // Current date for delivery
+      INBOUND_DEL_TOTAL_ORDERED_QTY: totalQuantity,
+      INBOUND_DEL_ORDER_APPRVDBY_USER: localStorage.getItem("user_first_name"),
+
+      details: orderDetails.map((detail) => ({
+        INBOUND_DEL_DETAIL_PROD_ID: detail.PURCHASE_ORDER_DET_PROD_ID,
+        INBOUND_DEL_DETAIL_PROD_NAME: detail.PURCHASE_ORDER_DET_PROD_NAME,
+        INBOUND_DEL_DETAIL_ORDERED_QTY: detail.PURCHASE_ORDER_DET_PROD_LINE_QTY,
+      })),
+    };
+
+    try {
+      const response = await addNewSupplierDelivery(newDelivery);
+      if (response) {
+        console.log("New inbound delivery created:", response);
+        alert("Inbound delivery accepted successfully!");
+      } else {
+        alert("Failed to accept the inbound delivery.");
+      }
+    } catch (error) {
+      console.error("Error accepting the order:", error);
+      alert("An error occurred while accepting the order.");
+    } finally {
+      onClose();
+    }
   };
 
   const handleCancelOrder = () => {
