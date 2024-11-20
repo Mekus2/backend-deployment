@@ -5,6 +5,7 @@ from .views import (
     OutboundDeliveryDetailsAPIView,
     OutboundDeliveryListCreateAPIView,
     InboundDeliveryRetrieveUpdateAPIView,
+    UpdateInboundDelStatus,
 )
 
 urlpatterns = [
@@ -32,5 +33,10 @@ urlpatterns = [
         "supplier/<int:pk>/details",
         InboundDeliveryDetailsAPIView.as_view(),
         name="supplier-delivery-details",
+    ),
+    path(
+        "supplier/<int:pk>/update",
+        UpdateInboundDelStatus.as_view(),
+        name="update-inbound-status",
     ),
 ]

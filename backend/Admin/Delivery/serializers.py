@@ -60,6 +60,41 @@ class OutboundDeliverySerializer(serializers.ModelSerializer):
         return outbound_delivery
 
 
+class CreateOutboundDeliveryDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OutboundDeliveryDetails
+        fields = [
+            "OUTBOUND_DEL_ID",
+            "OUTBOUND_DETAILS_PROD_NAME",
+            "OUTBOUND_DETAILS_PROD_QTY",
+            "OUTBOUND_DETAILS_LINE_PRICE",
+        ]
+
+        extra_kwargs = {"OUTBOUND_DEL_ID": {"required": False}}
+
+
+class CreateOutboundDeliverySerializer(serializers.ModelSerializer):
+    details = CreateOutboundDeliveryDetailsSerializer(many=True, required=False)
+
+    class Meta:
+        model = OutboundDelivery
+        fields = [
+            "SALES_ORDER_ID",
+            "OUTBOUND_DEL_CUSTOMER_NAME",
+            "OUTBOUND_DEL_DLVRY_OPTION",
+            "OUTBOUND_DEL_CITY",
+            "OUTBOUND_DEL_PROVINCE",
+            "OUTBOUND_DEL_ACCPTD_BY_USER",
+            "details",
+        ]
+
+
+class UpdateInboundStatus(serializers.ModelSerializer):
+    class Meta:
+        model = InboundDelivery
+        fields = ["INBOUND_DEL_STATUS"]
+
+
 class InboundDeliveryDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = InboundDeliveryDetails
