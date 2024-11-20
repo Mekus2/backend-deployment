@@ -6,6 +6,7 @@ from Admin.Supplier.models import Supplier
 from Admin.Product.models import Product
 from django.conf import settings
 from django.utils.text import slugify
+from django.utils import timezone
 
 
 # Create your models here.
@@ -90,6 +91,8 @@ class InboundDelivery(models.Model):
     ]
 
     INBOUND_DEL_ID = models.AutoField(primary_key=True)
+    INBOUND_DEL_ORDER_DATE_CREATED = models.DateTimeField(auto_now_add=True)
+    INBOUND_DEL_ORDER_DATE_UPDATED = models.DateTimeField(auto_now=True)
     PURCHASE_ORDER_ID = models.ForeignKey(
         PurchaseOrder, on_delete=models.CASCADE, null=True
     )
