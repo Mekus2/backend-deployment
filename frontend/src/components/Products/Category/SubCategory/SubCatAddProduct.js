@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import Modal from "../../Layout/Modal"; // Reusable Modal component
-import SearchBar from "../../Layout/SearchBar"; // Reusable SearchBar component
-import Button from "../../Layout/Button"; // Import the Button component
-import { colors } from "../../../colors"; // Ensure you import colors from the correct path
-import productData from "../../../data/ProductData"; // Import product data
+import Modal from "../../../Layout/Modal"; // Reusable Modal component
+import SearchBar from "../../../Layout/SearchBar"; // Reusable SearchBar component
+import Button from "../../../Layout/Button"; // Import the Button component
+import { colors } from "../../../../colors"; // Ensure you import colors from the correct path
+import productData from "../../../../data/ProductData"; // Import product data
 
-const CategoryAddProduct = ({ onAddProduct, onClose }) => {
+const SubCatAddProduct = ({ onAddProduct, onClose }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Use productData.PRODUCT for availableProducts
@@ -88,4 +88,4 @@ const TableCell = styled.td`
   text-align: center;
 `;
 
-export default CategoryAddProduct;
+export default SubCatAddProduct;

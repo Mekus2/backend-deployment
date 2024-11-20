@@ -1,4 +1,3 @@
-// src/pages/LoginPage.js
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
 import styled from 'styled-components';
@@ -11,12 +10,14 @@ const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false); // Add loading state
   const { setRole } = useUserRole(); // Access setRole from context
   const navigate = useNavigate(); // Initialize useNavigate
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(''); // Reset error state
+    setIsLoading(true); // Set loading to true
 
     try {
       const credentials = { username, password };
@@ -29,6 +30,8 @@ const LoginPage = () => {
       // Handle error responses
       setError(err.detail || 'Login failed'); // Display detailed error message from the response
       console.error('Login failed:', err); // Log the error for debugging
+    } finally {
+      setIsLoading(false); // Reset loading state
     }
   };
 
@@ -56,7 +59,9 @@ const LoginPage = () => {
           <Link to="/forgot-password">
             <ForgotPasswordText>Forgot password?</ForgotPasswordText>
           </Link>
-          <LoginButton type="submit">Login</LoginButton>
+          <LoginButton type="submit" disabled={isLoading}>
+            {isLoading ? 'Logging In...' : 'Login'}
+          </LoginButton>
         </form>
       </FormContainer>
     </BackgroundContainer>
@@ -163,6 +168,11 @@ const LoginButton = styled.button`
 
   &:hover {
     background-color: #d77834;
+  }
+
+  &:disabled {
+    background-color: #d77834;
+    cursor: not-allowed;
   }
 `;
 
