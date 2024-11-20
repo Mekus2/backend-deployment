@@ -16,6 +16,8 @@ from .serializers import (
     UpdateInboundDeliverySerializer,
     CreateInboundDeliverySerializer,
     CreateInboundDeliveryDetailsSerializer,
+    CreateOutboundDeliveryDetailsSerializer,
+    CreateOutboundDeliverySerializer,
 )
 from django.db import transaction
 from Admin.Order.Purchase.models import PurchaseOrder
@@ -31,13 +33,45 @@ class OutboundDeliveryListCreateAPIView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        """Create a new Outbound Delivery with details."""
-        serializer = OutboundDeliverySerializer(data=request.data)
-        if serializer.is_valid():
+        """Create a new Outbound Delivery with associated details."""
+        data = request.data
+        details_data = data.pop("details", [])  # Extract nested details data
+
+        # Validate and create the outbound delivery
+        delivery_serializer = CreateOutboundDeliverySerializer(data=data)
+        if delivery_serializer.is_valid():
             with transaction.atomic():
-                outbound_delivery = serializer.save()  # noqa:F841
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                # Save the parent delivery
+                outbound_delivery = delivery_serializer.save()
+
+                # Validate and save the associated details
+                for detail in details_data:
+                    # Update the status of the related Sales(Customer) Order
+                    sales_order = outbound_delivery.SALES_ORDER_ID
+                    if sales_order:
+                        sales_order.SALES_ORDER_STATUS = "Accepted"
+                        sales_order.save()
+
+                    detail["OUTBOUND_DEL_ID"] = outbound_delivery.OUTBOUND_DEL_ID
+                    detail_serializer = CreateOutboundDeliveryDetailsSerializer(
+                        data=detail
+                    )
+                    if detail_serializer.is_valid():
+                        detail_serializer.save()
+                    else:
+                        # If any detail fails validation, rollback the transaction
+                        return Response(
+                            {
+                                "error": "Invalid details data",
+                                "details_errors": detail_serializer.errors,
+                            },
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+            # Return the created delivery along with its details
+            return Response(delivery_serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(delivery_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OutboundDeliveryDetailsAPIView(APIView):

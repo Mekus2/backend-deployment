@@ -6,12 +6,14 @@ import Button from "../../Layout/Button"; // Ensure you import the Button compon
 
 // Import api functions
 import { fetchOrderDetailsById } from "../../../api/fetchCustomerOrders";
+import { addNewCustomerDelivery } from "../../../api/CustomerDeliveryApi";
 
 const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const abortControllerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
+  const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -88,10 +90,36 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   );
 
   // Handlers for the buttons
-  const handleAcceptOrder = () => {
+  const handleAcceptOrder = async () => {
     // Logic to accept the order
-    console.log("Order accepted");
-    onClose(); // Close modal after action
+    const newOrderDelivery = {
+      SALES_ORDER_ID: order.SALES_ORDER_ID,
+      OUTBOUND_DEL_CUSTOMER_NAME: order.SALES_ORDER_CLIENT_NAME,
+      OUTBOUND_DEL_DLVRY_OPTION: order.SALES_ORDER_DLVRY_OPTION,
+      OUTBOUND_DEL_CITY: order.SALES_ORDER_CLIENT_CITY,
+      OUTBOUND_DEL_PROVINCE: order.SALES_ORDER_CLIENT_PROVINCE,
+      OUTBOUND_DEL_ACCPTD_BY_USER: userId,
+      details: orderDetails.map((detail) => ({
+        OUTBOUND_DETAILS_PROD_NAME: detail.SALES_ORDER_PROD_NAME,
+        OUTBOUND_DETAILS_PROD_QTY: detail.SALES_ORDER_LINE_QTY,
+        OUTBOUND_DETAILS_LINE_PRICE: detail.SALES_ORDER_LINE_PRICE,
+      })),
+    };
+    try {
+      const response = await addNewCustomerDelivery(newOrderDelivery);
+      if (response) {
+        console.info("New Customer Delivery created:", response);
+        alert("Customer delivery accepted");
+      } else {
+        alert("Customer delivery rejected");
+      }
+    } catch (err) {
+      console.error("Error accepting the order:", err);
+      alert("An error occurred while accepting the order.");
+    } finally {
+      onClose();
+      window.location.reload();
+    }
   };
 
   const handleCancelOrder = () => {
@@ -113,10 +141,10 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     >
       <Section>
         <p>
-          <strong>Order ID:</strong> {order.SALES_ORDER_ID}
+          <strong>Order ID: </strong> {(" ", order.SALES_ORDER_ID)}
         </p>
         <p>
-          <strong>Order Created Date:</strong>
+          <strong>Order Created Date:</strong>{" "}
           {(() => {
             const date = new Date(order.SALES_ORDER_DATE_CREATED);
             if (!isNaN(date)) {
@@ -141,7 +169,13 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
           {order.SALES_ORDER_DLVRY_OPTION || "N/A"}
         </p>
         <p>
-          <strong>Client ID:</strong> {order.CLIENT_ID}
+          <strong>Client :</strong> {order.SALES_ORDER_CLIENT_NAME}
+        </p>
+        <p>
+          <strong>City:</strong> {order.SALES_ORDER_CLIENT_CITY}
+        </p>
+        <p>
+          <strong>Province:</strong> {order.SALES_ORDER_CLIENT_PROVINCE}
         </p>
       </Section>
       <Section>
