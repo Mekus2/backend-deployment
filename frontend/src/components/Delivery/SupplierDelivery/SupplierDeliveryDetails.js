@@ -29,8 +29,6 @@ import {
 } from "./SupplierDeliveryStyles"; // Adjust the import path as needed
 
 const SupplierDeliveryDetails = ({ delivery, onClose }) => {
-  console.log("Data received:", delivery);
-
   const abortControllerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -87,7 +85,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         abortControllerRef.current.abort();
       }
     };
-  }, [delivery]);
+  }, []);
 
   // Early return if order is not provided
   if (loading) return <p>Loading...</p>;
@@ -137,9 +135,12 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       const updatedOrder = await updateOrderStatus(orderId, newStatus);
       if (updatedOrder) {
         console.log("Order updated successfully:", updatedOrder);
+        alert("Order updated successfully");
       }
     } catch (error) {
       console.error("Error updating order status:", error);
+      alert("Order update failed");
+      onClose();
     }
   };
 
@@ -327,8 +328,13 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
               </TableCell>
               <TableCell>
                 ₱
+<<<<<<< Updated upstream
                 {(
                   item.INBOUND_DEL_DETAIL_LINE_QTY *
+=======
+                {calculateItemTotal(
+                  item.INBOUND_DEL_DETAIL_LINE_QTY,
+>>>>>>> Stashed changes
                   item.INBOUND_DEL_DETAIL_LINE_PRICE
                 ).toFixed(2)}
               </TableCell>
