@@ -176,7 +176,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       case "Delivered":
         return 100; // 100% progress for Received
       default:
-        return 0;
+        return 0; // Default progress if status is unknown
     }
   };
 
@@ -188,7 +188,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   };
 
   // Calculate total value for each product (Quantity Delivered * Price per Unit)
-  const calculateItemTotal = (qty, price) => qty * price;
+  const calculateItemTotal = (qtyAccepted, price) => qtyAccepted * price;
 
   // Calculate total quantity and total amount for the summary
   const totalQuantity = orderDetails.reduce(
@@ -196,11 +196,11 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     0
   );
   const totalAmount = orderDetails.reduce(
-    (total, item) =>
+    (total, item, index) =>
       total +
       calculateItemTotal(
-        item.INBOUND_DEL_DETAIL_QTY_DLVRD,
-        item.PRICE_PER_UNIT
+        qtyAccepted[index], // Use qtyAccepted instead of qtyOrdered
+        item.INBOUND_DEL_DETAIL_LINE_PRICE
       ),
     0
   );
@@ -261,15 +261,14 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       </DetailsContainer>
 
       {/* Product Table */}
+      {/* Product Table */}
       <ProductTable>
         <thead>
           <tr>
             <TableHeader>Product Name</TableHeader>
             <TableHeader>Qty Ordered</TableHeader>
-            <TableHeader>Qty Accepted</TableHeader>{" "}
-            {/* Added column for Qty Accepted */}
-            <TableHeader>Qty Defect</TableHeader>{" "}
-            {/* Added column for Qty Defect */}
+            <TableHeader>Qty Accepted</TableHeader>
+            <TableHeader>Qty Defect</TableHeader>
             <TableHeader>Expiry Date</TableHeader>
             <TableHeader>Price</TableHeader>
             <TableHeader>Total</TableHeader>
@@ -293,6 +292,9 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
                     border: "1px solid #ccc",
                     padding: "5px",
                     borderRadius: "4px",
+                    appearance: "none", // Remove the up/down arrows in the input field
+                    WebkitAppearance: "none", // Remove for Safari
+                    MozAppearance: "textfield", // Remove for Firefox
                   }}
                 />
               </TableCell>
@@ -321,20 +323,38 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
                 </InputContainer>
               </TableCell>
               <TableCell>
-                ₱
-                {typeof item.INBOUND_DEL_DETAIL_LINE_PRICE === "number"
-                  ? item.INBOUND_DEL_DETAIL_LINE_PRICE.toFixed(2)
-                  : "0.00"}
+                <input
+                  type="number"
+                  value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""} // Allow customization of the price
+                  min="0" // Ensure price cannot be negative
+                  onChange={(e) => {
+                    // Validate price input
+                    const newPrice = parseFloat(e.target.value);
+                    if (isNaN(newPrice) || newPrice < 0) {
+                      // If invalid, keep the previous valid value
+                      return;
+                    }
+                    // Update the price for the product in the orderDetails array
+                    const updatedOrderDetails = [...orderDetails];
+                    updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
+                      newPrice;
+                    setOrderDetails(updatedOrderDetails);
+                  }}
+                  style={{
+                    border: "1px solid #ccc",
+                    padding: "5px",
+                    borderRadius: "4px",
+                    appearance: "none", // Remove the up/down arrows in the input field
+                    WebkitAppearance: "none", // Remove for Safari
+                    MozAppearance: "textfield", // Remove for Firefox
+                  }}
+                />
               </TableCell>
+
               <TableCell>
                 ₱
-<<<<<<< Updated upstream
-                {(
-                  item.INBOUND_DEL_DETAIL_LINE_QTY *
-=======
                 {calculateItemTotal(
-                  item.INBOUND_DEL_DETAIL_LINE_QTY,
->>>>>>> Stashed changes
+                  qtyAccepted[index], // Use qtyAccepted instead of qtyOrdered
                   item.INBOUND_DEL_DETAIL_LINE_PRICE
                 ).toFixed(2)}
               </TableCell>
@@ -346,7 +366,11 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       {/* Summary Section */}
       <TotalSummary>
         <SummaryItem>
-          <strong>Total Quantity:</strong> {totalQuantity}
+          <strong>Total Qty Ordered:</strong> {totalQuantity}
+        </SummaryItem>
+        <SummaryItem>
+          <strong>Total Qty Accepted:</strong>{" "}
+          {qtyAccepted.reduce((total, qty) => total + qty, 0)}
         </SummaryItem>
         <SummaryItem>
           <strong>Total Amount:</strong>{" "}
@@ -354,6 +378,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         </SummaryItem>
       </TotalSummary>
 
+      {/* Progress Bar */}
       {/* Progress Bar */}
       <ProgressSection>
         <ProgressBar>
