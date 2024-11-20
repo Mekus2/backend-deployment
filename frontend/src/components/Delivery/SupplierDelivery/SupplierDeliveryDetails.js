@@ -101,25 +101,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .toString()
       .padStart(2, "0")}/${date.getFullYear()}`;
   };
-
-  // // Function to get the Supplier Name by Supplier ID
-  // const getSupplierNameById = (supplierId) => {
-  //   const supplier = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-  //     (item) => item.SUPP_ID === supplierId
-  //   )?.SUPPLIER;
-  //   return supplier ? supplier.SUPP_NAME : "Unknown Supplier";
-  // };
-
-  // Function to get the User's Full Name by User ID
-  // const getUserFullNameById = (userId) => {
-  //   const user = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-  //     (item) => item.INBOUND_DEL_RCVD_BY_USER_ID === userId
-  //   )?.USER;
-  //   return user
-  //     ? `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`
-  //     : "Unknown User";
-  // };
-
   // Function to handle status update
   const handleStatusChange = (newStatus) => {
     setStatus(newStatus); // Update the status state
@@ -164,7 +145,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       case "Received":
         return 100; // 100% progress for Received
       default:
-        return 0;
+        return 0; // Default progress if status is unknown
     }
   };
 
@@ -183,12 +164,13 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     (total, item) => total + item.INBOUND_DEL_DETAIL_ORDERED_QTY,
     0
   );
+  // Calculate total amount from the Total column (which is ordered qty * price)
   const totalAmount = orderDetails.reduce(
     (total, item) =>
       total +
       calculateItemTotal(
-        item.INBOUND_DEL_DETAIL_QTY_DLVRD,
-        item.PRICE_PER_UNIT
+        item.INBOUND_DEL_DETAIL_ORDERED_QTY,
+        item.INBOUND_DEL_DETAIL_LINE_PRICE
       ),
     0
   );
@@ -249,15 +231,14 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       </DetailsContainer>
 
       {/* Product Table */}
+      {/* Product Table */}
       <ProductTable>
         <thead>
           <tr>
             <TableHeader>Product Name</TableHeader>
             <TableHeader>Qty Ordered</TableHeader>
-            <TableHeader>Qty Accepted</TableHeader>{" "}
-            {/* Added column for Qty Accepted */}
-            <TableHeader>Qty Defect</TableHeader>{" "}
-            {/* Added column for Qty Defect */}
+            <TableHeader>Qty Accepted</TableHeader>
+            <TableHeader>Qty Defect</TableHeader>
             <TableHeader>Expiry Date</TableHeader>
             <TableHeader>Price</TableHeader>
             <TableHeader>Total</TableHeader>
@@ -281,6 +262,9 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
                     border: "1px solid #ccc",
                     padding: "5px",
                     borderRadius: "4px",
+                    appearance: "none", // Remove the up/down arrows in the input field
+                    WebkitAppearance: "none", // Remove for Safari
+                    MozAppearance: "textfield", // Remove for Firefox
                   }}
                 />
               </TableCell>
@@ -309,15 +293,38 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
                 </InputContainer>
               </TableCell>
               <TableCell>
-                ₱
-                {typeof item.INBOUND_DEL_DETAIL_LINE_PRICE === "number"
-                  ? item.INBOUND_DEL_DETAIL_LINE_PRICE.toFixed(2)
-                  : "0.00"}
+                <input
+                  type="number"
+                  value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""} // Allow customization of the price
+                  min="0" // Ensure price cannot be negative
+                  onChange={(e) => {
+                    // Validate price input
+                    const newPrice = parseFloat(e.target.value);
+                    if (isNaN(newPrice) || newPrice < 0) {
+                      // If invalid, keep the previous valid value
+                      return;
+                    }
+                    // Update the price for the product in the orderDetails array
+                    const updatedOrderDetails = [...orderDetails];
+                    updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
+                      newPrice;
+                    setOrderDetails(updatedOrderDetails);
+                  }}
+                  style={{
+                    border: "1px solid #ccc",
+                    padding: "5px",
+                    borderRadius: "4px",
+                    appearance: "none", // Remove the up/down arrows in the input field
+                    WebkitAppearance: "none", // Remove for Safari
+                    MozAppearance: "textfield", // Remove for Firefox
+                  }}
+                />
               </TableCell>
+
               <TableCell>
                 ₱
-                {(
-                  item.INBOUND_DEL_DETAIL_LINE_QTY *
+                {calculateItemTotal(
+                  item.INBOUND_DEL_DETAIL_ORDERED_QTY,
                   item.INBOUND_DEL_DETAIL_LINE_PRICE
                 ).toFixed(2)}
               </TableCell>
@@ -329,7 +336,11 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       {/* Summary Section */}
       <TotalSummary>
         <SummaryItem>
-          <strong>Total Quantity:</strong> {totalQuantity}
+          <strong>Total Qty Ordered:</strong> {totalQuantity}
+        </SummaryItem>
+        <SummaryItem>
+          <strong>Total Qty Accepted:</strong>{" "}
+          {qtyAccepted.reduce((total, qty) => total + qty, 0)}
         </SummaryItem>
         <SummaryItem>
           <strong>Total Amount:</strong>{" "}
@@ -337,6 +348,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         </SummaryItem>
       </TotalSummary>
 
+      {/* Progress Bar */}
       {/* Progress Bar */}
       <ProgressSection>
         <ProgressBar>
