@@ -89,6 +89,12 @@ class CreateOutboundDeliverySerializer(serializers.ModelSerializer):
         ]
 
 
+class UpdateInboundStatus(serializers.ModelSerializer):
+    class Meta:
+        model = InboundDelivery
+        fields = ["INBOUND_DEL_STATUS"]
+
+
 class InboundDeliveryDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = InboundDeliveryDetails

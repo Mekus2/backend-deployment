@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Modal from "../../Layout/Modal";
 // import INBOUND_DELIVERY from "../../../data/InboundData"; // Import the data
 import { fetchOrderDetails } from "../../../api/SupplierDeliveryApi";
+import { updateOrderStatus } from "../../../api/SupplierDeliveryApi";
 
 // Import the styles
 import {
@@ -67,6 +68,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           );
           console.log("Received Details:", details);
           setOrderDetails(details);
+          setStatus(delivery.INBOUND_DEL_STATUS);
         } catch (err) {
           if (err.name === "AbortError") {
             console.log("Fetch aborted"); // Request was canceled
@@ -102,33 +104,42 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  // // Function to get the Supplier Name by Supplier ID
-  // const getSupplierNameById = (supplierId) => {
-  //   const supplier = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-  //     (item) => item.SUPP_ID === supplierId
-  //   )?.SUPPLIER;
-  //   return supplier ? supplier.SUPP_NAME : "Unknown Supplier";
-  // };
-
-  // Function to get the User's Full Name by User ID
-  // const getUserFullNameById = (userId) => {
-  //   const user = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-  //     (item) => item.INBOUND_DEL_RCVD_BY_USER_ID === userId
-  //   )?.USER;
-  //   return user
-  //     ? `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`
-  //     : "Unknown User";
-  // };
-
   // Function to handle status update
-  const handleStatusChange = (newStatus) => {
-    setStatus(newStatus); // Update the status state
-    delivery.INBOUND_DEL_STATUS = newStatus; // This would be a way to mutate the status in the object
+  const handleStatusChange = async (
+    orderId,
+    currentStatus,
+    expiryDates = []
+  ) => {
+    // Validate expiry dates only for 'Dispatched' to 'Delivered' transition
+    if (currentStatus === "Dispatched") {
+      const areAllExpiryDatesFilled = expiryDates.every((date) => date !== "");
+      if (!areAllExpiryDatesFilled) {
+        console.error("Please fill in all expiry dates.");
+        return; // Stop the status change if expiry dates are empty
+      }
+    }
 
-    if (newStatus === "Received") {
-      const currentDate = new Date().toISOString().split("T")[0];
-      setReceivedDate(currentDate);
-      delivery.INBOUND_DEL_DATE_RCVD = currentDate; // Set the current date as received date in the data
+    let newStatus;
+
+    switch (currentStatus) {
+      case "Pending":
+        newStatus = "Dispatched";
+        break;
+      case "Dispatched":
+        newStatus = "Delivered";
+        break;
+      default:
+        console.error("Invalid status:", currentStatus);
+        return;
+    }
+
+    try {
+      const updatedOrder = await updateOrderStatus(orderId, newStatus);
+      if (updatedOrder) {
+        console.log("Order updated successfully:", updatedOrder);
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
     }
   };
 
@@ -157,11 +168,11 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   // Get progress percentage for each status
   const getProgressPercentage = () => {
     switch (status) {
-      case "Awaiting":
+      case "Pending":
         return 33; // 33% progress for Awaiting
-      case "In Transit":
+      case "Dispatched":
         return 66; // 66% progress for In Transit
-      case "Received":
+      case "Delivered":
         return 100; // 100% progress for Received
       default:
         return 0;
@@ -194,19 +205,19 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   );
 
   // Check if all expiry dates are filled
-  const areAllExpiryDatesFilled = expiryDates.every((date) => date !== "");
+  // const areAllExpiryDatesFilled = expiryDates.every((date) => date !== "");
 
   // Handle the Mark as Received button click
   const handleMarkAsReceivedClick = () => {
-    setReceivedClicked(true); // Set to true when the button is clicked
+    setReceivedClicked(true); // Custom behavior (if needed)
 
-    if (!areAllExpiryDatesFilled) {
-      return; // Do not allow status change if expiry dates are not filled
+    if (!expiryDates.every((date) => date !== "")) {
+      console.error("Please fill in all expiry dates.");
+      return;
     }
 
-    handleStatusChange("Received");
+    handleStatusChange(delivery.INBOUND_DEL_ID, status, expiryDates);
   };
-
   // Calculate Qty Defect (Difference between Delivered Quantity and Accepted Quantity)
   const calculateQtyDefect = (index) => {
     const qtyDelivered = orderDetails[index].INBOUND_DEL_DETAIL_ORDERED_QTY;
@@ -347,21 +358,25 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
 
       {/* Status Change Buttons */}
       <ModalFooter>
-        {status === "Awaiting" && (
-          <StatusButton onClick={() => handleStatusChange("In Transit")}>
+        {status === "Pending" && (
+          <StatusButton
+            onClick={() => handleStatusChange(delivery.INBOUND_DEL_ID, status)}
+          >
             Mark as In Transit
           </StatusButton>
         )}
-        {status === "In Transit" && (
+        {status === "Dispatched" && (
           <StatusButton onClick={handleMarkAsReceivedClick}>
             Mark as Received
           </StatusButton>
         )}
-        {status === "Received" && (
-          <StatusButton onClick={() => handleStatusChange("Awaiting")}>
+        {/* {status === "Delivered" && (
+          <StatusButton
+            onClick={() => handleStatusChange(delivery.INBOUND_DEL_ID, status)}
+          >
             Mark as Awaiting
           </StatusButton>
-        )}
+        )} */}
       </ModalFooter>
     </Modal>
   );

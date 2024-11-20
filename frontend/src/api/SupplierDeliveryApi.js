@@ -39,3 +39,20 @@ export const fetchOrderDetails = async (orderId) => {
     return [];
   }
 };
+
+export const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    const response = await axios.patch(
+      `${BASE_URL}/api/delivery/supplier/${orderId}/update`,
+      {
+        INBOUND_DEL_STATUS: newStatus, // Ensure this matches your backend expectation
+      }
+    );
+
+    console.info("Updated Successfully", response.status);
+    return response.status; // Return the status for further use if needed
+  } catch (error) {
+    console.error("Failed to update status:", error.message || error);
+    throw new Error("Failed to update order status"); // Throw error for handling
+  }
+};

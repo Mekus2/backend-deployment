@@ -69,7 +69,7 @@ const Header = ({ toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const pageTitle = pageTitles[location.pathname] || "Page Title";
+  const pageTitle = pageTitles[location.pathname] || "Supplier Delivery";
 
   const handleMouseEnter = () => {
     setIsDropdownOpen(true);
@@ -100,15 +100,15 @@ const Header = ({ toggleSidebar }) => {
   };
 
   const handleSignOut = () => {
-       // Clear access token and any other user-related data from localStorage
-       localStorage.removeItem('access_tokenStorage');
-       localStorage.removeItem('refresh_token');
-       localStorage.removeItem('user_id');
-       localStorage.removeItem('user_first_name');
-       localStorage.removeItem('user_type'); // Clear any other stored user info
-   
-       console.log("User signed out. Tokens cleared."); // Log the sign-out action
-       navigate("/login"); // Redirect to the login page
+    // Clear access token and any other user-related data from localStorage
+    localStorage.removeItem("access_tokenStorage");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_first_name");
+    localStorage.removeItem("user_type"); // Clear any other stored user info
+
+    console.log("User signed out. Tokens cleared."); // Log the sign-out action
+    navigate("/login"); // Redirect to the login page
   };
 
   return (

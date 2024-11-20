@@ -18,6 +18,7 @@ from .serializers import (
     CreateInboundDeliveryDetailsSerializer,
     CreateOutboundDeliveryDetailsSerializer,
     CreateOutboundDeliverySerializer,
+    UpdateInboundStatus,
 )
 from django.db import transaction
 from Admin.Order.Purchase.models import PurchaseOrder
@@ -289,3 +290,28 @@ class InboundDeliveryDetailsAPIView(APIView):
             {"message": "Inbound Delivery details deleted successfully."},
             status=status.HTTP_204_NO_CONTENT,
         )
+
+
+class UpdateInboundDelStatus(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def patch(self, request, pk):
+        try:
+            # Fetch the InboundDelivery instance
+            inbound_delivery = InboundDelivery.objects.get(pk=pk)
+        except InboundDelivery.DoesNotExist:
+            return Response(
+                {"error": "Inbound delivery not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize and validate the incoming data
+        serializer = UpdateInboundStatus(
+            inbound_delivery, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()  # Save the updated status
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        # Return validation errors
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
