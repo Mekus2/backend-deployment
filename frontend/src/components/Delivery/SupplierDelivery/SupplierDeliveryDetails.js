@@ -187,19 +187,18 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   };
 
   // Calculate total value for each product (Quantity Delivered * Price per Unit)
-  const calculateItemTotal = (qty, price) => qty * price;
+  const calculateItemTotal = (qtyAccepted, price) => qtyAccepted * price;
 
   // Calculate total quantity and total amount for the summary
   const totalQuantity = orderDetails.reduce(
     (total, item) => total + item.INBOUND_DEL_DETAIL_ORDERED_QTY,
     0
   );
-  // Calculate total amount from the Total column (which is ordered qty * price)
   const totalAmount = orderDetails.reduce(
-    (total, item) =>
+    (total, item, index) =>
       total +
       calculateItemTotal(
-        item.INBOUND_DEL_DETAIL_ORDERED_QTY,
+        qtyAccepted[index], // Use qtyAccepted instead of qtyOrdered
         item.INBOUND_DEL_DETAIL_LINE_PRICE
       ),
     0
@@ -354,7 +353,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
               <TableCell>
                 ₱
                 {calculateItemTotal(
-                  item.INBOUND_DEL_DETAIL_ORDERED_QTY,
+                  qtyAccepted[index], // Use qtyAccepted instead of qtyOrdered
                   item.INBOUND_DEL_DETAIL_LINE_PRICE
                 ).toFixed(2)}
               </TableCell>
