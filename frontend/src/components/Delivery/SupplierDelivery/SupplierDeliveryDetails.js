@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Modal from "../../Layout/Modal";
-import INBOUND_DELIVERY from "../../../data/InboundData"; // Import the data
+// import INBOUND_DELIVERY from "../../../data/InboundData"; // Import the data
+import { fetchOrderDetails } from "../../../api/SupplierDeliveryApi";
 
 // Import the styles
 import {
@@ -26,24 +27,23 @@ import {
   Asterisk,
 } from "./SupplierDeliveryStyles"; // Adjust the import path as needed
 
-const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
-  const [status, setStatus] = useState(delivery.INBOUND_DEL_STATUS); // Use state to track the status
-  const [receivedDate, setReceivedDate] = useState(
-    delivery.INBOUND_DEL_DATE_RCVD || "Not yet Received"
-  ); // Use state for received date
-  const [expiryDates, setExpiryDates] = useState(
-    Array(deliveryDetails.length).fill("") // Track expiry dates as an array
-  );
-  const [qtyAccepted, setQtyAccepted] = useState(
-    Array(deliveryDetails.length).fill(0) // Track accepted quantities, initialized to 0
-  );
-  const [receivedClicked, setReceivedClicked] = useState(false); // Track if the Mark as Received button was clicked
-  const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
+const SupplierDeliveryDetails = ({ delivery, onClose }) => {
+  console.log("Data received:", delivery);
 
   const abortControllerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
+  const [status, setStatus] = useState(""); // Use state to track the status
+  const [receivedDate, setReceivedDate] = useState("Not yet Received"); // Use state for received date
+  const [expiryDates, setExpiryDates] = useState(
+    Array((orderDetails || []).length).fill("") // Track expiry dates as an array
+  );
+  const [qtyAccepted, setQtyAccepted] = useState(
+    Array((orderDetails || []).length).fill(0) // Track accepted quantities, initialized to 0
+  );
+  const [receivedClicked, setReceivedClicked] = useState(false); // Track if the Mark as Received button was clicked
+  const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -54,15 +54,15 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
-      if (order.PURCHASE_ORDER_ID) {
+      if (delivery.INBOUND_DEL_ID) {
         setLoading(true);
         setError(null);
         try {
           console.log(
-            `Fetching details for Order ID: ${order.PURCHASE_ORDER_ID}`
+            `Fetching details for Order ID: ${delivery.INBOUND_DEL_ID}`
           );
-          const details = await fetchPurchaseDetailsById(
-            order.PURCHASE_ORDER_ID,
+          const details = await fetchOrderDetails(
+            delivery.INBOUND_DEL_ID,
             controller.signal
           );
           console.log("Received Details:", details);
@@ -79,31 +79,46 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
         }
       }
     };
-  }, []);
+    fetchDetails();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [delivery]);
 
   // Early return if order is not provided
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
   if (!orderDetails) return null;
-  if (!order) return null;
+  if (!delivery) return null;
 
-  // Function to get the Supplier Name by Supplier ID
-  const getSupplierNameById = (supplierId) => {
-    const supplier = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-      (item) => item.SUPP_ID === supplierId
-    )?.SUPPLIER;
-    return supplier ? supplier.SUPP_NAME : "Unknown Supplier";
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    if (isNaN(date)) return ""; // Return empty string if invalid date
+    return `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
+      .getDate()
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
   };
+
+  // // Function to get the Supplier Name by Supplier ID
+  // const getSupplierNameById = (supplierId) => {
+  //   const supplier = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
+  //     (item) => item.SUPP_ID === supplierId
+  //   )?.SUPPLIER;
+  //   return supplier ? supplier.SUPP_NAME : "Unknown Supplier";
+  // };
 
   // Function to get the User's Full Name by User ID
-  const getUserFullNameById = (userId) => {
-    const user = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-      (item) => item.INBOUND_DEL_RCVD_BY_USER_ID === userId
-    )?.USER;
-    return user
-      ? `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`
-      : "Unknown User";
-  };
+  // const getUserFullNameById = (userId) => {
+  //   const user = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
+  //     (item) => item.INBOUND_DEL_RCVD_BY_USER_ID === userId
+  //   )?.USER;
+  //   return user
+  //     ? `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`
+  //     : "Unknown User";
+  // };
 
   // Function to handle status update
   const handleStatusChange = (newStatus) => {
@@ -119,7 +134,7 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
 
   // Function to handle Qty Accepted input change
   const handleQtyAcceptedChange = (index, value) => {
-    const qtyOrdered = deliveryDetails[index].INBOUND_DEL_DETAIL_QTY_DLVRD;
+    const qtyOrdered = orderDetails[index].INBOUND_DEL_DETAIL_ORDERED_QTY;
     const newQtyAccepted = [...qtyAccepted];
     const parsedValue = parseInt(value, 10);
 
@@ -164,11 +179,11 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
   const calculateItemTotal = (qty, price) => qty * price;
 
   // Calculate total quantity and total amount for the summary
-  const totalQuantity = deliveryDetails.reduce(
-    (total, item) => total + item.INBOUND_DEL_DETAIL_QTY_DLVRD,
+  const totalQuantity = orderDetails.reduce(
+    (total, item) => total + item.INBOUND_DEL_DETAIL_ORDERED_QTY,
     0
   );
-  const totalAmount = deliveryDetails.reduce(
+  const totalAmount = orderDetails.reduce(
     (total, item) =>
       total +
       calculateItemTotal(
@@ -194,7 +209,7 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
 
   // Calculate Qty Defect (Difference between Delivered Quantity and Accepted Quantity)
   const calculateQtyDefect = (index) => {
-    const qtyDelivered = deliveryDetails[index].INBOUND_DEL_DETAIL_QTY_DLVRD;
+    const qtyDelivered = orderDetails[index].INBOUND_DEL_DETAIL_ORDERED_QTY;
     const qtyAcceptedForItem = qtyAccepted[index];
     return qtyAcceptedForItem ? qtyDelivered - qtyAcceptedForItem : 0; // Show defect as 0 if not accepted
   };
@@ -214,7 +229,7 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
           </FormGroup>
           <FormGroup>
             <Label>Supplier Name:</Label>
-            <Value>{getSupplierNameById(delivery.SUPP_ID)}</Value>
+            <Value>{delivery.INBOUND_DEL_SUPP_NAME}</Value>
           </FormGroup>
           <FormGroup>
             <Label>Received Date:</Label>
@@ -224,17 +239,11 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
         <Column>
           <FormGroup>
             <Label>Date Created:</Label>
-            <Value>{delivery.INBOUND_DEL_DATECREATED}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Delivery Option:</Label>
-            <Value>{delivery.INBOUND_DEL_DLVRY_OPT}</Value>
+            <Value>{formatDate(delivery.INBOUND_DEL_ORDER_DATE_CREATED)}</Value>
           </FormGroup>
           <FormGroup>
             <Label>Received By:</Label>
-            <Value>
-              {getUserFullNameById(delivery.INBOUND_DEL_RCVD_BY_USER_ID)}
-            </Value>
+            <Value>{delivery.OUTBOUND_DEL_ACCPTD_BY_USER || ""}</Value>
           </FormGroup>
         </Column>
       </DetailsContainer>
@@ -255,15 +264,15 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
           </tr>
         </thead>
         <tbody>
-          {deliveryDetails.map((item, index) => (
+          {orderDetails.map((item, index) => (
             <TableRow key={index}>
-              <TableCell>{item.PROD_NAME}</TableCell>
-              <TableCell>{item.INBOUND_DEL_DETAIL_QTY_DLVRD}</TableCell>
+              <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
+              <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
               <TableCell>
                 <input
                   type="number"
                   min="0"
-                  max={item.INBOUND_DEL_DETAIL_QTY_DLVRD}
+                  max={item.INBOUND_DEL_DETAIL_LINE_QTY}
                   value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
                   onChange={(e) =>
                     handleQtyAcceptedChange(index, e.target.value)
@@ -299,11 +308,17 @@ const SupplierDeliveryDetails = ({ delivery, deliveryDetails, onClose }) => {
                   )}
                 </InputContainer>
               </TableCell>
-              <TableCell>₱{item.PRICE_PER_UNIT.toFixed(2)}</TableCell>
+              <TableCell>
+                ₱
+                {typeof item.INBOUND_DEL_DETAIL_LINE_PRICE === "number"
+                  ? item.INBOUND_DEL_DETAIL_LINE_PRICE.toFixed(2)
+                  : "0.00"}
+              </TableCell>
               <TableCell>
                 ₱
                 {(
-                  item.INBOUND_DEL_DETAIL_QTY_DLVRD * item.PRICE_PER_UNIT
+                  item.INBOUND_DEL_DETAIL_LINE_QTY *
+                  item.INBOUND_DEL_DETAIL_LINE_PRICE
                 ).toFixed(2)}
               </TableCell>
             </TableRow>

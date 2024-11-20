@@ -80,11 +80,9 @@ const SharedSupplierDeliveryPage = () => {
       (delivery.INBOUND_DEL_SUPP_NAME?.toLowerCase() || "").includes(
         lowerCaseSearchTerm
       ) ||
-      (
-        getUserNameById(
-          delivery.INBOUND_DEL_RCVD_BY_USER_NAME
-        )?.toLowerCase() || ""
-      ).includes(lowerCaseSearchTerm)
+      (delivery.INBOUND_DEL_RCVD_BY_USER_NAME?.toLowerCase() || "").includes(
+        lowerCaseSearchTerm
+      )
     );
   });
 
@@ -99,10 +97,8 @@ const SharedSupplierDeliveryPage = () => {
   });
 
   const openDetailsModal = (delivery) => {
-    const deliveryDetails = INBOUND_DELIVERY.INBOUND_DELIVERY_DETAILS.filter(
-      (detail) => detail.INBOUND_DEL_ID === delivery.INBOUND_DEL_ID
-    );
-    setSelectedDelivery({ delivery, deliveryDetails });
+    setSelectedDelivery(delivery);
+    console.log("Data Passed:", delivery);
   };
 
   const closeDetailsModal = () => setSelectedDelivery(null);
@@ -194,8 +190,7 @@ const SharedSupplierDeliveryPage = () => {
       />
       {selectedDelivery && (
         <SupplierDeliveryDetails
-          delivery={selectedDelivery.delivery}
-          deliveryDetails={selectedDelivery.deliveryDetails}
+          delivery={selectedDelivery}
           onClose={closeDetailsModal}
         />
       )}

@@ -27,3 +27,15 @@ export const fetchSupplierDelivery = async () => {
     return [];
   }
 };
+
+export const fetchOrderDetails = async (orderId) => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/api/delivery/supplier/${orderId}/details`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch details.");
+    return [];
+  }
+};
