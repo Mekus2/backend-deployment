@@ -1,0 +1,22 @@
+/* styles.css */
+.custom-tooltip {
+    background-color: #333; /* Background color */
+    color: #fff;            /* Text color */
+    border-radius: 5px;    /* Rounded corners */
+    padding: 8px;          /* Padding inside the tooltip */
+    font-size: 14px;       /* Font size */
+    max-width: 200px;      /* Max width of tooltip */
+    text-align: center;    /* Centered text */
+  }
+  
+  .custom-tooltip::after {
+    content: ''; /* This pseudo-element creates the arrow */
+    position: absolute;
+    bottom: 100%; /* Position above the tooltip */
+    left: 50%; /* Center horizontally */
+    margin-left: -5px; /* Center arrow */
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #333 transparent; /* Arrow color */
+  }
+  

@@ -1,0 +1,27 @@
+
+Dependencies
+- @testing-library/jest-dom
+- @testing-library/react
+- @testing-library/user-event
+- antd
+- autoprefixer
+- postcss
+- react
+- react-dom
+- react-icons
+- react-router-dom
+- react-scripts
+- recharts
+- styled-components
+- tailwindcss
+- web-vitals
+
+DevDependencies
+- @babel/plugin-proposal-private-property-in-object
+
+Commands to install:
+
+Using npm:
+npm install @testing-library/jest-dom @testing-library/react @testing-library/user-event antd autoprefixer postcss react react-dom react-icons react-router-dom react-scripts recharts styled-components tailwindcss web-vitals
+npm install --save-dev @babel/plugin-proposal-private-property-in-object
+
