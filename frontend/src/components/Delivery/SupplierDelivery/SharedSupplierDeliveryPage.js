@@ -47,7 +47,6 @@ const SharedSupplierDeliveryPage = () => {
       try {
         const data = await fetchSupplierDelivery();
         setOrders(data);
-        console.log("Data:", data);
       } catch (error) {
         console.error("Error fetching purchase orders:", error);
       } finally {
@@ -98,7 +97,6 @@ const SharedSupplierDeliveryPage = () => {
 
   const openDetailsModal = (delivery) => {
     setSelectedDelivery(delivery);
-    console.log("Data Passed:", delivery);
   };
 
   const closeDetailsModal = () => setSelectedDelivery(null);
