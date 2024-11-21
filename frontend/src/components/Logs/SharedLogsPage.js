@@ -96,7 +96,7 @@ const StyledTabButton = styled(Button)`
   border: none;
   margin-right: 8px;
   padding: 8px 16px;
-  border-radius: 4px 4px 0 0;
+  border-radius: 4px;
   &:hover {
     background-color: ${(props) =>
       props.active ? colors.primaryHover : "#c0c0c0"};
