@@ -116,11 +116,11 @@ const SharedProfilePage = () => {
     ) {
       setHasChanges(true);
       const currentTime = Date.now();
-      
+
       // Show toast only if 5 seconds have passed since the last toast
       if (currentTime - lastToastTime >= 5000) {
-        notify.info("Make sure to save changes!");  // Display toast when changes are made
-        setLastToastTime(currentTime);  // Update the last toast time
+        notify.info("Make sure to save changes!"); // Display toast when changes are made
+        setLastToastTime(currentTime); // Update the last toast time
       }
     }
   };
@@ -146,13 +146,13 @@ const SharedProfilePage = () => {
         setProfileImage(reader.result);
         setImage(file);
         setHasChanges(true);
-        
+
         const currentTime = Date.now();
-        
+
         // Show toast only if 5 seconds have passed since the last toast
         if (currentTime - lastToastTime >= 5000) {
-          notify.info("Make sure to save changes!");  // Display toast when image changes
-          setLastToastTime(currentTime);  // Update the last toast time
+          notify.info("Make sure to save changes!"); // Display toast when image changes
+          setLastToastTime(currentTime); // Update the last toast time
         }
       };
       reader.readAsDataURL(file);
@@ -225,7 +225,11 @@ const SharedProfilePage = () => {
 
         <ProfileInfo>
           <AdminText>{/* Admin Text Placeholder */}</AdminText>
-          <NameText>{`${firstName} ${middleInitial} ${lastName}`}</NameText>
+          <NameText>
+            {`${firstName} ${
+              middleInitial ? `${middleInitial}.` : ""
+            } ${lastName}`}
+          </NameText>
           <EmailText>{email}</EmailText>
         </ProfileInfo>
       </LeftPanel>
@@ -236,15 +240,26 @@ const SharedProfilePage = () => {
             <ProfileField key={field}>
               <Label htmlFor={field}>
                 {field
-                  .replace(/([a-z0-9])([A-Z])/g, '$1 $2') // Add space before capital letters
-                  .replace(/^./, (str) => str.toUpperCase())} {/* Capitalize the first letter */}
+                  .replace(/([a-z0-9])([A-Z])/g, "$1 $2") // Add space before capital letters
+                  .replace(/^./, (str) => str.toUpperCase())}{" "}
+                {/* Capitalize the first letter */}
               </Label>
               <FieldContainer>
                 <InputField
                   type={field === "email" ? "email" : "text"}
                   id={field}
                   name={field}
-                  value={field === "firstName" ? firstName : field === "middleInitial" ? middleInitial : field === "lastName" ? lastName : field === "email" ? email : contact}
+                  value={
+                    field === "firstName"
+                      ? firstName
+                      : field === "middleInitial"
+                      ? middleInitial
+                      : field === "lastName"
+                      ? lastName
+                      : field === "email"
+                      ? email
+                      : contact
+                  }
                   onChange={(e) => handleChange(field, e)}
                   onBlur={() => handleBlur(field)}
                   disabled={!editMode[field]} // Use disabled when not in edit mode
