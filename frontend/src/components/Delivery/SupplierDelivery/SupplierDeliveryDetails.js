@@ -27,6 +27,7 @@ import {
   InputContainer,
   Asterisk,
 } from "./SupplierDeliveryStyles"; // Adjust the import path as needed
+import { addNewInventoy } from "../../../api/InventoryApi";
 
 const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   const abortControllerRef = useRef(null);
@@ -147,10 +148,10 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   // Function to handle Qty Accepted input change
   const handleQtyAcceptedChange = (index, value) => {
     const qtyOrdered = orderDetails[index].INBOUND_DEL_DETAIL_ORDERED_QTY;
-    const newQtyAccepted = [...qtyAccepted];
     const parsedValue = parseInt(value, 10);
 
-    // If value is empty, we reset to 0, otherwise we set the new value
+    // If value is empty, reset to 0, otherwise set the new value
+    const newQtyAccepted = [...qtyAccepted];
     if (value === "") {
       newQtyAccepted[index] = 0;
     } else if (
@@ -163,7 +164,21 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       newQtyAccepted[index] = parsedValue;
     }
 
+    // Calculate the defect quantity and update both states at once
+    const updatedOrderDetails = [...orderDetails];
+    const defectQty = newQtyAccepted[index]
+      ? qtyOrdered - newQtyAccepted[index]
+      : 0;
+
+    updatedOrderDetails[index] = {
+      ...updatedOrderDetails[index],
+      INBOUND_DEL_DETAIL_LINE_QTY: newQtyAccepted[index],
+      INBOUND_DEL_DETAIL_LINE_QTY_DEFECT: defectQty,
+    };
+
+    // Set both states in one go
     setQtyAccepted(newQtyAccepted);
+    setOrderDetails(updatedOrderDetails);
   };
 
   // Get progress percentage for each status
@@ -185,6 +200,20 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     const newExpiryDates = [...expiryDates];
     newExpiryDates[index] = value; // Set the specific index with new date value
     setExpiryDates(newExpiryDates);
+
+    // Update orderDetails only if the expiry date has changed
+    const updatedOrderDetails = [...orderDetails];
+    const currentExpiryDate =
+      orderDetails[index].INBOUND_DEL_DETAIL_PROD_EXP_DATE;
+
+    if (value !== currentExpiryDate) {
+      updatedOrderDetails[index] = {
+        ...updatedOrderDetails[index], // Keep other fields unchanged
+        INBOUND_DEL_DETAIL_PROD_EXP_DATE: value, // Update the expiry date
+      };
+
+      setOrderDetails(updatedOrderDetails); // Update orderDetails state
+    }
   };
 
   // Calculate total value for each product (Quantity Delivered * Price per Unit)
@@ -205,25 +234,72 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     0
   );
 
-  // Check if all expiry dates are filled
-  // const areAllExpiryDatesFilled = expiryDates.every((date) => date !== "");
-
   // Handle the Mark as Received button click
-  const handleMarkAsReceivedClick = () => {
+  const handleMarkAsReceivedClick = async () => {
     setReceivedClicked(true); // Custom behavior (if needed)
 
+    // Check if all expiry dates are filled
     if (!expiryDates.every((date) => date !== "")) {
       console.error("Please fill in all expiry dates.");
       return;
     }
+    console.info("Order Details Data:", orderDetails);
 
-    handleStatusChange(delivery.INBOUND_DEL_ID, status, expiryDates);
+    // Prepare inventory data to be posted
+    // const inventoryData = orderDetails.map((item, index) => {
+    //   const expiryDate = expiryDates[index];
+    //   return {
+    //     PRODUCT_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Assuming `PRODUCT_ID` is part of `orderDetails`
+    //     INBOUND_DEL_ID: delivery.INBOUND_DEL_ID,
+    //     EXPIRY_DATE: expiryDate,
+    //     QUANTITY: item.QUANTITY, // Assuming `QUANTITY` is part of `orderDetails`
+    //   };
+    // });
+
+    // console.log("Inventory data prepared for posting:", inventoryData);
+
+    // Try posting the inventory data and updating the status
+    // // try {
+    // //   // Iterate over inventoryData and post each entry
+    // //   for (const inventoryItem of inventoryData) {
+    // //     const response = await addNewInventoy(inventoryItem); // Posting inventory item
+    // //     if (response) {
+    // //       console.log("Inventory entry created successfully:", response);
+    // //     } else {
+    // //       console.error("Failed to create inventory entry for:", inventoryItem);
+    // //     }
+    // //   }
+
+    // //   // After all inventory data is posted, update the status
+    // //   console.log("All inventory data posted successfully, updating status...");
+    // //   handleStatusChange(delivery.INBOUND_DEL_ID, status, expiryDates);
+    // } catch (error) {
+    //   console.error("Error posting to Inventory:", error);
+    // }
   };
   // Calculate Qty Defect (Difference between Delivered Quantity and Accepted Quantity)
   const calculateQtyDefect = (index) => {
     const qtyDelivered = orderDetails[index].INBOUND_DEL_DETAIL_ORDERED_QTY;
     const qtyAcceptedForItem = qtyAccepted[index];
-    return qtyAcceptedForItem ? qtyDelivered - qtyAcceptedForItem : 0; // Show defect as 0 if not accepted
+
+    // Calculate the defect quantity
+    const defectQty = qtyAcceptedForItem
+      ? qtyDelivered - qtyAcceptedForItem
+      : 0;
+
+    // Check if the defect quantity has actually changed before updating state
+    if (defectQty !== orderDetails[index].INBOUND_DEL_DETAIL_LINE_QTY_DEFECT) {
+      // Only update the orderDetails state if the defect quantity has changed
+      const updatedOrderDetails = [...orderDetails];
+      updatedOrderDetails[index] = {
+        ...updatedOrderDetails[index], // Keep other fields unchanged
+        INBOUND_DEL_DETAIL_LINE_QTY_DEFECT: defectQty, // Set defect quantity
+      };
+
+      setOrderDetails(updatedOrderDetails); // Update the state
+    }
+
+    return defectQty;
   };
 
   return (
@@ -353,10 +429,12 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
 
               <TableCell>
                 ₱
-                {calculateItemTotal(
-                  qtyAccepted[index], // Use qtyAccepted instead of qtyOrdered
-                  item.INBOUND_DEL_DETAIL_LINE_PRICE
-                ).toFixed(2)}
+                {
+                  calculateItemTotal(
+                    qtyAccepted[index] ?? 0, // If qtyAccepted[index] is null or undefined, use 0
+                    item.INBOUND_DEL_DETAIL_LINE_PRICE ?? 0 // If price is null or undefined, use 0
+                  ).toFixed(2) // Format as two decimal places
+                }
               </TableCell>
             </TableRow>
           ))}
