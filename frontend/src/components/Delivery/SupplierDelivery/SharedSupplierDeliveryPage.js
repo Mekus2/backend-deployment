@@ -10,26 +10,6 @@ import Button from "../../Layout/Button";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { fetchSupplierDelivery } from "../../../api/SupplierDeliveryApi";
 
-// Function to get Supplier Name by ID
-function getSupplierNameById(id) {
-  const supplier = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-    (delivery) => delivery.SUPP_ID === id
-  )?.SUPPLIER;
-  return supplier ? supplier.SUPP_NAME : "Unknown Supplier"; // Handle missing supplier
-}
-
-// Function to get User Name by ID
-function getUserNameById(userId) {
-  const delivery = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-    (d) => d.INBOUND_DEL_RCVD_BY_USER_ID === userId
-  );
-  if (delivery && delivery.USER) {
-    const user = delivery.USER;
-    return `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`;
-  }
-  return "Unknown User"; // Handle missing user
-}
-
 const SharedSupplierDeliveryPage = () => {
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
