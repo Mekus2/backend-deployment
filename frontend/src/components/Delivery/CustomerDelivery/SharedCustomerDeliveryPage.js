@@ -1,15 +1,14 @@
 // Imports
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import CustomerDeliveryDetails from "./CustomerDeliveryDetails"; // Make sure this is the correct path and is a default export
+import CustomerDeliveryDetails from "./CustomerDeliveryDetails"; // Ensure correct path
 import { colors } from "../../../colors";
-import OUTBOUND_DELIVERY from "../../../data/OutboundData";
-import SearchBar from "../../Layout/SearchBar"; // Confirm the default export or change to named export if necessary
-import Table from "../../Layout/Table"; // Confirm the default export or change to named export if necessary
-import CardTotalCustomerDelivery from "../../CardsData/CardTotalCustomerDelivery"; // Confirm the default export or change to named export if necessary
-import Button from "../../Layout/Button"; // Confirm the default export or change to named export if necessary
+import SearchBar from "../../Layout/SearchBar"; // Ensure correct export
+import Table from "../../Layout/Table"; // Ensure correct export
+import CardTotalCustomerDelivery from "../../CardsData/CardTotalCustomerDelivery"; // Ensure correct export
+import Button from "../../Layout/Button"; // Ensure correct export
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
-
+import Loading from "../../Layout/Loading"; // Import Loading component
 import { fetchCustomerDelivery } from "../../../api/CustomerDeliveryApi";
 
 const SharedCustomerDeliveryPage = () => {
@@ -37,30 +36,6 @@ const SharedCustomerDeliveryPage = () => {
     fetchOrder();
   }, []);
 
-  // Handle status update from the modal
-  // const handleStatusUpdate = (updatedDelivery) => {
-  //   const updatedDeliveries = OUTBOUND_DELIVERY.OUTBOUND_DELIVERY.map(
-  //     (delivery) => {
-  //       if (delivery.OUTBOUND_DEL_ID === updatedDelivery.OUTBOUND_DEL_ID) {
-  //         return updatedDelivery;
-  //       }
-  //       return delivery;
-  //     }
-  //   );
-
-  //   // Update the global OUTBOUND_DELIVERY with the new status
-  //   OUTBOUND_DELIVERY.OUTBOUND_DELIVERY = updatedDeliveries;
-
-  //   if (
-  //     selectedDelivery &&
-  //     selectedDelivery.delivery.OUTBOUND_DEL_ID ===
-  //       updatedDelivery.OUTBOUND_DEL_ID
-  //   ) {
-  //     setSelectedDelivery({ ...selectedDelivery, delivery: updatedDelivery });
-  //   }
-  // };
-
-  // Filter and search deliveries across all fields
   const filteredDeliveries = (orders || []).filter((delivery) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return Object.values(delivery).some(
@@ -69,7 +44,6 @@ const SharedCustomerDeliveryPage = () => {
     );
   });
 
-  // Sort deliveries by date only
   const sortedDeliveries = filteredDeliveries.sort((a, b) => {
     if (
       sortConfig.key === "OUTBOUND_DEL_SHIPPED_DATE" ||
@@ -78,13 +52,12 @@ const SharedCustomerDeliveryPage = () => {
       const dateA = a[sortConfig.key] ? new Date(a[sortConfig.key]) : null;
       const dateB = b[sortConfig.key] ? new Date(b[sortConfig.key]) : null;
 
-      if (!dateA || !dateB) return !dateA ? 1 : -1; // Handle null dates
+      if (!dateA || !dateB) return !dateA ? 1 : -1;
       return (dateB - dateA) * (sortConfig.direction === "asc" ? 1 : -1);
     }
     return 0;
   });
 
-  // Open the details modal with selected delivery and details
   const openDetailsModal = (delivery) => {
     setSelectedDelivery(delivery);
   };
@@ -99,7 +72,6 @@ const SharedCustomerDeliveryPage = () => {
     setSortConfig({ key, direction });
   };
 
-  // Update headers to only include the required fields
   const headers = [
     { title: "Shipped Date", key: "OUTBOUND_DEL_SHIPPED_DATE" },
     { title: "Received Date", key: "OUTBOUND_DEL_DATE_CUST_RCVD" },
@@ -109,7 +81,6 @@ const SharedCustomerDeliveryPage = () => {
     { title: "Action", key: "action" },
   ];
 
-  // Update rows to display the relevant columns
   const rows = sortedDeliveries.map((delivery) => [
     delivery.OUTBOUND_DEL_SHIPPED_DATE || "Not Shipped",
     delivery.OUTBOUND_DEL_CSTMR_RCVD_DATE || "Not Received",
@@ -127,6 +98,11 @@ const SharedCustomerDeliveryPage = () => {
       Details
     </Button>,
   ]);
+
+  // Show loading spinner while fetching data
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <>
@@ -185,9 +161,7 @@ const SharedCustomerDeliveryPage = () => {
       {selectedDelivery && (
         <CustomerDeliveryDetails
           delivery={selectedDelivery}
-          // deliveryDetails={selectedDelivery.deliveryDetails}
           onClose={closeDetailsModal}
-          // onStatusUpdate={handleStatusUpdate}
         />
       )}
     </>

@@ -11,11 +11,13 @@ import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { colors } from "../../colors";
 import { fetchSuppliers } from "../../api/SupplierApi"; // Import the fetchSuppliers function
 import axios from "axios"; // Import axios for making requests
+import Loading from "../../components/Layout/Loading"; // Import Loading component
 
 const SharedSuppliersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [suppliers, setSuppliers] = useState([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // Loading state
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -32,6 +34,8 @@ const SharedSuppliersPage = () => {
         setFilteredSuppliers(data);
       } catch (error) {
         console.error("Failed to fetch suppliers", error);
+      } finally {
+        setIsLoading(false); // Stop loading when data is fetched
       }
     };
     fetchData();
@@ -117,6 +121,10 @@ const SharedSuppliersPage = () => {
       Details
     </ActionButton>,
   ]);
+
+  if (isLoading) {
+    return <Loading />; // Display Loading component while fetching data
+  }
 
   return (
     <>

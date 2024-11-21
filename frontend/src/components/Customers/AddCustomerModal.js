@@ -3,6 +3,7 @@ import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
 import { addCustomer } from "../../api/CustomerApi"; // Import the addCustomer API function
+import { notify } from "../Layout/CustomToast"; // Import the toast notification utility
 
 const AddCustomerModal = ({ onClose, onAdd }) => {
   const [clientName, setClientName] = useState("");
@@ -42,13 +43,14 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
 
       try {
         const addedCustomer = await addCustomer(newClient); // Call API function to add customer
+        notify.success("Customer added successfully!"); // Trigger success toast notification
         onAdd(addedCustomer); // Pass the added customer data to the parent
         console.log('data:', addCustomer);
         console.log('customer data:', newClient);
         onClose(); // Close the modal
       } catch (error) {
         console.error("Error adding customer:", error);
-        // Optionally, you can handle errors here, like displaying an error message
+        notify.error("An error occurred while adding the customer."); // Trigger error toast notification
       }
     } else {
       setErrors(newErrors);

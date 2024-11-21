@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
 import Modal from "../../Layout/Modal";
+import Loading from "../../Layout/Loading"; // Import the Loading component
 import { colors } from "../../../colors";
 import { fetchCustomerDelDetails } from "../../../api/CustomerDeliveryApi";
 
@@ -121,100 +122,112 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       status={status}
       onClose={onClose}
     >
-      <DetailsContainer>
-        <Column>
-          <FormGroup>
-            <Label>Delivery ID:</Label>
-            <Value>{delivery.OUTBOUND_DEL_ID}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Shipped Date:</Label>
-            <Value>{delivery.OUTBOUND_DEL_SHIPPED_DATE}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Received Date:</Label>
-            <Value>{receivedDate}</Value>
-          </FormGroup>
-        </Column>
-        <Column>
-          <FormGroup>
-            <Label>Delivery Option:</Label>
-            <Value>{delivery.OUTBOUND_DEL_DLVRY_OPT}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>City:</Label>
-            <Value>{delivery.OUTBOUND_DEL_CITY}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Province:</Label>
-            <Value>{delivery.OUTBOUND_DEL_PROVINCE}</Value>
-          </FormGroup>
-        </Column>
-      </DetailsContainer>
+      {loading ? (
+        <Loading /> // Display the Loading component
+      ) : error ? (
+        <ErrorContainer>{error}</ErrorContainer>
+      ) : (
+        <>
+          <DetailsContainer>
+            <Column>
+              <FormGroup>
+                <Label>Delivery ID:</Label>
+                <Value>{delivery.OUTBOUND_DEL_ID}</Value>
+              </FormGroup>
+              <FormGroup>
+                <Label>Shipped Date:</Label>
+                <Value>{delivery.OUTBOUND_DEL_SHIPPED_DATE}</Value>
+              </FormGroup>
+              <FormGroup>
+                <Label>Received Date:</Label>
+                <Value>{receivedDate}</Value>
+              </FormGroup>
+            </Column>
+            <Column>
+              <FormGroup>
+                <Label>Delivery Option:</Label>
+                <Value>{delivery.OUTBOUND_DEL_DLVRY_OPT}</Value>
+              </FormGroup>
+              <FormGroup>
+                <Label>City:</Label>
+                <Value>{delivery.OUTBOUND_DEL_CITY}</Value>
+              </FormGroup>
+              <FormGroup>
+                <Label>Province:</Label>
+                <Value>{delivery.OUTBOUND_DEL_PROVINCE}</Value>
+              </FormGroup>
+            </Column>
+          </DetailsContainer>
 
-      <ProductTable>
-        <thead>
-          <tr>
-            <TableHeader>Product Name</TableHeader>
-            <TableHeader>Quantity Shipped</TableHeader>
-            <TableHeader>Price</TableHeader>
-            <TableHeader>Total</TableHeader>
-          </tr>
-        </thead>
-        <tbody>
-          {orderDetails.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
-              <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
-              <TableCell>
-                ₱{(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(2)}
-              </TableCell>
-              <TableCell>
-                ₱
-                {calculateItemTotal(
-                  item.OUTBOUND_DETAILS_PROD_QTY,
-                  item.OUTBOUND_DETAILS_LINE_PRICE
-                ).toFixed(2)}
-              </TableCell>
-            </TableRow>
-          ))}
-        </tbody>
-      </ProductTable>
+          <ProductTable>
+            <thead>
+              <tr>
+                <TableHeader>Product Name</TableHeader>
+                <TableHeader>Quantity Shipped</TableHeader>
+                <TableHeader>Price</TableHeader>
+                <TableHeader>Total</TableHeader>
+              </tr>
+            </thead>
+            <tbody>
+              {orderDetails.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
+                  <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
+                  <TableCell>
+                    ₱{(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    ₱
+                    {calculateItemTotal(
+                      item.OUTBOUND_DETAILS_PROD_QTY,
+                      item.OUTBOUND_DETAILS_LINE_PRICE
+                    ).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </tbody>
+          </ProductTable>
 
-      {/* Summary Section */}
-      <TotalSummary>
-        <SummaryItem>
-          <strong>Total Quantity:</strong> {totalQuantity}
-        </SummaryItem>
-        <SummaryItem>
-          <strong>Total Amount:</strong>{" "}
-          <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
-        </SummaryItem>
-      </TotalSummary>
+          <TotalSummary>
+            <SummaryItem>
+              <strong>Total Quantity:</strong> {totalQuantity}
+            </SummaryItem>
+            <SummaryItem>
+              <strong>Total Amount:</strong>{" "}
+              <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
+            </SummaryItem>
+          </TotalSummary>
 
-      {/* Progress Bar Section */}
-      <ProgressSection>
-        <ProgressBar>
-          <ProgressFiller progress={progress} />
-        </ProgressBar>
-        <ProgressText>{progress}%</ProgressText>
-      </ProgressSection>
+          <ProgressSection>
+            <ProgressBar>
+              <ProgressFiller progress={progress} />
+            </ProgressBar>
+            <ProgressText>{progress}%</ProgressText>
+          </ProgressSection>
 
-      {/* Status Buttons */}
-      <ModalFooter>
-        <StatusButton onClick={handleStatusChange}>
-          {status === "Pending"
-            ? "Mark as In Transit"
-            : status === "In Transit"
-            ? "Mark as Delivered"
-            : "Mark as Pending"}
-        </StatusButton>
-      </ModalFooter>
+          <ModalFooter>
+            <StatusButton onClick={handleStatusChange}>
+              {status === "Pending"
+                ? "Mark as In Transit"
+                : status === "In Transit"
+                ? "Mark as Delivered"
+                : "Mark as Pending"}
+            </StatusButton>
+          </ModalFooter>
+        </>
+      )}
     </Modal>
   );
 };
 
 // Styled components
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+  color: ${colors.error};
+`;
+
 const DetailsContainer = styled.div`
   display: flex;
   justify-content: space-between;
