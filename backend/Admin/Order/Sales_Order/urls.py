@@ -3,6 +3,7 @@ from .views import (
     SalesOrderListCreateAPIView,
     SalesOrderDetailsAPIView,
     SalesOrderRetrieveUpdateAPIView,
+    GetPendingTotalView,
 )
 
 urlpatterns = [
@@ -17,4 +18,5 @@ urlpatterns = [
         SalesOrderDetailsAPIView.as_view(),
         name="sales-order-details",
     ),
+    path("total-orders", GetPendingTotalView.as_view(), name="get-total-orders"),
 ]

@@ -18,6 +18,19 @@ export const fetchCustomerOrders = async () => {
   }
 };
 
+// Function to get total pending customer orders
+export const fetchCountOrders = async () => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/api/customer-order/total-orders`
+    );
+    return response.data; // { pending_total: <number> }
+  } catch (error) {
+    console.error("Failed to fetch count data:", error);
+    return { pending_total: 0 }; // Return a fallback value
+  }
+};
+
 // Function to fetch order details by ID
 export const fetchOrderDetailsById = async (orderId) => {
   try {
