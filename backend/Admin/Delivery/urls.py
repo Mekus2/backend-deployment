@@ -15,7 +15,7 @@ urlpatterns = [
         name="customer-delivery-list-create",
     ),
     path(
-        "customer/<int:pk>/",
+        "customer/<int:pk>/details",
         OutboundDeliveryDetailsAPIView.as_view(),
         name="customer-delivery-details",
     ),
