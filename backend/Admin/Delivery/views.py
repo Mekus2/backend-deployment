@@ -75,6 +75,22 @@ class OutboundDeliveryListCreateAPIView(APIView):
         return Response(delivery_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class GetTotalOutboundPendingCount(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        try:
+            pending_count = OutboundDelivery.objects.filter(
+                OUTBOUND_DEL_STATUS="Pending"
+            ).count()
+
+            return Response({"pending_total": pending_count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class OutboundDeliveryDetailsAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -104,6 +120,19 @@ class OutboundDeliveryDetailsAPIView(APIView):
             {"message": "Outbound Delivery details deleted successfully."},
             status=status.HTTP_204_NO_CONTENT,
         )
+
+
+class GetTotalInboundPendingCount(APIView):
+    def get(self, request):
+        try:
+            pending_count = InboundDelivery.objects.filter(
+                INBOUND_DEL_STATUS="Pending"
+            ).count()
+            return Response({"pending_count": pending_count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class InboundDeliveryListCreateAPIView(APIView):

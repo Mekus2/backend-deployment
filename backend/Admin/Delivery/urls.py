@@ -6,6 +6,8 @@ from .views import (
     OutboundDeliveryListCreateAPIView,
     InboundDeliveryRetrieveUpdateAPIView,
     UpdateInboundDelStatus,
+    GetTotalOutboundPendingCount,
+    GetTotalInboundPendingCount,
 )
 
 urlpatterns = [
@@ -38,5 +40,15 @@ urlpatterns = [
         "supplier/<int:pk>/update",
         UpdateInboundDelStatus.as_view(),
         name="update-inbound-status",
+    ),
+    path(
+        "customer/total-orders",
+        GetTotalOutboundPendingCount.as_view(),
+        name="total-customer-pending",
+    ),
+    path(
+        "supplier/total-orders",
+        GetTotalInboundPendingCount.as_view(),
+        name="total-supplier-pending",
     ),
 ]
