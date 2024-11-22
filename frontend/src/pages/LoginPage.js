@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { useUserRole } from '../context/UserContext'; // Import useUserRole to set the role
 import { loginUser } from '../api/LoginApi'; // Import the loginUser function
 import logo from '../assets/roundlogo.png';
-import loginbg from '../assets/loginbg.jpg';
+import loginbg from '../assets/loginbg.png';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
