@@ -2,22 +2,22 @@ import React, { useEffect, useState } from "react";
 import Card from "../Layout/Card";
 import styled from "styled-components";
 import { FaClipboardList } from "react-icons/fa";
-import { fetchCustomerOrders } from "../../api/fetchCustomerOrders";
+import { fetchCountOrders } from "../../api/fetchCustomerOrders";
 
 const CardTotalCustomerOrder = () => {
   const [salesOrderCount, setSalesOrderCount] = useState(0);
 
   useEffect(() => {
     const fetchOrders = async () => {
-      const orders = await fetchCustomerOrders();
-      setSalesOrderCount(orders.length);
+      const orders = await fetchCountOrders();
+      setSalesOrderCount(orders.pending_total); // Extract and set `pending_total`
     };
 
     fetchOrders(); // Initial fetch on mount
 
-    const intervalId = setInterval(fetchOrders, 20000); // Fetch every 60 seconds
+    const intervalId = setInterval(fetchOrders, 30000); // Fetch every 30 seconds
 
-    return () => clearInterval(intervalId); // Cleanup on unmountz
+    return () => clearInterval(intervalId); // Cleanup on unmount
   }, []);
 
   return (

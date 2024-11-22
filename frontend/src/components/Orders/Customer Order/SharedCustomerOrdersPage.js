@@ -23,22 +23,22 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const [loading, setLoading] = useState(true); // Add loading state
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true); // Start loading
-        const data = await fetchCustomerOrders();
-        setCustomer(data);
-        setLoading(false); // Stop loading once data is fetched
-      } catch (error) {
-        setLoading(false); // Stop loading if there is an error
-        console.error("Error fetching customer orders:", error);
-      }
-    };
-    fetchData();
+    refreshOrders();
     console.log(`Logged User Role: ${userRole}`);
   }, [userRole]); // Include userRole as a dependency
-  
-  // Helper function to format date to mm/dd/yyyy
+
+  const refreshOrders = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchCustomerOrders();
+      setCustomer(data);
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.error("Error refreshing customer orders:", error);
+    }
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     if (isNaN(date)) return ""; // Return empty string if invalid date
@@ -78,12 +78,14 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const closeDetailsModal = () => setSelectedOrder(null);
 
   const openAddCustomerOrderModal = () => setIsAddingCustomerOrder(true);
-  const closeAddCustomerOrderModal = () => setIsAddingCustomerOrder(false);
+  const closeAddCustomerOrderModal = () => {
+    setIsAddingCustomerOrder(false);
+    refreshOrders(); // Refresh orders when modal is closed
+  };
 
-  // Update headers to exclude Total Amount
   const headers = [
     "Order ID",
-    "Client",
+    "Customer Name",
     "Order Date",
     "Payment Status",
     "Action",
@@ -108,7 +110,7 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   };
 
   if (loading) {
-    return <Loading />;  // Show the loading component when data is being fetched
+    return <Loading />; // Show the loading component when data is being fetched
   }
 
   return (
@@ -204,7 +206,7 @@ const AnalyticsContainer = styled.div`
 
 const Status = styled.span`
   background-color: ${(props) =>
-    props.status === "Paid"
+    props.status === "Accepted"
       ? "#1DBA0B"
       : props.status === "Pending"
       ? "#f08400"

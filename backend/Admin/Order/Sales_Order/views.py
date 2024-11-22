@@ -78,6 +78,25 @@ class SalesOrderListCreateAPIView(APIView):
         )
 
 
+class GetPendingTotalView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        try:
+            # Query for sales orders with a status of 'pending'
+            pending_count = SalesOrder.objects.filter(
+                SALES_ORDER_STATUS="Pending"
+            ).count()
+
+            # Return the total count in the response
+            return Response({"pending_total": pending_count}, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle any unexpected errors
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class SalesOrderRetrieveUpdateAPIView(APIView):
     """
     Handle retrieving a specific Sales Order and updating it.

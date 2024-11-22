@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import styled from "styled-components";
 import Modal from "../../Layout/Modal";
+import Loading from "../../Layout/Loading"; // Import the Loading component
 import { colors } from "../../../colors";
+import { fetchCustomerDelDetails } from "../../../api/CustomerDeliveryApi";
 
 // Define getProgressForStatus function outside of the component to avoid initialization errors
 const getProgressForStatus = (status) => {
@@ -17,15 +19,64 @@ const getProgressForStatus = (status) => {
   }
 };
 
-const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusUpdate }) => {
-  const [status, setStatus] = useState(delivery.OUTBOUND_DEL_STATUS); // Manage the status using state
-  const [receivedDate, setReceivedDate] = useState(delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received");
+const CustomerDeliveryDetails = ({ delivery, onClose }) => {
+  const abortControllerRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [orderDetails, setOrderDetails] = useState([]);
+  const [status, setStatus] = useState(""); // Manage the status using state
+  const [receivedDate, setReceivedDate] = useState(
+    delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received"
+  );
   const progress = getProgressForStatus(status); // Calculate progress percentage
+  console.info("Received Delivery Data:", delivery);
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      if (!delivery.OUTBOUND_DEL_ID) {
+        console.warn("Delivery ID is not available yet");
+        return;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      setLoading(true);
+      setError(null);
+      try {
+        const details = await fetchCustomerDelDetails(
+          delivery.OUTBOUND_DEL_ID,
+          controller.signal
+        );
+        console.info("Received Details:", details);
+        setOrderDetails(details);
+        setStatus(delivery.OUTBOUND_DEL_STATUS);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("Fetch aborted");
+        } else {
+          console.error("Failed to fetch order details:", error);
+          setError("Failed to fetch order details.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetails();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [delivery]);
 
   // Calculate the total quantity shipped
   const calculateTotalQuantity = () => {
-    return deliveryDetails.reduce(
-      (total, item) => total + item.OUTBOUND_DEL_DETAIL_QTY_SHIPPED,
+    return orderDetails.reduce(
+      (total, item) => total + item.OUTBOUND_DETAILS_PROD_QTY,
       0
     );
   };
@@ -35,8 +86,13 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
 
   // Calculate total quantity and amount for summary
   const totalQuantity = calculateTotalQuantity();
-  const totalAmount = deliveryDetails.reduce(
-    (total, item) => total + calculateItemTotal(item.OUTBOUND_DEL_DETAIL_QTY_SHIPPED, item.OUTBOUND_DEL_DETAIL_PRICE),
+  const totalAmount = orderDetails.reduce(
+    (total, item) =>
+      total +
+      calculateItemTotal(
+        item.OUTBOUND_DETAILS_PROD_QTY,
+        item.OUTBOUND_DETAILS_LINE_PRICE
+      ),
     0
   );
 
@@ -56,7 +112,7 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
     }
 
     setStatus(newStatus); // Update the status locally
-    onStatusUpdate({ ...delivery, OUTBOUND_DEL_STATUS: newStatus }); // Notify parent of status update
+    // onStatusUpdate({ ...delivery, OUTBOUND_DEL_STATUS: newStatus }); // Notify parent of status update
   };
 
   return (
@@ -66,91 +122,112 @@ const CustomerDeliveryDetails = ({ delivery, deliveryDetails, onClose, onStatusU
       status={status}
       onClose={onClose}
     >
-      <DetailsContainer>
-        <Column>
-          <FormGroup>
-            <Label>Delivery ID:</Label>
-            <Value>{delivery.OUTBOUND_DEL_ID}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Shipped Date:</Label>
-            <Value>{delivery.OUTBOUND_DEL_SHIPPED_DATE}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Received Date:</Label>
-            <Value>{receivedDate}</Value>
-          </FormGroup>
-        </Column>
-        <Column>
-          <FormGroup>
-            <Label>Delivery Option:</Label>
-            <Value>{delivery.OUTBOUND_DEL_DLVRY_OPT}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>City:</Label>
-            <Value>{delivery.OUTBOUND_DEL_CITY}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Province:</Label>
-            <Value>{delivery.OUTBOUND_DEL_PROVINCE}</Value>
-          </FormGroup>
-        </Column>
-      </DetailsContainer>
+      {loading ? (
+        <Loading /> // Display the Loading component
+      ) : error ? (
+        <ErrorContainer>{error}</ErrorContainer>
+      ) : (
+        <>
+          <DetailsContainer>
+            <Column>
+              <FormGroup>
+                <Label>Delivery ID:</Label>
+                <Value>{delivery.OUTBOUND_DEL_ID}</Value>
+              </FormGroup>
+              <FormGroup>
+                <Label>Shipped Date:</Label>
+                <Value>{delivery.OUTBOUND_DEL_SHIPPED_DATE}</Value>
+              </FormGroup>
+              <FormGroup>
+                <Label>Received Date:</Label>
+                <Value>{receivedDate}</Value>
+              </FormGroup>
+            </Column>
+            <Column>
+              <FormGroup>
+                <Label>Delivery Option:</Label>
+                <Value>{delivery.OUTBOUND_DEL_DLVRY_OPT}</Value>
+              </FormGroup>
+              <FormGroup>
+                <Label>City:</Label>
+                <Value>{delivery.OUTBOUND_DEL_CITY}</Value>
+              </FormGroup>
+              <FormGroup>
+                <Label>Province:</Label>
+                <Value>{delivery.OUTBOUND_DEL_PROVINCE}</Value>
+              </FormGroup>
+            </Column>
+          </DetailsContainer>
 
-      <ProductTable>
-        <thead>
-          <tr>
-            <TableHeader>Product Name</TableHeader>
-            <TableHeader>Quantity Shipped</TableHeader>
-            <TableHeader>Price</TableHeader>
-            <TableHeader>Total</TableHeader>
-          </tr>
-        </thead>
-        <tbody>
-          {deliveryDetails.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>{item.PROD_NAME}</TableCell>
-              <TableCell>{item.OUTBOUND_DEL_DETAIL_QTY_SHIPPED}</TableCell>
-              <TableCell>₱{item.OUTBOUND_DEL_DETAIL_PRICE.toFixed(2)}</TableCell>
-              <TableCell>₱{calculateItemTotal(item.OUTBOUND_DEL_DETAIL_QTY_SHIPPED, item.OUTBOUND_DEL_DETAIL_PRICE).toFixed(2)}</TableCell>
-            </TableRow>
-          ))}
-        </tbody>
-      </ProductTable>
+          <ProductTable>
+            <thead>
+              <tr>
+                <TableHeader>Product Name</TableHeader>
+                <TableHeader>Quantity Shipped</TableHeader>
+                <TableHeader>Price</TableHeader>
+                <TableHeader>Total</TableHeader>
+              </tr>
+            </thead>
+            <tbody>
+              {orderDetails.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
+                  <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
+                  <TableCell>
+                    ₱{(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(2)}
+                  </TableCell>
+                  <TableCell>
+                    ₱
+                    {calculateItemTotal(
+                      item.OUTBOUND_DETAILS_PROD_QTY,
+                      item.OUTBOUND_DETAILS_LINE_PRICE
+                    ).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </tbody>
+          </ProductTable>
 
-      {/* Summary Section */}
-      <TotalSummary>
-        <SummaryItem>
-          <strong>Total Quantity:</strong> {totalQuantity}
-        </SummaryItem>
-        <SummaryItem>
-          <strong>Total Amount:</strong> <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
-        </SummaryItem>
-      </TotalSummary>
+          <TotalSummary>
+            <SummaryItem>
+              <strong>Total Quantity:</strong> {totalQuantity}
+            </SummaryItem>
+            <SummaryItem>
+              <strong>Total Amount:</strong>{" "}
+              <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
+            </SummaryItem>
+          </TotalSummary>
 
-      {/* Progress Bar Section */}
-      <ProgressSection>
-        <ProgressBar>
-          <ProgressFiller progress={progress} />
-        </ProgressBar>
-        <ProgressText>{progress}%</ProgressText>
-      </ProgressSection>
+          <ProgressSection>
+            <ProgressBar>
+              <ProgressFiller progress={progress} />
+            </ProgressBar>
+            <ProgressText>{progress}%</ProgressText>
+          </ProgressSection>
 
-      {/* Status Buttons */}
-      <ModalFooter>
-        <StatusButton onClick={handleStatusChange}>
-          {status === "Pending"
-            ? "Mark as In Transit"
-            : status === "In Transit"
-            ? "Mark as Delivered"
-            : "Mark as Pending"}
-        </StatusButton>
-      </ModalFooter>
+          <ModalFooter>
+            <StatusButton onClick={handleStatusChange}>
+              {status === "Pending"
+                ? "Mark as In Transit"
+                : status === "In Transit"
+                ? "Mark as Delivered"
+                : "Mark as Pending"}
+            </StatusButton>
+          </ModalFooter>
+        </>
+      )}
     </Modal>
   );
 };
 
 // Styled components
+const ErrorContainer = styled.div`
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+  color: ${colors.error};
+`;
+
 const DetailsContainer = styled.div`
   display: flex;
   justify-content: space-between;

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
+import { notify } from "../Layout/CustomToast"; // Import the toast notification utility
 
 const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -57,13 +58,13 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
             alert(`Error: ${errorData.message || 'Failed to update customer details'}`);
           } else {
             // Handle success
-            alert("Customer details saved successfully!");
+            notify.success("Customer details updated successfully!"); // Trigger success toast
             setIsEditing(false);
             onClose(); // Close the modal after saving
           }
         } catch (error) {
           // Handle network or other errors
-          alert(`Error: ${error.message}`);
+          notify.error(`Error: ${error.message}`); // Trigger error toast
         }
       }
     }
@@ -85,8 +86,14 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
       "Are you sure you want to remove this customer?"
     );
     if (confirmRemoval) {
-      onRemove(client.id); // Make sure `client.id` exists
-      onClose();
+      try {
+        onRemove(client.id); // Make sure `client.id` exists
+        notify.success("Customer removed successfully!"); // Trigger success toast
+        onClose();
+      } catch (error) {
+        console.error("Error removing customer:", error);
+        notify.error("Failed to remove customer."); // Trigger error toast
+      }
     }
   };
 
@@ -143,8 +150,7 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
                   border
                   placeholder="Address" // Placeholder for the Address input
                 />
-                {errors.address && <Error>{errors.address}</Error>} {/* Updated validation */}
-                
+                {errors.address && <Error>{errors.address}</Error>} {/* Updated validation */}                
                 <ProvinceInput
                   type="text"
                   value={editedClient.province || ""}

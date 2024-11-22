@@ -2,33 +2,13 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import SupplierDeliveryDetails from "./SupplierDeliveryDetails";
 import { colors } from "../../../colors";
-import INBOUND_DELIVERY from "../../../data/InboundData"; // Updated import
 import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import CardTotalSupplierDelivery from "../../CardsData/CardTotalSupplierDelivery";
 import Button from "../../Layout/Button";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { fetchSupplierDelivery } from "../../../api/SupplierDeliveryApi";
-
-// Function to get Supplier Name by ID
-function getSupplierNameById(id) {
-  const supplier = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-    (delivery) => delivery.SUPP_ID === id
-  )?.SUPPLIER;
-  return supplier ? supplier.SUPP_NAME : "Unknown Supplier"; // Handle missing supplier
-}
-
-// Function to get User Name by ID
-function getUserNameById(userId) {
-  const delivery = INBOUND_DELIVERY.INBOUND_DELIVERY.find(
-    (d) => d.INBOUND_DEL_RCVD_BY_USER_ID === userId
-  );
-  if (delivery && delivery.USER) {
-    const user = delivery.USER;
-    return `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`;
-  }
-  return "Unknown User"; // Handle missing user
-}
+import Loading from "../../Layout/Loading"; // Import the loading spinner component
 
 const SharedSupplierDeliveryPage = () => {
   const [orders, setOrders] = useState([]);
@@ -40,7 +20,6 @@ const SharedSupplierDeliveryPage = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Function to fetch supplier deliveries
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
@@ -50,7 +29,7 @@ const SharedSupplierDeliveryPage = () => {
       } catch (error) {
         console.error("Error fetching purchase orders:", error);
       } finally {
-        setLoading(false); // Stop loading when done
+        setLoading(false);
       }
     };
     fetchOrders();
@@ -67,9 +46,7 @@ const SharedSupplierDeliveryPage = () => {
 
   const filteredDeliveries = (orders || []).filter((delivery) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-
     return (
-      // Use formatDate to format the date before checking
       (
         formatDate(delivery.INBOUND_DEL_ORDER_DATE_CREATED)?.toLowerCase() || ""
       ).includes(lowerCaseSearchTerm) ||
@@ -95,10 +72,7 @@ const SharedSupplierDeliveryPage = () => {
     return 0;
   });
 
-  const openDetailsModal = (delivery) => {
-    setSelectedDelivery(delivery);
-  };
-
+  const openDetailsModal = (delivery) => setSelectedDelivery(delivery);
   const closeDetailsModal = () => setSelectedDelivery(null);
 
   const handleSort = (key) => {
@@ -136,61 +110,69 @@ const SharedSupplierDeliveryPage = () => {
 
   return (
     <>
-      <Controls>
-        <SearchBar
-          data-cy="search-bar"
-          placeholder="Search / Filter delivery..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </Controls>
-      <SummarySection>
-        <CardTotalSupplierDelivery />
-      </SummarySection>
-      <Table
-        headers={headers.map((header) => (
-          <TableHeader
-            key={header.key}
-            onClick={
-              header.key === "INBOUND_DEL_ORDER_DATE_CREATED"
-                ? () => handleSort(header.key)
-                : undefined
-            }
-          >
-            {header.title}
-            {header.key === "INBOUND_DEL_ORDER_DATE_CREATED" && (
-              <>
-                {sortConfig.key === header.key ? (
-                  sortConfig.direction === "asc" ? (
-                    <FaChevronUp
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                  ) : (
-                    <FaChevronDown
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                  )
-                ) : (
-                  <span style={{ opacity: 0.5 }}>
-                    <FaChevronUp
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                    <FaChevronDown
-                      style={{ marginLeft: "5px", fontSize: "12px" }}
-                    />
-                  </span>
+      {loading ? (
+        <SpinnerWrapper>
+          <Loading />
+        </SpinnerWrapper>
+      ) : (
+        <>
+          <Controls>
+            <SearchBar
+              data-cy="search-bar"
+              placeholder="Search / Filter delivery..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </Controls>
+          <SummarySection>
+            <CardTotalSupplierDelivery />
+          </SummarySection>
+          <Table
+            headers={headers.map((header) => (
+              <TableHeader
+                key={header.key}
+                onClick={
+                  header.key === "INBOUND_DEL_ORDER_DATE_CREATED"
+                    ? () => handleSort(header.key)
+                    : undefined
+                }
+              >
+                {header.title}
+                {header.key === "INBOUND_DEL_ORDER_DATE_CREATED" && (
+                  <>
+                    {sortConfig.key === header.key ? (
+                      sortConfig.direction === "asc" ? (
+                        <FaChevronUp
+                          style={{ marginLeft: "5px", fontSize: "12px" }}
+                        />
+                      ) : (
+                        <FaChevronDown
+                          style={{ marginLeft: "5px", fontSize: "12px" }}
+                        />
+                      )
+                    ) : (
+                      <span style={{ opacity: 0.5 }}>
+                        <FaChevronUp
+                          style={{ marginLeft: "5px", fontSize: "12px" }}
+                        />
+                        <FaChevronDown
+                          style={{ marginLeft: "5px", fontSize: "12px" }}
+                        />
+                      </span>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </TableHeader>
-        ))}
-        rows={rows}
-      />
-      {selectedDelivery && (
-        <SupplierDeliveryDetails
-          delivery={selectedDelivery}
-          onClose={closeDetailsModal}
-        />
+              </TableHeader>
+            ))}
+            rows={rows}
+          />
+          {selectedDelivery && (
+            <SupplierDeliveryDetails
+              delivery={selectedDelivery}
+              onClose={closeDetailsModal}
+            />
+          )}
+        </>
       )}
     </>
   );
@@ -209,6 +191,13 @@ const SummarySection = styled.div`
   display: flex;
   justify-content: left;
   margin-bottom: 20px;
+`;
+
+const SpinnerWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 `;
 
 const Status = styled.span`

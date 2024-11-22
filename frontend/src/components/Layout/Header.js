@@ -14,7 +14,7 @@ const pageTitles = {
   "/admin/customer-order": "Customer Order",
   "/admin/purchase-order": "Supplier Order",
   "/admin/delivery": "Delivery",
-  "/admin/products": "Total Products",
+  "/admin/products": "Products",
   "/admin/categories": "Category",
   "/admin/inventory": "Inventory",
   "/admin/suppliers": "Supplier",
@@ -22,7 +22,7 @@ const pageTitles = {
   "/admin/users": "User",
   "/admin/sales": "Sales",
   "/admin/returns": "Return",
-  "/admin/logs": "Log",
+  "/admin/logs": "Logs",
   "/admin/reports": "Reports",
   "/admin/profile": "Profile",
   "/admin/notifications": "Notifications",
@@ -35,7 +35,7 @@ const pageTitles = {
   "/superadmin/customer-order": "Customer Order",
   "/superadmin/purchase-order": "Supplier Order",
   "/superadmin/delivery": "Delivery",
-  "/superadmin/products": "Total Products",
+  "/superadmin/products": "Products",
   "/superadmin/categories": "Category",
   "/superadmin/inventory": "Inventory",
   "/superadmin/suppliers": "Supplier",
@@ -43,7 +43,7 @@ const pageTitles = {
   "/superadmin/users": "User",
   "/superadmin/sales": "Sales",
   "/superadmin/returns": "Return",
-  "/superadmin/logs": "Log",
+  "/superadmin/logs": "Logs",
   "/superadmin/reports": "Reports",
   "/superadmin/profile": "SuperAdmin Profile",
   "/superadmin/notifications": "Notifications",
@@ -55,7 +55,7 @@ const pageTitles = {
   "/staff/request-order": "Request Order",
   "/staff/customer-order": "Customer Order",
   "/staff/delivery": "Delivery",
-  "/staff/products": "Total Products",
+  "/staff/products": "Products",
   "/staff/categories": "Category",
   "/staff/inventory": "Inventory",
   "/staff/customers": "Customers",
@@ -107,7 +107,7 @@ const Header = ({ toggleSidebar }) => {
     localStorage.removeItem("user_first_name");
     localStorage.removeItem("user_type"); // Clear any other stored user info
 
-    console.log("User signed out. Tokens cleared."); // Log the sign-out action
+    console.log("User signed out. Tokens cleared."); // Logs the sign-out action
     navigate("/login"); // Redirect to the login page
   };
 

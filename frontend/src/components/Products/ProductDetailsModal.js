@@ -3,183 +3,265 @@ import axios from "axios";
 import styled from "styled-components";
 import Modal from "../Layout/Modal";
 import Button from "../Layout/Button";
-// import PriceHistoryDetails from "./PriceHistory/PriceHistoryDetails"; 
-// import { USER } from '../../data/UserData'; // Import User Data
-
 
 const ProductDetailsModal = ({ productId, onClose }) => {
-  const [product, setProduct] = useState(null); // Store the product data
+  const [product, setProduct] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [ setShowPriceHistory] = useState(false); // State for Price History Modal
+  const [editFields, setEditFields] = useState({});
+  const [showPriceHistory, setShowPriceHistory] = useState(false);
 
-  // Fetch product details when the component is mounted
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
-        const response = await axios.get(`http://127.0.0.1:8000/items/productList/${productId}/`);
-        setProduct(response.data); // Set the fetched product data
+        const response = await axios.get(
+          `http://127.0.0.1:8000/items/productList/${productId}/`
+        );
+        setProduct(response.data);
+        setEditFields({
+          ...response.data.PROD_DETAILS,
+          PROD_NAME: response.data.PROD_NAME,
+          PROD_RO_LEVEL: response.data.PROD_RO_LEVEL || "",
+          PROD_RO_QTY: response.data.PROD_RO_QTY || "",
+          PROD_QOH: response.data.PROD_QOH || "",
+        });
       } catch (error) {
         console.error("Error fetching product data:", error);
       }
     };
 
     fetchProductDetails();
-  }, [productId]); // Run this effect only when productId changes
+  }, [productId]);
 
-  if (!product) {
-    return <p>Loading...</p>; // Show a loading message while the data is being fetched
-  }
-
-  // Extract product details and category data
-  const productDetail = product.PROD_DETAILS;
-  const category = product.PROD_CAT_CODE; // Assuming this is an ID or similar; adjust if needed
+  if (!product) return <p>Loading...</p>;
 
   const handleEdit = () => setIsEditing(true);
 
-  const handleRemove = () => {
-    const confirmRemoval = window.confirm(
-      "Are you sure you want to remove this product?"
-    );
-    if (confirmRemoval) {
-      // Implement remove logic here
-      alert(`Product ${product.PROD_NAME} removed`);
-      onClose(); // Close the modal after removal
+  const handleInputChange = (field, value) => {
+    setEditFields((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    try {
+      const updatedProduct = {
+        ...product,
+        PROD_NAME: editFields.PROD_NAME,
+        PROD_DETAILS: { ...editFields },
+        PROD_RO_LEVEL: editFields.PROD_RO_LEVEL,
+        PROD_RO_QTY: editFields.PROD_RO_QTY,
+        PROD_QOH: editFields.PROD_QOH,
+      };
+      await axios.put(
+        `http://127.0.0.1:8000/items/productList/${productId}/`,
+        updatedProduct
+      );
+      setProduct(updatedProduct);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error updating product data:", error);
     }
   };
 
-  const handleMoreInfoClick = () => {
-    setShowPriceHistory(true); // Open the price history modal
+  const handleRemove = () => {
+    const confirmRemoval = window.confirm(
+      `Are you sure you want to remove this product?`
+    );
+    if (confirmRemoval) {
+      alert(`Product ${product.PROD_NAME} removed`);
+      onClose();
+    }
   };
 
-  // const closePriceHistoryModal = () => {
-  //   setShowPriceHistory(false); // Close the price history modal
-  // };
+  const handleMoreInfoClick = () => setShowPriceHistory(true);
 
-  // Filter the price history for the current product
-  // const priceHistoryEntries = PRICE_HISTORY_DATA.filter(
-  //   (entry) => entry.PROD_ID === productId
-  // );
-
-  // // Create user mapping from USER data
-  // const userMapping = Object.fromEntries(
-  //   USER.map((user) => [
-  //     user.USER_ID,
-  //     `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`
-  //   ])
-  // );
+  const productDetail = product.PROD_DETAILS;
 
   return (
     <Modal
-      title={
-        isEditing ? `Edit ${product.PROD_NAME}` : `${product.PROD_NAME} Details`
-      }
+      title={isEditing ? `Edit ${product.PROD_NAME}` : `${product.PROD_NAME} Details`}
       onClose={onClose}
     >
       {isEditing ? (
         <Details>
-          {/* Existing editing fields go here */}
+          <DetailItem>
+            <Label>Name:</Label>
+            <Input
+              value={editFields.PROD_NAME || ""}
+              onChange={(e) => handleInputChange("PROD_NAME", e.target.value)}
+            />
+          </DetailItem>
+          <DetailItem>
+            <Label>Category:</Label>
+            <Input
+              value={editFields.PROD_CAT_CODE || ""}
+              onChange={(e) => handleInputChange("PROD_CAT_CODE", e.target.value)}
+            />
+          </DetailItem>
+          <DetailItem>
+            <Label>Size:</Label>
+            <Input
+              value={editFields.PROD_DETAILS_SIZE || ""}
+              onChange={(e) =>
+                handleInputChange("PROD_DETAILS_SIZE", e.target.value)
+              }
+            />
+          </DetailItem>
+          <DetailItem>
+            <Label>Brand:</Label>
+            <Input
+              value={editFields.PROD_DETAILS_BRAND || ""}
+              onChange={(e) =>
+                handleInputChange("PROD_DETAILS_BRAND", e.target.value)
+              }
+            />
+          </DetailItem>
+          <DetailItem>
+            <Label>Price:</Label>
+            <Input
+              type="number"
+              value={editFields.PROD_DETAILS_PRICE || ""}
+              onChange={(e) =>
+                handleInputChange("PROD_DETAILS_PRICE", e.target.value)
+              }
+            />
+          </DetailItem>
+          <DetailItem>
+            <Label>Description:</Label>
+            <TextArea
+              value={editFields.PROD_DETAILS_DESCRIPTION || ""}
+              onChange={(e) =>
+                handleInputChange("PROD_DETAILS_DESCRIPTION", e.target.value)
+              }
+            />
+          </DetailItem>
+          <DetailItem>
+            <Label>Reorder Level:</Label>
+            <Input
+              type="number"
+              value={editFields.PROD_RO_LEVEL || ""}
+              onChange={(e) => handleInputChange("PROD_RO_LEVEL", e.target.value)}
+            />
+          </DetailItem>
+          <DetailItem>
+            <Label>Reorder Quantity:</Label>
+            <Input
+              type="number"
+              value={editFields.PROD_RO_QTY || ""}
+              onChange={(e) => handleInputChange("PROD_RO_QTY", e.target.value)}
+            />
+          </DetailItem>
+          <DetailItem>
+            <Label>Quantity on Hand:</Label>
+            <Input
+              type="number"
+              value={editFields.PROD_QOH || ""}
+              onChange={(e) => handleInputChange("PROD_QOH", e.target.value)}
+            />
+          </DetailItem>
         </Details>
       ) : (
-        <>
-          <Section>
-            <Image src={product.PROD_IMAGE || '/path/to/default/image.jpg'} alt={product.PROD_NAME} />
-            <Detail>
-              <DetailLabel>Name:</DetailLabel> {product.PROD_NAME}
-            </Detail>
-            <Detail>
-              <DetailLabel>Category:</DetailLabel> {category}
-            </Detail>
-            <Detail>
-              <DetailLabel>Size:</DetailLabel> {productDetail.PROD_DETAILS_SIZE}
-            </Detail>
-            <Detail>
-              <DetailLabel>Brand:</DetailLabel>{" "}
-              {productDetail.PROD_DETAILS_BRAND}
-            </Detail>
-            <Detail>
-              <DetailLabel>Price:</DetailLabel> ₱
-              {productDetail.PROD_DETAILS_PRICE}
-              <MoreInfoButton onClick={handleMoreInfoClick}>
-                More Info
-              </MoreInfoButton>
-            </Detail>
-            <Detail>
-              <DetailLabel>Description:</DetailLabel>{" "}
-              {productDetail.PROD_DETAILS_DESCRIPTION}
-            </Detail>
-            <Detail>
-              <DetailLabel>Reorder Level:</DetailLabel> {product.PROD_RO_LEVEL}
-            </Detail>
-            <Detail>
-              <DetailLabel>Reorder Quantity:</DetailLabel> {product.PROD_RO_QTY}
-            </Detail>
-            <Detail>
-              <DetailLabel>Quantity on Hand:</DetailLabel> {product.PROD_QOH}
-            </Detail>
-            <Detail>
-            <DetailLabel>Date Created:</DetailLabel>{" "}
-            {new Date(product.PROD_DATECREATED).toISOString().split("T")[0]}
-            </Detail>
-             <Detail>
-            <DetailLabel>Date Updated:</DetailLabel>{" "}
-            {new Date(product.PROD_DATEUPDATED).toISOString().split("T")[0]}
-           </Detail>
-          </Section>
-
-          <ButtonGroup>
+        <Details>
+          <Detail>
+            <DetailLabel>Name:</DetailLabel> {product.PROD_NAME}
+          </Detail>
+          <Detail>
+            <DetailLabel>Category:</DetailLabel> {product.PROD_CAT_CODE}
+          </Detail>
+          <Detail>
+            <DetailLabel>Size:</DetailLabel> {productDetail.PROD_DETAILS_SIZE}
+          </Detail>
+          <Detail>
+            <DetailLabel>Brand:</DetailLabel> {productDetail.PROD_DETAILS_BRAND}
+          </Detail>
+          <Detail>
+            <DetailLabel>Price:</DetailLabel> ₱{productDetail.PROD_DETAILS_PRICE}
+            <MoreInfoButton onClick={handleMoreInfoClick}>More Info</MoreInfoButton>
+          </Detail>
+          <Detail>
+            <DetailLabel>Description:</DetailLabel>{" "}
+            {productDetail.PROD_DETAILS_DESCRIPTION}
+          </Detail>
+          <Detail>
+            <DetailLabel>Reorder Level:</DetailLabel> {product.PROD_RO_LEVEL}
+          </Detail>
+          <Detail>
+            <DetailLabel>Reorder Quantity:</DetailLabel> {product.PROD_RO_QTY}
+          </Detail>
+          <Detail>
+            <DetailLabel>Quantity on Hand:</DetailLabel> {product.PROD_QOH}
+          </Detail>
+        </Details>
+      )}
+      <ButtonGroup>
+        {isEditing ? (
+          <>
+            <Button variant="primary" onClick={handleSave}>
+              Save
+            </Button>
+            <Button variant="red" onClick={() => setIsEditing(false)}>
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <>
             <Button variant="red" onClick={handleRemove}>
               Remove
             </Button>
             <Button variant="primary" onClick={handleEdit}>
-              Edit Details
+              Edit
             </Button>
-          </ButtonGroup>
-        </>
-      )}
-
-      
+          </>
+        )}
+      </ButtonGroup>
     </Modal>
   );
 };
 
 // Styled Components
-
-const Section = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start; /* Align to the left */
-`;
-
-const Image = styled.img`
-  width: 100px;
-  height: 100px;
-  margin-bottom: 20px;
-`;
-
 const Details = styled.div`
   margin-bottom: 20px;
 `;
 
 const Detail = styled.div`
   margin-bottom: 10px;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
 `;
 
 const DetailLabel = styled.span`
   font-weight: bold;
-  margin-right: 8px;
+  margin-right: 10px;
+`;
+
+const DetailItem = styled.div`
+  margin-bottom: 10px;
+`;
+
+const Label = styled.label`
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+`;
+
+const TextArea = styled.textarea`
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: 10px;
   justify-content: flex-end;
+  gap: 10px;
 `;
 
 const MoreInfoButton = styled(Button)`
-  margin-left: 10px; /* Space between price and button */
+  margin-left: 10px;
 `;
 
 export default ProductDetailsModal;
