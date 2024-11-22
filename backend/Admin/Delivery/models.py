@@ -4,6 +4,7 @@ from Admin.Order.Sales_Order.models import SalesOrder
 from Admin.Order.Purchase.models import PurchaseOrder
 from Admin.Supplier.models import Supplier
 from Admin.Product.models import Product
+from Admin.Customer.models import Clients
 from django.conf import settings
 from django.utils.text import slugify
 from django.utils import timezone
@@ -28,6 +29,9 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_CSTMR_RCVD_DATE = models.DateTimeField(
         auto_now=True, null=True, blank=True
     )
+    CLIENT_ID = models.ForeignKey(
+        Clients, on_delete=models.SET_NULL, null=True
+    )  # Customer ID
     OUTBOUND_DEL_CUSTOMER_NAME = models.CharField(max_length=60, null=False)
     OUTBOUND_DEL_TOTAL_PRICE = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
@@ -48,8 +52,14 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_DATEUPDATED = models.DateTimeField(auto_now=True)
     OUTBOUND_DEL_ACCPTD_BY_USER = models.ForeignKey(
         settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="customer_deliveries_accepted",
+    )
+    OUTBOUND_DEL_CREATEDBY_USER_ID = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        null=False,
+        null=True,
         related_name="customer_deliveries_created",
     )
 
@@ -135,14 +145,13 @@ class InboundDeliveryDetails(models.Model):
         max_digits=10, decimal_places=2, default=0
     )
     INBOUND_DEL_DETAIL_ORDERED_QTY = models.PositiveIntegerField(null=False, default=0)
-    INBOUND_DEL_DETAIL_LINE_QTY = models.PositiveIntegerField(null=False, default=0)
+    INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT = models.PositiveIntegerField(
+        null=False, default=0
+    )
     INBOUND_DEL_DETAIL_LINE_QTY_DEFECT = models.PositiveIntegerField(
         null=False, default=0
     )
     INBOUND_DEL_DETAIL_PROD_EXP_DATE = models.DateField(null=True, blank=True)
-    INBOUND_DEL_DETAIL_BATCH_ID = models.CharField(
-        max_length=30, null=True, blank=True, editable=False
-    )
 
     # def save(self, *args, **kwargs):
     #     if not self.INBOUND_DEL_DETAIL_BATCH_ID:
