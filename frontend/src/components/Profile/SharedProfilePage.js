@@ -27,6 +27,7 @@ import { notify } from "../Layout/CustomToast"; // Toast integration
 import Loading from "../Layout/Loading"; // Spinner component
 
 const SharedProfilePage = () => {
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [contact, setContact] = useState("");
@@ -61,7 +62,7 @@ const SharedProfilePage = () => {
           setFirstName(userData.first_name);
           setMiddleInitial(userData.mid_initial);
           setLastName(userData.last_name);
-
+          setUsername(userData.username);
           const imageResponse = await axios.get(
             `http://127.0.0.1:8000/account/users/${userId}/image/`
           );
@@ -230,7 +231,7 @@ const SharedProfilePage = () => {
               middleInitial ? `${middleInitial}.` : ""
             } ${lastName}`}
           </NameText>
-          <EmailText>{email}</EmailText>
+          <EmailText>{username}</EmailText>
         </ProfileInfo>
       </LeftPanel>
 

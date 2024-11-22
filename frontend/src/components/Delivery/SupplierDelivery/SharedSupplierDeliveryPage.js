@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import SupplierDeliveryDetails from "./SupplierDeliveryDetails";
 import { colors } from "../../../colors";
-import INBOUND_DELIVERY from "../../../data/InboundData"; // Updated import
 import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import CardTotalSupplierDelivery from "../../CardsData/CardTotalSupplierDelivery";
@@ -48,10 +47,18 @@ const SharedSupplierDeliveryPage = () => {
   const filteredDeliveries = (orders || []).filter((delivery) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return (
-      (formatDate(delivery.INBOUND_DEL_ORDER_DATE_CREATED)?.toLowerCase() || "").includes(lowerCaseSearchTerm) ||
-      (delivery.INBOUND_DEL_STATUS?.toLowerCase() || "").includes(lowerCaseSearchTerm) ||
-      (delivery.INBOUND_DEL_SUPP_NAME?.toLowerCase() || "").includes(lowerCaseSearchTerm) ||
-      (delivery.INBOUND_DEL_RCVD_BY_USER_NAME?.toLowerCase() || "").includes(lowerCaseSearchTerm)
+      (
+        formatDate(delivery.INBOUND_DEL_ORDER_DATE_CREATED)?.toLowerCase() || ""
+      ).includes(lowerCaseSearchTerm) ||
+      (delivery.INBOUND_DEL_STATUS?.toLowerCase() || "").includes(
+        lowerCaseSearchTerm
+      ) ||
+      (delivery.INBOUND_DEL_SUPP_NAME?.toLowerCase() || "").includes(
+        lowerCaseSearchTerm
+      ) ||
+      (delivery.INBOUND_DEL_RCVD_BY_USER_NAME?.toLowerCase() || "").includes(
+        lowerCaseSearchTerm
+      )
     );
   });
 

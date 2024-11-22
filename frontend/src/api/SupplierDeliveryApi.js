@@ -17,6 +17,18 @@ export const addNewSupplierDelivery = async (orderData) => {
   }
 };
 
+export const fetchCountOrders = async () => {
+  try {
+    const response = await axios.get(
+      `${BASE_URL}/api/delivery/supplier/total-orders`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch data:", error);
+    return { pending_total: 0 };
+  }
+};
+
 export const fetchSupplierDelivery = async () => {
   try {
     const response = await axios.get(`${BASE_URL}/api/delivery/supplier`);
