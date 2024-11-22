@@ -14,7 +14,8 @@ class LogsAPIView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        logs = Logs.objects.all()
+        # Fetch logs in descending order of creation date
+        logs = Logs.objects.all().order_by('-LOG_DATETIME')  # Replace 'created_at' with the correct field name
         serializer = LogsSerializer(logs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -87,4 +88,40 @@ class LogsByUserAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         serializer = LogsSerializer(logs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserLogsAPIView(APIView):
+    """
+    Retrieve all logs where LOG_TYPE = 'User logs'.
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        user_logs = Logs.objects.filter(LLOG_TYPE="User logs").order_by('-LOG_DATETIME')
+        if not user_logs.exists():
+            return Response(
+                {"error": "No user logs found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = LogsSerializer(user_logs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TransactionLogsAPIView(APIView):
+    """
+    Retrieve all logs where LOG_TYPE = 'Transaction logs'.
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        transaction_logs = Logs.objects.filter(LLOG_TYPE="Transaction logs").order_by('-LOG_DATETIME')
+        if not transaction_logs.exists():
+            return Response(
+                {"error": "No transaction logs found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = LogsSerializer(transaction_logs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

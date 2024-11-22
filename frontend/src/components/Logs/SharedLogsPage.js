@@ -1,57 +1,72 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
 import CardTotalLogs from "../../components/CardsData/CardTotalLogs";
 import Button from "../../components/Layout/Button"; // Use Button component for tabs
-import { logData } from "../../data/LogsData";
-import { USER } from "../../data/UserData";
+import { fetchLogsByType, fetchUserById } from "../../api/LogsApi"; // Import the new API function
 import { colors } from "../../colors"; // Assuming colors are available
 
 const SharedLogsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("User Logs"); // State for active tab
+  const [logs, setLogs] = useState([]); // State to store logs
+  const [loading, setLoading] = useState(false); // Loading state
+  const [error, setError] = useState(null); // Error state
+  const [userDetails, setUserDetails] = useState({}); // State to store user details by ID
 
-  // Create a map to get user names based on USER_ID
-  const userNames = USER.reduce((acc, user) => {
-    acc[user.USER_ID] = `${user.USER_FIRSTNAME} ${user.USER_LASTNAME}`;
-    return acc;
-  }, {});
+  // Fetch logs dynamically based on the active tab
+  useEffect(() => {
+    const fetchLogs = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const logType = activeTab === "User Logs" ? "user" : "transaction";
+        const data = await fetchLogsByType(logType);
+        setLogs(data);
 
-  // Filter logs based on active tab
-  const filteredLogs =
-    activeTab === "User Logs"
-      ? logData.filter((log) => {
-          const userName = userNames[log.USER_ID] || "Unknown User";
-          return (
-            log.LOG_TITLE.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.LOG_DESCRIPTION.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            log.LOG_DATETIME.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            userName.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        })
-      : logData.filter((log) => log.LOG_TITLE.toLowerCase().includes(searchTerm.toLowerCase())); // Example filter for transaction logs
+        // If it's user logs, fetch user details for each log
+        if (activeTab === "User Logs") {
+          for (const log of data) {
+            if (log.USER_ID) {
+              const userData = await fetchUserById(log.USER_ID); // Fetch user by ID
+              setUserDetails((prevState) => ({
+                ...prevState,
+                [log.USER_ID]: `${userData.first_name} ${userData.last_name}`, // Store full name in userDetails
+              }));
+            }
+          }
+        }
+      } catch (err) {
+        setError("Failed to fetch logs. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLogs();
+  }, [activeTab]);
 
   // Update headers and rows dynamically based on active tab
   const headers =
     activeTab === "User Logs"
-      ? ["Date & Time", "Title", "Description", "User"]
-      : ["Date & Time", "Title", "Amount", "Status"]; // Example headers for transaction logs
+      ? ["Date & Time", "Type", "Description", "User"]
+      : ["Date & Time", "Type", "Description", "User"];
 
-  const rows =
-    activeTab === "User Logs"
-      ? filteredLogs.map((log) => [
+  const rows = logs.map((log) => {
+    return activeTab === "User Logs"
+      ? [
           log.LOG_DATETIME,
-          log.LOG_TITLE,
+          log.LLOG_TYPE,
           log.LOG_DESCRIPTION,
-          userNames[log.USER_ID] || "Unknown User",
-        ])
-      : filteredLogs.map((log) => [
+          userDetails[log.USER_ID] || "Unknown User", // Display user full name
+        ]
+      : [
           log.LOG_DATETIME,
-          log.LOG_TITLE,
-          log.LOG_DESCRIPTION,
-          "Status Placeholder", // Example placeholder for transaction logs
-        ]);
+          log.LLOG_TYPE,
+          log.LOG_DESCRIPTION || "N/A",
+          userDetails[log.USER_ID] || "Unknown User",
+        ];
+  });
 
   return (
     <>
@@ -79,7 +94,13 @@ const SharedLogsPage = () => {
       <AnalyticsContainer>
         <CardTotalLogs />
       </AnalyticsContainer>
-      <Table headers={headers} rows={rows} />
+      {loading ? (
+        <p>Loading...</p>
+      ) : error ? (
+        <p>{error}</p>
+      ) : (
+        <Table headers={headers} rows={rows} />
+      )}
     </>
   );
 };
