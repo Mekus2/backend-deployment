@@ -4,8 +4,9 @@ import Modal from "../../Layout/Modal";
 import Loading from "../../Layout/Loading"; // Import the Loading component
 import { colors } from "../../../colors";
 import { fetchCustomerDelDetails } from "../../../api/CustomerDeliveryApi";
+import CustomerIssueModal from "./CustomerIssueModal"; // Import the Issue Modal
+import IssueDetails from "./IssueDetails";
 
-// Define getProgressForStatus function outside of the component to avoid initialization errors
 const getProgressForStatus = (status) => {
   switch (status) {
     case "Pending":
@@ -14,6 +15,8 @@ const getProgressForStatus = (status) => {
       return 50;
     case "Delivered":
       return 100;
+    case "Delivered with Issues":
+      return 75;
     default:
       return 0;
   }
@@ -24,12 +27,13 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState([]);
-  const [status, setStatus] = useState(""); // Manage the status using state
-  const [receivedDate, setReceivedDate] = useState(
-    delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received"
-  );
-  const progress = getProgressForStatus(status); // Calculate progress percentage
-  console.info("Received Delivery Data:", delivery);
+  const [status, setStatus] = useState("");
+  const [receivedDate, setReceivedDate] = useState(delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received");
+  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false);  // State for IssueDetails modal
+  const [issueReported, setIssueReported] = useState(false); // Track if issue has been reported
+
+  const progress = getProgressForStatus(status);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -46,11 +50,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       setLoading(true);
       setError(null);
       try {
-        const details = await fetchCustomerDelDetails(
-          delivery.OUTBOUND_DEL_ID,
-          controller.signal
-        );
-        console.info("Received Details:", details);
+        const details = await fetchCustomerDelDetails(delivery.OUTBOUND_DEL_ID, controller.signal);
         setOrderDetails(details);
         setStatus(delivery.OUTBOUND_DEL_STATUS);
       } catch (error) {
@@ -73,150 +73,162 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     };
   }, [delivery]);
 
-  // Calculate the total quantity shipped
-  const calculateTotalQuantity = () => {
-    return orderDetails.reduce(
-      (total, item) => total + item.OUTBOUND_DETAILS_PROD_QTY,
-      0
-    );
-  };
-
-  // Calculate total price for each item (quantity * price)
+  const calculateTotalQuantity = () => orderDetails.reduce((total, item) => total + item.OUTBOUND_DETAILS_PROD_QTY, 0);
   const calculateItemTotal = (qty, price) => qty * price;
-
-  // Calculate total quantity and amount for summary
   const totalQuantity = calculateTotalQuantity();
-  const totalAmount = orderDetails.reduce(
-    (total, item) =>
-      total +
-      calculateItemTotal(
-        item.OUTBOUND_DETAILS_PROD_QTY,
-        item.OUTBOUND_DETAILS_LINE_PRICE
-      ),
-    0
-  );
+  const totalAmount = orderDetails.reduce((total, item) => total + calculateItemTotal(item.OUTBOUND_DETAILS_PROD_QTY, item.OUTBOUND_DETAILS_LINE_PRICE), 0);
 
-  // Handle status change
   const handleStatusChange = () => {
     let newStatus;
     if (status === "Pending") {
-      newStatus = "In Transit"; // Change to In Transit
+      newStatus = "In Transit";
     } else if (status === "In Transit") {
-      newStatus = "Delivered"; // Change to Delivered
-      const currentDate = new Date().toISOString().split("T")[0]; // Get the current date in YYYY-MM-DD format
-      setReceivedDate(currentDate); // Set the received date to the current date
-      delivery.OUTBOUND_DEL_DATE_CUST_RCVD = currentDate; // Update the delivery data object
+      newStatus = "Delivered";
+      const currentDate = new Date().toISOString().split("T")[0];
+      setReceivedDate(currentDate);
+      delivery.OUTBOUND_DEL_DATE_CUST_RCVD = currentDate;
     } else if (status === "Delivered") {
-      newStatus = "Pending"; // Revert back to Pending
-      setReceivedDate("Not Received"); // Clear the received date when reverting to Pending
+      newStatus = "Delivered with Issues";
+    } else if (status === "Delivered with Issues") {
+      newStatus = "Pending";
+      setReceivedDate("Not Received");
     }
 
-    setStatus(newStatus); // Update the status locally
-    // onStatusUpdate({ ...delivery, OUTBOUND_DEL_STATUS: newStatus }); // Notify parent of status update
+    setStatus(newStatus);
+  };
+
+  const handleIssueModalOpen = () => setIsIssueModalOpen(true);  // This remains for opening the initial "What's the issue?" modal
+  const handleIssueModalClose = () => setIsIssueModalOpen(false);  // This closes the initial modal
+
+  const handleIssueDetailsOpen = () => setIsIssueDetailsOpen(true); // Open IssueDetails modal
+  const handleIssueDetailsClose = () => setIsIssueDetailsOpen(false); // Close IssueDetails modal
+  
+  const handleIssueModalSubmit = (updatedOrderDetails, remarks) => {
+    console.log("Issue reported:", updatedOrderDetails, remarks);
+    setIssueReported(true); // Mark issue as reported after submission
+    setIsIssueModalOpen(false); // Close the modal
   };
 
   return (
-    <Modal
-      data-cy="outbound-delivery-details-modal"
-      title="Outbound Delivery Details"
-      status={status}
-      onClose={onClose}
-    >
-      {loading ? (
-        <Loading /> // Display the Loading component
-      ) : error ? (
-        <ErrorContainer>{error}</ErrorContainer>
-      ) : (
-        <>
-          <DetailsContainer>
-            <Column>
-              <FormGroup>
-                <Label>Delivery ID:</Label>
-                <Value>{delivery.OUTBOUND_DEL_ID}</Value>
-              </FormGroup>
-              <FormGroup>
-                <Label>Shipped Date:</Label>
-                <Value>{delivery.OUTBOUND_DEL_SHIPPED_DATE}</Value>
-              </FormGroup>
-              <FormGroup>
-                <Label>Received Date:</Label>
-                <Value>{receivedDate}</Value>
-              </FormGroup>
-            </Column>
-            <Column>
-              <FormGroup>
-                <Label>Delivery Option:</Label>
-                <Value>{delivery.OUTBOUND_DEL_DLVRY_OPT}</Value>
-              </FormGroup>
-              <FormGroup>
-                <Label>City:</Label>
-                <Value>{delivery.OUTBOUND_DEL_CITY}</Value>
-              </FormGroup>
-              <FormGroup>
-                <Label>Province:</Label>
-                <Value>{delivery.OUTBOUND_DEL_PROVINCE}</Value>
-              </FormGroup>
-            </Column>
-          </DetailsContainer>
+    <>
+      <Modal
+        data-cy="outbound-delivery-details-modal"
+        title="Outbound Delivery Details"
+        status={status}
+        onClose={onClose}
+      >
+        {loading ? (
+          <Loading />
+        ) : error ? (
+          <ErrorContainer>{error}</ErrorContainer>
+        ) : (
+          <>
+            <DetailsContainer>
+              <Column>
+                <FormGroup>
+                  <Label>Delivery ID:</Label>
+                  <Value>{delivery.OUTBOUND_DEL_ID}</Value>
+                </FormGroup>
+                <FormGroup>
+                  <Label>Shipped Date:</Label>
+                  <Value>{delivery.OUTBOUND_DEL_SHIPPED_DATE}</Value>
+                </FormGroup>
+                <FormGroup>
+                  <Label>Received Date:</Label>
+                  <Value>{receivedDate}</Value>
+                </FormGroup>
+              </Column>
+              <Column>
+                <FormGroup>
+                  <Label>Delivery Option:</Label>
+                  <Value>{delivery.OUTBOUND_DEL_DLVRY_OPT}</Value>
+                </FormGroup>
+                <FormGroup>
+                  <Label>City:</Label>
+                  <Value>{delivery.OUTBOUND_DEL_CITY}</Value>
+                </FormGroup>
+                <FormGroup>
+                  <Label>Province:</Label>
+                  <Value>{delivery.OUTBOUND_DEL_PROVINCE}</Value>
+                </FormGroup>
+              </Column>
+            </DetailsContainer>
 
-          <ProductTable>
-            <thead>
-              <tr>
-                <TableHeader>Product Name</TableHeader>
-                <TableHeader>Quantity Shipped</TableHeader>
-                <TableHeader>Price</TableHeader>
-                <TableHeader>Total</TableHeader>
-              </tr>
-            </thead>
-            <tbody>
-              {orderDetails.map((item, index) => (
-                <TableRow key={index}>
-                  <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
-                  <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
-                  <TableCell>
-                    ₱{(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(2)}
-                  </TableCell>
-                  <TableCell>
-                    ₱
-                    {calculateItemTotal(
-                      item.OUTBOUND_DETAILS_PROD_QTY,
-                      item.OUTBOUND_DETAILS_LINE_PRICE
-                    ).toFixed(2)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </tbody>
-          </ProductTable>
+            <ProductTable>
+              <thead>
+                <tr>
+                  <TableHeader>Product Name</TableHeader>
+                  <TableHeader>Quantity Shipped</TableHeader>
+                  <TableHeader>Price</TableHeader>
+                  <TableHeader>Total</TableHeader>
+                </tr>
+              </thead>
+              <tbody>
+                {orderDetails.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
+                    <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
+                    <TableCell>
+                      ₱{(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      ₱{calculateItemTotal(item.OUTBOUND_DETAILS_PROD_QTY, item.OUTBOUND_DETAILS_LINE_PRICE).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </tbody>
+            </ProductTable>
 
-          <TotalSummary>
-            <SummaryItem>
-              <strong>Total Quantity:</strong> {totalQuantity}
-            </SummaryItem>
-            <SummaryItem>
-              <strong>Total Amount:</strong>{" "}
-              <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
-            </SummaryItem>
-          </TotalSummary>
+            <TotalSummary>
+              <SummaryItem>
+                <strong>Total Quantity:</strong> {totalQuantity}
+              </SummaryItem>
+              <SummaryItem>
+                <strong>Total Amount:</strong>{" "}
+                <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
+              </SummaryItem>
+            </TotalSummary>
 
-          <ProgressSection>
-            <ProgressBar>
-              <ProgressFiller progress={progress} />
-            </ProgressBar>
-            <ProgressText>{progress}%</ProgressText>
-          </ProgressSection>
+            <ProgressSection>
+              <ProgressBar>
+                <ProgressFiller progress={progress} />
+              </ProgressBar>
+              <ProgressText>{progress}%</ProgressText>
+            </ProgressSection>
 
-          <ModalFooter>
-            <StatusButton onClick={handleStatusChange}>
-              {status === "Pending"
-                ? "Mark as In Transit"
-                : status === "In Transit"
-                ? "Mark as Delivered"
-                : "Mark as Pending"}
-            </StatusButton>
-          </ModalFooter>
-        </>
+            <ModalFooter>
+              {status === "Delivered with Issues" && !issueReported && (
+                <IssueButton onClick={handleIssueModalOpen}>What's the issue?</IssueButton>
+              )}
+              {status === "Delivered with Issues" && issueReported && (
+                <IssueButton onClick={handleIssueDetailsOpen}>Issue details</IssueButton>
+              )}
+              <StatusButton onClick={handleStatusChange}>
+                {status === "Pending"
+                  ? "Mark as In Transit"
+                  : status === "In Transit"
+                  ? "Mark as Delivered"
+                  : status === "Delivered"
+                  ? "Mark as Delivered with Issues"
+                  : "Mark as Delivered"}
+              </StatusButton>
+            </ModalFooter>
+          </>
+        )}
+      </Modal>
+
+      {isIssueModalOpen && (
+        <CustomerIssueModal
+          orderDetails={orderDetails}
+          onClose={handleIssueModalClose}
+          onSubmit={handleIssueModalSubmit}
+        />
       )}
-    </Modal>
+
+      {isIssueDetailsOpen && (
+        <IssueDetails onClose={handleIssueDetailsClose} />
+      )}
+    </>
   );
 };
 
@@ -341,6 +353,20 @@ const StatusButton = styled.button`
 
   &:hover {
     background-color: ${colors.primaryHover};
+  }
+`;
+
+const IssueButton = styled.button`
+  color: Gray;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 5px;
+  margin-right: 10px;
+
+  &:hover {
+    color: black;
   }
 `;
 
