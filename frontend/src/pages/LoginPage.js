@@ -23,9 +23,15 @@ const LoginPage = () => {
       const credentials = { username, password };
       const data = await loginUser(credentials); // Call the login API
 
-      // Use the returned data
-      setRole(data.type); // Set role based on API response
-      navigate(`/${data.type}/dashboard`); // Redirect based on role using navigate
+      // Check if the password is the default password
+      if (password === "Password@123") {
+        // If the password is the default one, redirect to the change password page
+        navigate('/change-password'); // Redirect to the change password page
+      } else {
+        // If the password is not the default, continue with normal login flow
+        setRole(data.type); // Set role based on API response
+        navigate(`/${data.type}/dashboard`); // Redirect based on role using navigate
+      }
     } catch (err) {
       // Handle error responses
       setError(err.detail || 'Login failed'); // Display detailed error message from the response

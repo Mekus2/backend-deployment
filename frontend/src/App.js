@@ -9,6 +9,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 
 import LoginPage from "./pages/LoginPage";
 import ForgotPassword from "./pages/ForgotPasswordPage";
+import NewUserChangePass from "./pages/NewUserChangePass";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -87,6 +88,7 @@ function App() {
             {/* Authentication */}
             <Route path="/" element={<LoginPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/change-password" element={<NewUserChangePass />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* SuperAdmin Routes */}
