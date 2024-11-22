@@ -82,6 +82,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 AUTH_USER_MODEL = "Account.User"
 
+TIME_ZONE = 'Asia/Manila'
+USE_TZ = True  # Enable timezone support
 
 from datetime import timedelta  # noqa:E402
 
