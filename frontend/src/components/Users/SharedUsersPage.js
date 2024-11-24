@@ -97,13 +97,26 @@ const SharedUsersPage = () => {
 
   const filteredStaff = staffData.filter((member) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return (
+    const matchesSearchTerm =
       member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
       member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
       member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
-      member.username.toLowerCase().includes(lowerCaseSearchTerm)
-    );
+      member.username.toLowerCase().includes(lowerCaseSearchTerm);
+  
+    // If the user is admin, show only staff
+    if (userType === "admin") {
+      return matchesSearchTerm && member.accType.toLowerCase() === "staff";
+    }
+  
+    // If the user is superadmin, show both staff and admin
+    if (userType === "superadmin") {
+      return matchesSearchTerm;
+    }
+  
+    // Default case (for staff or any other case)
+    return matchesSearchTerm && member.accType.toLowerCase() === "staff";
   });
+  
 
   const rows = filteredStaff.map((member) => [
     <ImageContainer key={member.id}>

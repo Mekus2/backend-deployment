@@ -2,10 +2,12 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
-import CardTotalLogs from "../../components/CardsData/CardTotalLogs";
+import Card from "../../components/Layout/Card"; // Import Card component
 import Button from "../../components/Layout/Button"; // Use Button component for tabs
+import Loading from "../../components/Layout/Loading"; // Import Loading component
 import { fetchLogsByType, fetchUserById } from "../../api/LogsApi"; // Import the new API function
 import { colors } from "../../colors"; // Assuming colors are available
+import { FaListAlt } from "react-icons/fa"; // For the card icon
 
 const SharedLogsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,60 +48,71 @@ const SharedLogsPage = () => {
     fetchLogs();
   }, [activeTab]);
 
-  // Update headers and rows dynamically based on active tab
-  const headers =
-    activeTab === "User Logs"
-      ? ["Date & Time", "Type", "Description", "User"]
-      : ["Date & Time", "Type", "Description", "User"];
+  // Filtered logs based on the search term
+  const filteredLogs = logs.filter((log) => {
+    const userFullName = userDetails[log.USER_ID] || "Unknown User";
+    const logValues = [
+      log.LOG_DATETIME,
+      log.LOG_DESCRIPTION,
+      userFullName,
+    ]
+      .join(" ")
+      .toLowerCase();
 
-  const rows = logs.map((log) => {
-    return activeTab === "User Logs"
-      ? [
-          log.LOG_DATETIME,
-          log.LLOG_TYPE,
-          log.LOG_DESCRIPTION,
-          userDetails[log.USER_ID] || "Unknown User", // Display user full name
-        ]
-      : [
-          log.LOG_DATETIME,
-          log.LLOG_TYPE,
-          log.LOG_DESCRIPTION || "N/A",
-          userDetails[log.USER_ID] || "Unknown User",
-        ];
+    return logValues.includes(searchTerm.toLowerCase());
   });
+
+  // Update headers and rows dynamically based on active tab
+  const headers = ["Date & Time", "Description", "User"]; // Removed "Type" column
+
+  const rows = filteredLogs.map((log) => [
+    log.LOG_DATETIME,
+    log.LOG_DESCRIPTION || "N/A",
+    userDetails[log.USER_ID] || "Unknown User", // Display user full name
+  ]);
 
   return (
     <>
-      <Tabs>
-        <StyledTabButton
-          active={activeTab === "User Logs"}
-          onClick={() => setActiveTab("User Logs")}
-        >
-          User Logs
-        </StyledTabButton>
-        <StyledTabButton
-          active={activeTab === "Transaction Logs"}
-          onClick={() => setActiveTab("Transaction Logs")}
-        >
-          Transaction Logs
-        </StyledTabButton>
-      </Tabs>
-      <Controls>
-        <SearchBar
-          placeholder={`Search / Filter ${activeTab.toLowerCase()}...`}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </Controls>
-      <AnalyticsContainer>
-        <CardTotalLogs />
-      </AnalyticsContainer>
       {loading ? (
-        <p>Loading...</p>
-      ) : error ? (
-        <p>{error}</p>
+        <Loading /> // Display the Loading component while fetching data
       ) : (
-        <Table headers={headers} rows={rows} />
+        <div>
+          <Tabs>
+            <StyledTabButton
+              active={activeTab === "User Logs"}
+              onClick={() => setActiveTab("User Logs")}
+            >
+              User Logs
+            </StyledTabButton>
+            <StyledTabButton
+              active={activeTab === "Transaction Logs"}
+              onClick={() => setActiveTab("Transaction Logs")}
+            >
+              Transaction Logs
+            </StyledTabButton>
+          </Tabs>
+          <Controls>
+            <SearchBar
+              placeholder={`Search / Filter ${activeTab.toLowerCase()}...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </Controls>
+          <AnalyticsContainer>
+            {/* Logs Card */}
+            <Card
+              label="Total Logs"
+              value={filteredLogs.length} // Count the logs dynamically
+              bgColor={colors.primary}
+              icon={<FaListAlt />}
+            />
+          </AnalyticsContainer>
+          {error ? (
+            <p>{error}</p>
+          ) : (
+            <Table headers={headers} rows={rows} />
+          )}
+        </div>
       )}
     </>
   );
