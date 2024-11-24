@@ -3,9 +3,15 @@ import styled from "styled-components";
 import sadDog from "../assets/sad.gif";
 import { colors } from "../colors";
 import Button from "../components/Layout/Button";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const NotFoundPage = () => {
+  const navigate = useNavigate();
+
+  const handleGoBack = () => {
+    navigate(-1); // Go to the previous page
+  };
+
   return (
     <Wrapper>
       <ContentContainer>
@@ -17,10 +23,15 @@ const NotFoundPage = () => {
           <Subtitle>
             Oops! <br /> Page Not Found
           </Subtitle>
-          <Description></Description>
-          <HomeLink to="/staff/dashboard">
-            <Button variant="primary">Go to Home</Button>
-          </HomeLink>
+          <Description>
+            The page you're looking for might have been removed, had its name
+            changed, or is temporarily unavailable.
+          </Description>
+          <ButtonContainer>
+            <Button variant="primary" onClick={handleGoBack}>
+              Back
+            </Button>
+          </ButtonContainer>
         </Content>
       </ContentContainer>
     </Wrapper>
@@ -48,6 +59,9 @@ const Content = styled.div`
   background: white;
   position: relative;
   z-index: 1;
+  height: 450px;
+  max-width: 500px; /* Limit the width */
+  width: 100%; /* Make it responsive */
 `;
 
 const Title = styled.h1`
@@ -67,8 +81,11 @@ const Description = styled.p`
   margin: 1rem 0;
 `;
 
-const HomeLink = styled(Link)`
-  text-decoration: none;
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
 `;
 
 const SadDogContainer = styled.div`

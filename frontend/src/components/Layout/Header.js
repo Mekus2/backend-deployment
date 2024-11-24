@@ -7,27 +7,6 @@ import { colors } from "../../colors";
 
 // Updated pageTitles with superadmin and other role titles
 const pageTitles = {
-  // Admin routes
-  "/admin/dashboard": "Dashboard",
-  "/admin/orders": "Order",
-  "/admin/request-order": "Request Order",
-  "/admin/customer-order": "Customer Order",
-  "/admin/purchase-order": "Supplier Order",
-  "/admin/delivery": "Delivery",
-  "/admin/products": "Products",
-  "/admin/categories": "Category",
-  "/admin/inventory": "Inventory",
-  "/admin/suppliers": "Supplier",
-  "/admin/customers": "Customer",
-  "/admin/users": "User",
-  "/admin/sales": "Sales",
-  "/admin/returns": "Return",
-  "/admin/logs": "Logs",
-  "/admin/reports": "Reports",
-  "/admin/profile": "Profile",
-  "/admin/notifications": "Notifications",
-  "/admin/purchase": "Supplier Order",
-
   // SuperAdmin routes
   "/superadmin/dashboard": "Dashboard",
   "/superadmin/orders": "Order",
@@ -48,6 +27,27 @@ const pageTitles = {
   "/superadmin/profile": "SuperAdmin Profile",
   "/superadmin/notifications": "Notifications",
   "/superadmin/purchase": "Supplier Order",
+
+  // Admin routes
+  "/admin/dashboard": "Dashboard",
+  "/admin/orders": "Order",
+  "/admin/request-order": "Request Order",
+  "/admin/customer-order": "Customer Order",
+  "/admin/purchase-order": "Supplier Order",
+  "/admin/delivery": "Delivery",
+  "/admin/products": "Products",
+  "/admin/categories": "Category",
+  "/admin/inventory": "Inventory",
+  "/admin/suppliers": "Supplier",
+  "/admin/customers": "Customer",
+  "/admin/users": "Staff",
+  "/admin/sales": "Sales",
+  "/admin/returns": "Return",
+  "/admin/logs": "Logs",
+  "/admin/reports": "Reports",
+  "/admin/profile": "Profile",
+  "/admin/notifications": "Notifications",
+  "/admin/purchase": "Supplier Order",
 
   // Staff routes
   "/staff/dashboard": "Dashboard",

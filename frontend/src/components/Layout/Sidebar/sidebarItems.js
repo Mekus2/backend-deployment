@@ -69,6 +69,11 @@ export const superadminSidebarItems = [
       },
       {
         icon: TbChevronRight,
+        label: "Inventory",
+        link: "/superadmin/inventory",
+      },
+      {
+        icon: TbChevronRight,
         label: "Categories",
         link: "/superadmin/categories",
       },
@@ -79,12 +84,30 @@ export const superadminSidebarItems = [
       },
     ],
   },
-  { icon: MdOutlineInventory2, label: "Inventory", link: "/superadmin/inventory" },
-  { icon: LuWarehouse, label: "Supplier", link: "/superadmin/suppliers" },
-  { icon: TbUserDollar, label: "Customer", link: "/superadmin/customers" },
-  { icon: GrGroup, label: "User", link: "/superadmin/users" },
-  { icon: TbBasketDollar, label: "Sales", link: "/superadmin/sales" },
+
+  {
+    icon: GrGroup,
+    label: "Management",
+    dropdown: [
+      {
+        icon: TbChevronRight,
+        label: "Customer",
+        link: "/superadmin/customers",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Supplier",
+        link: "/superadmin/suppliers",
+      },
+      {
+        icon: TbChevronRight,
+        label: "User",
+        link: "/superadmin/users",
+      },
+    ],
+  },
   { icon: TbTruckReturn, label: "Return", link: "/superadmin/returns" },
+  { icon: TbBasketDollar, label: "Sales", link: "/superadmin/sales" },
   { icon: TbHistory, label: "Logs", link: "/superadmin/logs" },
   { icon: TbFileReport, label: "Report", link: "/superadmin/reports" },
 ];
@@ -140,6 +163,11 @@ export const adminSidebarItems = [
       },
       {
         icon: TbChevronRight,
+        label: "Inventory",
+        link: "/admin/inventory",
+      },
+      {
+        icon: TbChevronRight,
         label: "Categories",
         link: "/admin/categories",
       },
@@ -150,11 +178,28 @@ export const adminSidebarItems = [
       },
     ],
   },
-  { icon: MdOutlineInventory2, label: "Inventory", link: "/admin/inventory" },
-  { icon: LuWarehouse, label: "Supplier", link: "/admin/suppliers" },
-  { icon: TbUserDollar, label: "Customer", link: "/admin/customers" },
-  { icon: GrGroup, label: "Staff", link: "/admin/users" },
-  { icon: TbBasketDollar, label: "Sales", link: "/admin/sales" },
+
+  {
+    icon: GrGroup,
+    label: "Management",
+    dropdown: [
+      {
+        icon: TbChevronRight,
+        label: "Customer",
+        link: "/admin/customers",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Supplier",
+        link: "/admin/suppliers",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Staff",
+        link: "/admin/users",
+      },
+    ],
+  },
   { icon: TbTruckReturn, label: "Return", link: "/admin/returns" },
   { icon: TbHistory, label: "Logs", link: "/admin/logs" },
   { icon: TbFileReport, label: "Report", link: "/admin/reports" },

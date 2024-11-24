@@ -7,7 +7,7 @@ import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
 import Button from "../../components/Layout/Button";
 import Card from "../../components/Layout/Card";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaUsers } from "react-icons/fa";
 import { fetchStaff } from "../../api/StaffApi";
 import axios from "axios";
 import profilePic from "../../assets/profile.png";
@@ -63,8 +63,14 @@ const SharedUsersPage = () => {
       ? member.USER_ISACTIVE
       : !member.USER_ISACTIVE;
 
+    // Only show "staff" for "admin" users, and show both "staff" and "admin" for "superadmin"
+    const isRelevantUser =
+      (userType === "superadmin" ||
+        (userType === "admin" && member.accType.toLowerCase() === "staff"));
+
     return (
       isActiveFilter &&
+      isRelevantUser &&
       (member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
         member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
         member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
@@ -121,6 +127,10 @@ const SharedUsersPage = () => {
     </Button>,
   ]);
 
+  // Count the number of admins and staff if the user is a superadmin
+  const adminCount = staffData.filter((member) => member.accType.toLowerCase() === "admin").length;
+  const staffCount = staffData.filter((member) => member.accType.toLowerCase() === "staff").length;
+
   if (loading) {
     return <Loading />; // Show loading spinner while fetching data
   }
@@ -153,12 +163,22 @@ const SharedUsersPage = () => {
         </ButtonGroup>
       </Controls>
       <AnalyticsContainer>
+        {/* Show Staff card for both admin and superadmin */}
         {(userType === "admin" || userType === "superadmin") && (
           <Card
-            label="Users"
-            value={`${filteredStaff.length}`}
+            label="Staff"
+            value={`${staffCount}`}
             bgColor={colors.primary}
-            icon={<FaPlus />}
+            icon={<FaUsers />}
+          />
+        )}
+        {/* Show Admin card only for superadmin */}
+        {userType === "superadmin" && (
+          <Card
+            label="Admin"
+            value={`${adminCount}`}
+            bgColor={colors.primary}
+            icon={<FaUsers />}
           />
         )}
       </AnalyticsContainer>
@@ -177,7 +197,7 @@ const SharedUsersPage = () => {
         />
       )}
     </>
-  );
+  );  
 };
 
 // Styled Components
