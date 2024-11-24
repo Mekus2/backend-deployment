@@ -14,7 +14,7 @@ class ProductDetails(models.Model):
     PROD_DETAILS_CODE = models.AutoField(primary_key=True)
     PROD_DETAILS_DESCRIPTION = models.CharField(max_length=255)
     PROD_DETAILS_PRICE = models.DecimalField(max_digits=10, decimal_places=2)
-    PROD_DETAILS_BRAND = models.CharField(max_length=255)
+    PROD_DETAILS_SUPPLIER = models.CharField(max_length=255)
     PROD_DETAILS_QUANTITY = models.IntegerField(default=0)
     PROD_DETAILS_UNIT = models.CharField(max_length=255, null=True)
     PROD_DETAILS_PACKAGING = models.CharField(max_length=255)

@@ -298,42 +298,71 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                     </SuggestionsContainer>
                   )}
                 </td>
-
                 <td>
                   <QuantityInput
                     type="number"
                     value={orderDetail.quantity}
-                    onChange={(e) =>
-                      handleQuantityChange(index, parseInt(e.target.value, 10))
-                    }
+                    onChange={(e) => {
+                      const quantity = parseInt(e.target.value, 10);
+                      handleQuantityChange(
+                        index,
+                        isNaN(quantity) ? 0 : quantity
+                      );
+                    }}
+                    onBlur={(e) => {
+                      if (e.target.value.startsWith("0")) {
+                        handleQuantityChange(
+                          index,
+                          parseInt(e.target.value, 10)
+                        );
+                      }
+                    }}
+                    placeholder="Quantity"
                   />
                 </td>
                 <td>
                   <Input
-                    type="number"
+                    type="text"
                     value={orderDetail.price}
-                    onChange={(e) =>
-                      handlePriceChange(index, parseFloat(e.target.value))
-                    }
+                    onChange={(e) => {
+                      let inputValue = e.target.value;
+                      // Strip leading zeros
+                      if (inputValue.startsWith("0") && inputValue.length > 1) {
+                        inputValue = inputValue.replace(/^0+/, "");
+                      }
+                      // Update state
+                      const price = parseFloat(inputValue);
+                      handlePriceChange(index, isNaN(price) ? 0 : price);
+                    }}
+                    onBlur={(e) => {
+                      // Ensure the final value has no leading zeros
+                      const inputValue = e.target.value.replace(/^0+/, "");
+                      const price = parseFloat(inputValue);
+                      handlePriceChange(index, isNaN(price) ? 0 : price);
+                    }}
                     placeholder="Price"
                   />
                 </td>
+
                 <td>
                   <Input
-                    type="number"
-                    value={orderDetail.discountValue}
+                    type="text"
+                    value={`${orderDetail.discountValue || ""}%`}
                     onChange={(e) => {
-                      const value = parseFloat(e.target.value) || 0;
+                      const value = e.target.value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
+                      const strippedValue = value.replace(/^0+/, ""); // Remove leading zeros
+                      const percent = parseFloat(strippedValue) || 0;
                       const updatedOrderDetails = [...orderDetails];
                       updatedOrderDetails[index] = {
                         ...updatedOrderDetails[index],
-                        discountValue: value,
+                        discountValue: percent,
                       };
                       setOrderDetails(updatedOrderDetails);
                     }}
-                    placeholder="Discount"
+                    placeholder="Discount (%)"
                   />
                 </td>
+
                 <td>₱{calculateLineTotal(orderDetail).toFixed(2)}</td>
                 <td>
                   <DeleteButton onClick={() => handleRemoveProduct(index)}>
@@ -355,9 +384,18 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           <TotalRow>
             <TotalLabel>Total Discount</TotalLabel>
             <TotalValue style={{ color: "#ff5757" }}>
-              ₱{(totalDiscount || 0).toFixed(2)}
+              ₱
+              {orderDetails
+                .reduce((acc, detail) => {
+                  const discount =
+                    ((detail.price * (detail.discountValue || 0)) / 100) *
+                    detail.quantity;
+                  return acc + discount;
+                }, 0)
+                .toFixed(2)}
             </TotalValue>
           </TotalRow>
+
           <TotalRow>
             <TotalLabel>Total Value</TotalLabel>
             <TotalValue style={{ color: "#1DBA0B" }}>

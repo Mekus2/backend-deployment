@@ -31,7 +31,7 @@ const StaffCatViewPage = () => {
     return (
       category.PROD_CAT_CODE === categoryId && // Check if product is in the selected category
       (product.PROD_NAME.toLowerCase().includes(lowerCaseSearchTerm) ||
-        productDetail?.PROD_DETAILS_BRAND?.toLowerCase().includes(
+        productDetail?.PROD_DETAILS_SUPPLIER?.toLowerCase().includes(
           lowerCaseSearchTerm
         ))
     );
@@ -51,7 +51,7 @@ const StaffCatViewPage = () => {
         style={{ width: "50px", height: "auto" }}
       />,
       product.PROD_NAME,
-      productDetail?.PROD_DETAILS_BRAND,
+      productDetail?.PROD_DETAILS_SUPPLIER,
       `₱${productDetail?.PROD_DETALS_PRICE}`,
       <ActionButton
         key="action"

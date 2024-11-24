@@ -7,11 +7,15 @@ import productData from "../../data/ProductData"; // Ensure the path is correct
 const InventoryDetailsModal = ({ item, onClose }) => {
   if (!item) return null;
 
-  const product = productData.PRODUCT.find(p => p.PROD_ID === item.PROD_ID);
-  const productDetails = productData.PRODUCT_DETAILS.find(pd => pd.PROD_DETAILS_CODE === product.PROD_DETAILS_CODE);
+  const product = productData.PRODUCT.find((p) => p.PROD_ID === item.PROD_ID);
+  const productDetails = productData.PRODUCT_DETAILS.find(
+    (pd) => pd.PROD_DETAILS_CODE === product.PROD_DETAILS_CODE
+  );
 
   const handleRemove = () => {
-    const confirmRemoval = window.confirm(`Are you sure you want to remove this item?`);
+    const confirmRemoval = window.confirm(
+      `Are you sure you want to remove this item?`
+    );
     if (confirmRemoval) {
       // Implement remove logic here
       alert(`Item ${product.PROD_NAME} removed`);
@@ -22,7 +26,7 @@ const InventoryDetailsModal = ({ item, onClose }) => {
   return (
     <Modal
       title={`${product.PROD_NAME} Details`}
-      status={item.PROD_INV_QTY_ON_HAND > 0 ? 'Available' : 'Out of Stock'}
+      status={item.PROD_INV_QTY_ON_HAND > 0 ? "Available" : "Out of Stock"}
       onClose={onClose}
     >
       <Section>
@@ -34,13 +38,15 @@ const InventoryDetailsModal = ({ item, onClose }) => {
           <DetailLabel>SKU:</DetailLabel> {item.PROD_INV_BATCH_NO}
         </Detail>
         <Detail>
-          <DetailLabel>Supplier:</DetailLabel> {productDetails ? productDetails.PROD_DETAILS_BRAND : 'N/A'}
+          <DetailLabel>Supplier:</DetailLabel>{" "}
+          {productDetails ? productDetails.PROD_DETAILS_SUPPLIER : "N/A"}
         </Detail>
         <Detail>
           <DetailLabel>Quantity:</DetailLabel> {item.PROD_INV_QTY_ON_HAND}
         </Detail>
         <Detail>
-          <DetailLabel>Status:</DetailLabel> {item.PROD_INV_QTY_ON_HAND > 0 ? 'Available' : 'Out of Stock'}
+          <DetailLabel>Status:</DetailLabel>{" "}
+          {item.PROD_INV_QTY_ON_HAND > 0 ? "Available" : "Out of Stock"}
         </Detail>
       </Section>
       <ButtonGroup>

@@ -3,11 +3,13 @@ import axios from "axios";
 import styled from "styled-components";
 import Modal from "../Layout/Modal";
 import Button from "../Layout/Button";
+import { colors } from "../../colors";
+import { FaTimes } from "react-icons/fa";
 
 const ProductDetailsModal = ({ productId, onClose }) => {
   const [product, setProduct] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editFields, setEditFields] = useState({});
+  const [editFields, setEditFields] = useState({ tags: [] });
   const [showPriceHistory, setShowPriceHistory] = useState(false);
 
   useEffect(() => {
@@ -23,6 +25,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
           PROD_RO_LEVEL: response.data.PROD_RO_LEVEL || "",
           PROD_RO_QTY: response.data.PROD_RO_QTY || "",
           PROD_QOH: response.data.PROD_QOH || "",
+          tags: response.data.PROD_TAGS || [],
         });
       } catch (error) {
         console.error("Error fetching product data:", error);
@@ -35,9 +38,19 @@ const ProductDetailsModal = ({ productId, onClose }) => {
   if (!product) return <p>Loading...</p>;
 
   const handleEdit = () => setIsEditing(true);
-
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file); // Create a preview URL for the image
+      setEditFields((prev) => ({ ...prev, PROD_IMG: imageUrl }));
+    }
+  };
   const handleInputChange = (field, value) => {
     setEditFields((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleTagsChange = (newTags) => {
+    setEditFields((prev) => ({ ...prev, tags: newTags }));
   };
 
   const handleSave = async () => {
@@ -45,10 +58,12 @@ const ProductDetailsModal = ({ productId, onClose }) => {
       const updatedProduct = {
         ...product,
         PROD_NAME: editFields.PROD_NAME,
+        PROD_IMG: editFields.PROD_IMG,
         PROD_DETAILS: { ...editFields },
         PROD_RO_LEVEL: editFields.PROD_RO_LEVEL,
         PROD_RO_QTY: editFields.PROD_RO_QTY,
         PROD_QOH: editFields.PROD_QOH,
+        PROD_TAGS: editFields.tags, // Save tags
       };
       await axios.put(
         `http://127.0.0.1:8000/items/productList/${productId}/`,
@@ -77,11 +92,20 @@ const ProductDetailsModal = ({ productId, onClose }) => {
 
   return (
     <Modal
-      title={isEditing ? `Edit ${product.PROD_NAME}` : `${product.PROD_NAME} Details`}
+      title={
+        isEditing ? `Edit ${product.PROD_NAME}` : `${product.PROD_NAME} Details`
+      }
       onClose={onClose}
     >
       {isEditing ? (
         <Details>
+          <DetailItem>
+            <Label>Image:</Label>
+            {editFields.PROD_IMG && (
+              <ImagePreview src={editFields.PROD_IMG} alt="Preview" />
+            )}
+            <Input type="file" accept="image/*" onChange={handleImageChange} />
+          </DetailItem>
           <DetailItem>
             <Label>Name:</Label>
             <Input
@@ -90,10 +114,10 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             />
           </DetailItem>
           <DetailItem>
-            <Label>Category:</Label>
-            <Input
-              value={editFields.PROD_CAT_CODE || ""}
-              onChange={(e) => handleInputChange("PROD_CAT_CODE", e.target.value)}
+            <Label>Tags:</Label>
+            <TagsInput
+              value={editFields.tags}
+              onChange={handleTagsChange}
             />
           </DetailItem>
           <DetailItem>
@@ -108,9 +132,9 @@ const ProductDetailsModal = ({ productId, onClose }) => {
           <DetailItem>
             <Label>Brand:</Label>
             <Input
-              value={editFields.PROD_DETAILS_BRAND || ""}
+              value={editFields.PROD_DETAILS_SUPPLIER || ""}
               onChange={(e) =>
-                handleInputChange("PROD_DETAILS_BRAND", e.target.value)
+                handleInputChange("PROD_DETAILS_SUPPLIER", e.target.value)
               }
             />
           </DetailItem>
@@ -138,7 +162,9 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             <Input
               type="number"
               value={editFields.PROD_RO_LEVEL || ""}
-              onChange={(e) => handleInputChange("PROD_RO_LEVEL", e.target.value)}
+              onChange={(e) =>
+                handleInputChange("PROD_RO_LEVEL", e.target.value)
+              }
             />
           </DetailItem>
           <DetailItem>
@@ -161,20 +187,31 @@ const ProductDetailsModal = ({ productId, onClose }) => {
       ) : (
         <Details>
           <Detail>
+            <DetailLabel>Image:</DetailLabel>
+            {product.PROD_IMG && (
+              <ImagePreview src={product.PROD_IMG} alt="Product Image" />
+            )}
+          </Detail>
+          <Detail>
             <DetailLabel>Name:</DetailLabel> {product.PROD_NAME}
           </Detail>
           <Detail>
-            <DetailLabel>Category:</DetailLabel> {product.PROD_CAT_CODE}
+            <DetailLabel>Tags:</DetailLabel>{" "}
+            {product.PROD_TAGS && product.PROD_TAGS.join(", ")}
           </Detail>
           <Detail>
             <DetailLabel>Size:</DetailLabel> {productDetail.PROD_DETAILS_SIZE}
           </Detail>
           <Detail>
-            <DetailLabel>Brand:</DetailLabel> {productDetail.PROD_DETAILS_BRAND}
+            <DetailLabel>Brand:</DetailLabel>{" "}
+            {productDetail.PROD_DETAILS_SUPPLIER}
           </Detail>
           <Detail>
-            <DetailLabel>Price:</DetailLabel> ₱{productDetail.PROD_DETAILS_PRICE}
-            <MoreInfoButton onClick={handleMoreInfoClick}>More Info</MoreInfoButton>
+            <DetailLabel>Price:</DetailLabel> ₱
+            {productDetail.PROD_DETAILS_PRICE}
+            <MoreInfoButton onClick={handleMoreInfoClick}>
+              More Info
+            </MoreInfoButton>
           </Detail>
           <Detail>
             <DetailLabel>Description:</DetailLabel>{" "}
@@ -216,7 +253,100 @@ const ProductDetailsModal = ({ productId, onClose }) => {
   );
 };
 
+const TagsInput = ({ value, onChange }) => {
+  const [newTag, setNewTag] = useState("");
+
+  const handleKeyDown = (e) => {
+    if ((e.key === "Enter" || e.key === ",") && newTag.trim()) {
+      e.preventDefault();
+      const updatedTags = [...value, newTag.trim()];
+      onChange(updatedTags);
+      setNewTag("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    const updatedTags = value.filter((tag) => tag !== tagToRemove);
+    onChange(updatedTags);
+  };
+
+  const handleBlur = () => {
+    if (newTag.trim()) {
+      const updatedTags = [...value, newTag.trim()];
+      onChange(updatedTags);
+      setNewTag("");
+    }
+  };
+
+  return (
+    <>
+      <TagInput
+        type="text"
+        value={newTag}
+        onChange={(e) => setNewTag(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={handleBlur}
+        placeholder="Add a tag"
+      />
+      <TagList>
+        {value.map((tag, index) => (
+          <Tag key={index}>
+            {tag}
+            <CloseIcon onClick={() => handleRemoveTag(tag)} />
+          </Tag>
+        ))}
+      </TagList>
+    </>
+  );
+};
+
 // Styled Components
+const TagList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 5px;
+`;
+
+const Tag = styled.span`
+  background-color: ${colors.primary}; /* Primary color */
+  color: white; /* White text */
+  padding: 6px 12px;
+  border-radius: 15px;
+  margin: 5px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: bold;
+`;
+
+const CloseIcon = styled(FaTimes)`
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: ${colors.red};
+  &:hover {
+    color: ${colors.darkRed};
+  }
+`;
+
+const TagInput = styled.input`
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 0.875rem;
+  margin-top: 10px;
+  margin-bottom: 5px;
+`;
+
+const ImagePreview = styled.img`
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 10px;
+`;
 const Details = styled.div`
   margin-bottom: 20px;
 `;

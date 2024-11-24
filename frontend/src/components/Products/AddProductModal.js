@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { colors } from "../../colors";
-import { IoCloseCircle } from "react-icons/io5";
+import { FaTimes } from "react-icons/fa";
 import Button from "../Layout/Button";
 import productData from "../../data/ProductData"; // Adjust the import path as necessary
 
@@ -11,11 +11,11 @@ const AddProductModal = ({ onClose, onSave }) => {
   const [roLevel, setRoLevel] = useState("");
   const [roQty, setRoQty] = useState("");
   const [qoh, setQoh] = useState("");
-  const [category, setCategory] = useState("No Category"); // Default category
+  const [tags, setTags] = useState([]);
   const [categoryCode, setCategoryCode] = useState(""); // Keep the code separate for saving
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [brand, setBrand] = useState("");
+  const [supplier, setSupplier] = useState("");
   const [size, setSize] = useState("");
   const [measurement, setMeasurement] = useState("");
   const [image, setImage] = useState(null);
@@ -48,22 +48,39 @@ const AddProductModal = ({ onClose, onSave }) => {
     if (!productName) newErrors.productName = "This field is required.";
     if (!detailsCode) newErrors.detailsCode = "This field is required.";
     if (!roLevel || isNaN(roLevel) || roLevel < 1)
-      newErrors.roLevel = "This field is required.";
+      newErrors.roLevel = "RO Level must be a positive number.";
     if (!roQty || isNaN(roQty) || roQty < 0)
-      newErrors.roQty = "This field is required.";
+      newErrors.roQty = "RO Quantity cannot be negative.";
     if (!qoh || isNaN(qoh) || qoh < 0)
-      newErrors.qoh = "This field is required.";
+      newErrors.qoh = "Quantity on Hand (QOH) cannot be negative.";
     if (!description) newErrors.description = "This field is required.";
     if (!price || isNaN(price) || price <= 0)
       newErrors.price = "This field is required.";
-    if (!brand) newErrors.brand = "This field is required.";
+    if (!supplier) newErrors.supplier = "This field is required.";
     if (!size) newErrors.size = "This field is required.";
     if (!measurement) newErrors.measurement = "This field is required.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+  // Handle tag input and adding tags to the list
+  const handleTagInputChange = (e) => {
+    const value = e.target.value;
+    if (value.includes(",")) {
+      const newTags = value
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter((tag) => tag && !tags.includes(tag)); // Filter out empty or duplicate tags
+      setTags([...tags, ...newTags]);
+      e.target.value = ""; // Clear input after processing
+    }
+  };
 
+  // Handle removing tags
+  const handleRemoveTag = (tagToRemove) => {
+    setTags(tags.filter((tag) => tag !== tagToRemove));
+  };
+  // Modify the handleSave function to include tags in the saved product
   const handleSave = () => {
     if (!validate()) return;
 
@@ -74,40 +91,24 @@ const AddProductModal = ({ onClose, onSave }) => {
       PROD_RO_LEVEL: parseInt(roLevel),
       PROD_RO_QTY: parseInt(roQty),
       PROD_QOH: parseInt(qoh),
-      PROD_IMG: image, // Store the image URL
-      PROD_DATECREATED:
-        productData.PROD_DATECREATED || new Date().toISOString().split("T")[0],
-      PROD_DATEUPDATED:
-        productData.PROD_DATEUPDATED || new Date().toISOString().split("T")[0],
-      PROD_CAT_CODE: categoryCode || "C000", // Default code if none is selected
+      PROD_IMG: image || "https://via.placeholder.com/50", // Use default image if none uploaded
+      PROD_DATECREATED: new Date().toISOString().split("T")[0],
+      PROD_DATEUPDATED: new Date().toISOString().split("T")[0],
+      PROD_TAGS: tags, // Save the tags instead of category
     };
 
     const newProductDetails = {
       PROD_DETAILS_CODE: detailsCode,
       PROD_DETAILS_DESCRIPTION: description,
       PROD_DETAILS_PRICE: parseFloat(price),
-      PROD_DETAILS_BRAND: brand,
+      PROD_DETAILS_SUPPLIER: supplier,
       PROD_DETAILS_SIZE: size,
       PROD_DETAILS_MEASUREMENT: measurement,
-      PROD_CAT_CODE: categoryCode || "C000", // Default code if none is selected
+      PROD_TAGS: tags, // Save the tags instead of category
     };
 
     onSave(newProduct, newProductDetails);
     onClose();
-  };
-
-  const handleCategoryChange = (e) => {
-    const selectedCategory = e.target.value;
-    const categoryData = productData.PRODUCT_CATEGORY.find(
-      (cat) => cat.PROD_CAT_NAME === selectedCategory
-    );
-    if (categoryData) {
-      setCategory(selectedCategory);
-      setCategoryCode(categoryData.PROD_CAT_CODE); // Set the category code from selected category
-    } else {
-      setCategory("No Category");
-      setCategoryCode(""); // Reset code if "No Category" is selected
-    }
   };
 
   return (
@@ -116,7 +117,7 @@ const AddProductModal = ({ onClose, onSave }) => {
         <ModalHeader>
           <h2>Add Product</h2>
           <CloseButton onClick={onClose}>
-            <IoCloseCircle />
+            <FaTimes />
           </CloseButton>
         </ModalHeader>
         <ModalBody>
@@ -174,17 +175,24 @@ const AddProductModal = ({ onClose, onSave }) => {
             {errors.qoh && <ErrorText>{errors.qoh}</ErrorText>}
           </Field>
           <Field>
-            <Label>Category</Label>
-            <Select value={category} onChange={handleCategoryChange}>
-              <option value="No Category">No Category</option>
-              {productData.PRODUCT_CATEGORY.map((cat) => (
-                <option key={cat.PROD_CAT_CODE} value={cat.PROD_CAT_NAME}>
-                  {cat.PROD_CAT_NAME}
-                </option>
-              ))}
-            </Select>
-            {errors.category && <ErrorText>{errors.category}</ErrorText>}
+            <Label>Tags</Label>
+            <div>
+              <Input
+                type="text"
+                onChange={handleTagInputChange}
+                placeholder="Enter tags, separated by commas"
+              />
+              <TagList>
+                {tags.map((tag, index) => (
+                  <Tag key={index}>
+                    {tag}
+                    <CloseIcon onClick={() => handleRemoveTag(tag)} />
+                  </Tag>
+                ))}
+              </TagList>
+            </div>
           </Field>
+
           <Field>
             <Label>Description</Label>
             <TextArea
@@ -207,13 +215,13 @@ const AddProductModal = ({ onClose, onSave }) => {
             {errors.price && <ErrorText>{errors.price}</ErrorText>}
           </Field>
           <Field>
-            <Label>Brand</Label>
+            <Label>Supplier</Label>
             <Input
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-              placeholder="Enter brand"
+              value={supplier}
+              onChange={(e) => setSupplier(e.target.value)}
+              placeholder="Enter supplier"
             />
-            {errors.brand && <ErrorText>{errors.brand}</ErrorText>}
+            {errors.supplier && <ErrorText>{errors.supplier}</ErrorText>}
           </Field>
           <Field>
             <Label>Size</Label>
@@ -257,6 +265,34 @@ const AddProductModal = ({ onClose, onSave }) => {
 };
 
 // Styled Components
+const TagList = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 10px;
+`;
+
+const Tag = styled.span`
+  background-color: ${colors.primary}; /* Replace with desired color */
+  color: white;
+  padding: 5px 10px;
+  border-radius: 15px;
+  margin: 5px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  font-weight: bold;
+`;
+
+const CloseIcon = styled(FaTimes)`
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  color: ${colors.red};
+  &:hover {
+    color: ${colors.darkRed};
+  }
+`;
+
 const ErrorText = styled.span`
   color: red;
   font-size: 0.75rem;
@@ -319,12 +355,15 @@ const ImageUpload = styled.div`
 `;
 
 const ImagePreview = styled.img`
-  width: 100px; /* Adjust width as needed */
-  height: 100px; /* Adjust height as needed */
+  width: 100px;
+  height: 100px;
   object-fit: cover;
   border: 1px solid #ddd;
   border-radius: 4px;
   margin-bottom: 10px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto; /* Center horizontally */
 `;
 
 const Field = styled.div`

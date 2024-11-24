@@ -5,7 +5,6 @@ import { fetchProductList } from "../../api/ProductApi";
 import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
 import CardTotalProducts from "../CardsData/CardTotalProducts";
-import CardTotalCategories from "../CardsData/CardTotalCategories";
 import Button from "../Layout/Button";
 import AddProductModal from "./AddProductModal";
 import ProductDetailsModal from "./ProductDetailsModal";
@@ -55,25 +54,28 @@ const SharedProductsPage = () => {
             : [];
 
         const rowsData = filteredProducts.map((product) => {
-          const prodId = product.id;
           const productDetail = product.PROD_DETAILS;
-          const category = uncachedCategories.find(
-            (cat) => cat.PROD_CAT_CODE === productDetail.PROD_CAT_CODE
-          );
 
-          const unit = productDetail.PROD_DETAILS_UNIT || "N/A";
-          const brand = productDetail.PROD_DETAILS_BRAND || "N/A";
+          // Static sample tags data
+          const sampleTags = ["Tag1", "Tag2"];
+
+          const brand = productDetail.PROD_DETAILS_SUPPLIER || "N/A";
           const price = parseFloat(productDetail.PROD_DETAILS_PRICE);
 
           return [
-            <img
-              src={product.PROD_IMAGE}
-              alt={product.PROD_NAME}
-              style={{ width: "50px", height: "auto" }}
-            />,
+            <ImageContainer key={product.PROD_ID}>
+              <img
+                src={product.PROD_IMAGE}
+                alt={product.PROD_NAME}
+                style={{ width: "50px", height: "auto" }}
+              />
+            </ImageContainer>,
             product.PROD_NAME,
-            category ? category.PROD_CAT_NAME : "N/A",
-            unit,
+            <TagList key={`tags-${product.PROD_ID}`}>
+              {sampleTags.map((tag, index) => (
+                <Tag key={index}>{tag}</Tag>
+              ))}
+            </TagList>,
             brand,
             price && !isNaN(price) ? `₱${price.toFixed(2)}` : "₱0.00",
             <ActionButton
@@ -85,6 +87,8 @@ const SharedProductsPage = () => {
             </ActionButton>,
           ];
         });
+
+        setRows(rowsData);
 
         setRows(rowsData);
         setLoading(false);
@@ -145,9 +149,8 @@ const SharedProductsPage = () => {
   const headers = [
     "Image",
     "Product Name",
-    "Category",
-    "Unit",
-    "Brand",
+    "Tags",
+    "Supplier",
     "Price",
     "Actions",
   ];
@@ -169,9 +172,6 @@ const SharedProductsPage = () => {
       </Controls>
       <AnalyticsContainer>
         <CardTotalProducts />
-        <ClickableCard onClick={handleCardClick}>
-          <CardTotalCategories />
-        </ClickableCard>
       </AnalyticsContainer>
       <Table headers={headers} rows={rows} />
       {isAddProductModalOpen && (
@@ -188,6 +188,40 @@ const SharedProductsPage = () => {
 };
 
 // Styled components
+const TagList = styled.div`
+  display: flex;
+  flex-wrap: wrap;   
+  gap: 8px;           
+  width: 100%;    
+  max-height: 120px;
+  overflow-y: auto;  
+  justify-content: center;
+`;
+
+const Tag = styled.div`
+  background-color: ${colors.primary};
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  text-align: center; 
+  min-width: 50px;    
+  max-width: 150px;  
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+`;
+
+
+
+
+const ImageContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+`;
+
 const Controls = styled.div`
   display: flex;
   justify-content: space-between;

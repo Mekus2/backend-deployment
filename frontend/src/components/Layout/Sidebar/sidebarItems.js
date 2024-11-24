@@ -25,11 +25,11 @@ export const superadminSidebarItems = [
     icon: MdOutlineShoppingCart,
     label: "Order",
     dropdown: [
-      {
-        icon: TbChevronRight,
-        label: "Request",
-        link: "/superadmin/request-order",
-      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Request",
+      //   link: "/superadmin/request-order",
+      // },
       {
         icon: TbChevronRight,
         label: "Customer",
@@ -72,11 +72,11 @@ export const superadminSidebarItems = [
         label: "Inventory",
         link: "/superadmin/inventory",
       },
-      {
-        icon: TbChevronRight,
-        label: "Categories",
-        link: "/superadmin/categories",
-      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Categories",
+      //   link: "/superadmin/categories",
+      // },
       {
         icon: TbChevronRight,
         label: "Price History",
@@ -119,11 +119,11 @@ export const adminSidebarItems = [
     icon: MdOutlineShoppingCart,
     label: "Order",
     dropdown: [
-      {
-        icon: TbChevronRight,
-        label: "Requests",
-        link: "/admin/request-order",
-      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Requests",
+      //   link: "/admin/request-order",
+      // },
       {
         icon: TbChevronRight,
         label: "Customer",
@@ -166,11 +166,11 @@ export const adminSidebarItems = [
         label: "Inventory",
         link: "/admin/inventory",
       },
-      {
-        icon: TbChevronRight,
-        label: "Categories",
-        link: "/admin/categories",
-      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Categories",
+      //   link: "/admin/categories",
+      // },
       {
         icon: TbChevronRight,
         label: "Price History",
@@ -212,11 +212,11 @@ export const staffSidebarItems = [
     icon: MdOutlineShoppingCart,
     label: "Order",
     dropdown: [
-      {
-        icon: TbChevronRight,
-        label: "Request",
-        link: "/staff/request-order",
-      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Request",
+      //   link: "/staff/request-order",
+      // },
       {
         icon: TbChevronRight,
         label: "Customer",
@@ -244,15 +244,20 @@ export const staffSidebarItems = [
         label: "Product",
         link: "/staff/products",
       },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Categories",
+      //   link: "/staff/categories",
+      // },
       {
-        icon: TbChevronRight,
-        label: "Categories",
-        link: "/staff/categories",
+        icon: MdOutlineInventory2,
+        label: "Inventory",
+        link: "/staff/inventory",
       },
     ],
   },
-  { icon: MdOutlineInventory2, label: "Inventory", link: "/staff/inventory" },
+
   { icon: TbUserDollar, label: "Customer", link: "/staff/customers" },
   { icon: TbTruckReturn, label: "Return", link: "/staff/returns" },
-  { icon: TbFileReport, label: "Report", link: "/staff/reports" },
+  // { icon: TbFileReport, label: "Report", link: "/staff/reports" },
 ];

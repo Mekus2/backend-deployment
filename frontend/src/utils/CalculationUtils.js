@@ -1,9 +1,7 @@
 // Function to calculate the total price for a line item, including applying any discounts
-export const calculateLineTotal = (detail) => {
-  const totalBeforeDiscount = detail.quantity * detail.price; // Calculate total before discount
-  const discountAmount = calculateDiscountAmount(detail); // Get discount amount based on the fixed discount only
-  const lineTotal = totalBeforeDiscount - discountAmount; // Deduct discount from total
-  return Math.max(0, lineTotal); // Ensure the total isn't negative
+export const calculateLineTotal = (orderDetail) => {
+  const discount = (orderDetail.price * (orderDetail.discountValue || 0)) / 100;
+  return (orderDetail.price - discount) * orderDetail.quantity;
 };
 
 // Function to calculate the discount amount based on the discount type and value
