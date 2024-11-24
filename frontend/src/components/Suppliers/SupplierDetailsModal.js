@@ -66,6 +66,7 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
             );
           } else {
             alert("Supplier details saved successfully!");
+            await logUserCreation(supplier, updatedSupplier);
             setIsEditing(false);
             onClose();
           }
@@ -106,6 +107,58 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
       });
     }
   };
+
+  const logUserCreation = async (oldSupplier, updatedSupplier) => {
+    // Fetch the user_id from localStorage
+    const userId = localStorage.getItem("user_id");
+  
+    // Prepare the fields for logging changes
+    const changes = [];
+    const fieldsToCheck = [
+      { field: "Supp_Company_Name", label: "Company Name" },
+      { field: "Supp_Company_Num", label: "Company Number" },
+      { field: "Supp_Contact_Pname", label: "Contact Person Name" },
+      { field: "Supp_Contact_Num", label: "Contact Person Number" },
+    ];
+  
+    fieldsToCheck.forEach(({ field, label }) => {
+      if (oldSupplier[field] !== updatedSupplier[field]) {
+        changes.push(
+          `${label} changed from "${oldSupplier[field] || "N/A"}" to "${
+            updatedSupplier[field] || "N/A"
+          }"`
+        );
+      }
+    });
+  
+    // Prepare the log payload
+    const logPayload = {
+      LLOG_TYPE: "User logs",
+      LOG_DESCRIPTION: `Edited supplier details:\n${changes.join("\n")}`,
+      USER_ID: userId,
+    };
+  
+    try {
+      // Send the log data to the backend
+      const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        body: JSON.stringify(logPayload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (response.ok) {
+        console.log("Supplier log successfully created:", logPayload);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to create log:", errorData);
+      }
+    } catch (error) {
+      console.error("Error logging user changes:", error);
+    }
+  };
+
 
   return (
     <Modal
