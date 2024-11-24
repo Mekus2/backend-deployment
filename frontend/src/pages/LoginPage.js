@@ -27,7 +27,7 @@ const LoginPage = () => {
       const credentials = { username, password };
       const data = await loginUser(credentials); 
 
-      if (password === "Password@1233") {
+      if (password === "Password@123") {
         navigate('/change-password'); 
       } else {
         setRole(data.type); 
