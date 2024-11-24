@@ -11,7 +11,7 @@ import {
   TbFileReport,
 } from "react-icons/tb";
 import { MdOutlineInventory2, MdOutlineShoppingCart } from "react-icons/md";
-import { LuWarehouse, LuBox } from "react-icons/lu";
+import { LuBox } from "react-icons/lu";
 import { GrGroup } from "react-icons/gr";
 
 // Sidebar Items for SuperAdmin

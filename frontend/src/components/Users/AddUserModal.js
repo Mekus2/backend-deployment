@@ -12,7 +12,7 @@ const AddUserModal = ({ onClose, onSave }) => {
   const [lastname, setLastname] = useState("");
   const [username, setUsername] = useState("staff_");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("Password@123"); // Default password set here
+  const [password] = useState("Password@123"); // Default password set here
   const [showPassword, setShowPassword] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");

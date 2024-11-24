@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react"; 
 import styled from "styled-components";
 import { colors } from "../../colors";
 import AddUserModal from "../../components/Users/AddUserModal";
@@ -8,7 +8,6 @@ import Table from "../../components/Layout/Table";
 import Button from "../../components/Layout/Button";
 import Card from "../../components/Layout/Card";
 import { FaPlus, FaUsers } from "react-icons/fa";
-import { fetchStaff } from "../../api/StaffApi";
 import axios from "axios";
 import profilePic from "../../assets/profile.png";
 import Loading from "../../components/Layout/Loading"; // Add your Loading component
@@ -24,14 +23,7 @@ const SharedUsersPage = () => {
   const [showInactive, setShowInactive] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const storedUserType = localStorage.getItem("user_type");
-    setUserType(storedUserType);
-
-    fetchUsers();
-  }, [showInactive]); // Re-fetch data when toggling active/inactive state
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(
@@ -60,7 +52,14 @@ const SharedUsersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showInactive]); // Re-fetch data when toggling active/inactive state
+
+  useEffect(() => {
+    const storedUserType = localStorage.getItem("user_type");
+    setUserType(storedUserType);
+
+    fetchUsers();
+  }, [fetchUsers]); // Added fetchUsers to the dependency array
 
   const handleAddUser = (newUser) => {
     setStaffData((prevData) => [...prevData, newUser]);
