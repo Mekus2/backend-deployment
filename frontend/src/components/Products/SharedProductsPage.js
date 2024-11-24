@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useNavigate, useLocation } from "react-router-dom";
 import { fetchProductList } from "../../api/ProductApi";
 import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
@@ -10,7 +9,6 @@ import AddProductModal from "./AddProductModal";
 import ProductDetailsModal from "./ProductDetailsModal";
 import { FaPlus } from "react-icons/fa";
 import { colors } from "../../colors";
-import { fetchCategory } from "../../api/CategoryApi";
 import axios from "axios";
 import Loading from "../Layout/Loading"; // Import the Loading component
 
@@ -20,38 +18,17 @@ const SharedProductsPage = () => {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [isProductDetailsModalOpen, setIsProductDetailsModalOpen] =
     useState(false);
-  const [product, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rows, setRows] = useState([]);
 
-  const navigate = useNavigate();
-  const location = useLocation();
-
   useEffect(() => {
-    const loadProductsAndCategories = async () => {
+    const loadProducts = async () => {
       try {
         const fetchedProducts = await fetchProductList();
-        setProducts(fetchedProducts);
-
-        const filteredProducts = fetchedProducts.filter((products) =>
-          products.PROD_NAME.toLowerCase().includes(searchTerm.toLowerCase())
+        const filteredProducts = fetchedProducts.filter((product) =>
+          product.PROD_NAME.toLowerCase().includes(searchTerm.toLowerCase())
         );
-
-        const uncachedCategoryCodes = [
-          ...new Set(
-            filteredProducts.map((product) =>
-              product.PROD_DETAILS?.PROD_CAT_CODE !== null
-                ? product.PROD_DETAILS?.PROD_CAT_CODE
-                : null
-            )
-          ),
-        ];
-
-        const uncachedCategories =
-          uncachedCategoryCodes.length > 0
-            ? await Promise.all(uncachedCategoryCodes.map(fetchCategory))
-            : [];
 
         const rowsData = filteredProducts.map((product) => {
           const productDetail = product.PROD_DETAILS;
@@ -89,17 +66,15 @@ const SharedProductsPage = () => {
         });
 
         setRows(rowsData);
-
-        setRows(rowsData);
         setLoading(false);
       } catch (err) {
-        setError("Error fetching products or categories");
+        setError("Error fetching products");
         setLoading(false);
         console.error("Error fetching products", err);
       }
     };
 
-    loadProductsAndCategories();
+    loadProducts();
   }, [searchTerm]);
 
   const openAddProductModal = () => setIsAddProductModalOpen(true);
@@ -107,10 +82,9 @@ const SharedProductsPage = () => {
 
   const openProductDetailsModal = async (product) => {
     try {
-      const productResponse = await axios.get(
+      await axios.get(
         `http://127.0.0.1:8000/items/productList/${product.id}`
       );
-
       setSelectedProductId(product.id);
       setIsProductDetailsModalOpen(true);
     } catch (error) {
@@ -121,21 +95,6 @@ const SharedProductsPage = () => {
   const closeProductDetailsModal = () => {
     setSelectedProductId(null);
     setIsProductDetailsModalOpen(false);
-  };
-
-  const handleCardClick = () => {
-    let path;
-    if (location.pathname.includes("/superadmin")) {
-      path = "/superadmin/categories";
-    } else if (location.pathname.includes("/admin")) {
-      path = "/admin/categories";
-    } else if (location.pathname.includes("/staff")) {
-      path = "/staff/categories";
-    } else {
-      alert("Access denied");
-      return;
-    }
-    navigate(path);
   };
 
   if (loading) {
@@ -166,7 +125,6 @@ const SharedProductsPage = () => {
         <ButtonGroup>
           <StyledButton onClick={openAddProductModal}>
             <FaPlus className="icon" /> Product
-            <p value={product}></p>
           </StyledButton>
         </ButtonGroup>
       </Controls>
@@ -190,11 +148,11 @@ const SharedProductsPage = () => {
 // Styled components
 const TagList = styled.div`
   display: flex;
-  flex-wrap: wrap;   
-  gap: 8px;           
-  width: 100%;    
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
   max-height: 120px;
-  overflow-y: auto;  
+  overflow-y: auto;
   justify-content: center;
 `;
 
@@ -205,15 +163,12 @@ const Tag = styled.div`
   border-radius: 4px;
   font-size: 12px;
   white-space: nowrap;
-  text-align: center; 
-  min-width: 50px;    
-  max-width: 150px;  
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  text-align: center;
+  min-width: 50px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
-
-
-
 
 const ImageContainer = styled.div`
   display: flex;
@@ -250,10 +205,6 @@ const AnalyticsContainer = styled.div`
   gap: 16px;
   margin-bottom: 16px;
   padding: 0 1px;
-`;
-
-const ClickableCard = styled.div`
-  cursor: pointer;
 `;
 
 const ActionButton = styled(Button)`

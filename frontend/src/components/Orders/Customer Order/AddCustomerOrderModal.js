@@ -59,7 +59,6 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     handleAddClient,
     totalQuantity,
     totalValue,
-    totalDiscount,
     setOrderDetails,
   } = useAddCustomerOrderModal(onSave, onClose);
 

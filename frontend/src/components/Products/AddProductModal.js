@@ -3,7 +3,6 @@ import styled from "styled-components";
 import { colors } from "../../colors";
 import { FaTimes } from "react-icons/fa";
 import Button from "../Layout/Button";
-import productData from "../../data/ProductData"; // Adjust the import path as necessary
 
 const AddProductModal = ({ onClose, onSave }) => {
   const [productName, setProductName] = useState("");
@@ -12,7 +11,6 @@ const AddProductModal = ({ onClose, onSave }) => {
   const [roQty, setRoQty] = useState("");
   const [qoh, setQoh] = useState("");
   const [tags, setTags] = useState([]);
-  const [categoryCode, setCategoryCode] = useState(""); // Keep the code separate for saving
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [supplier, setSupplier] = useState("");
