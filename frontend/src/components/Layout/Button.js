@@ -1,23 +1,29 @@
-// src/components/Button.js
 import React from "react";
 import styled from "styled-components";
-import { colors } from "../../colors"; // Adjust path as necessary
+import { colors } from "../../colors"; // Adjust path if necessary
 
 const Button = ({ variant = "primary", onClick, children, ...props }) => {
+  // Define different styles for each button variant
   const variantColors = {
     primary: {
-      backgroundColor: colors.primary,
-      hoverColor: colors.primaryHover,
+      backgroundColor: colors.primary, // Assuming you have a primary color defined
+      hoverColor: colors.primaryHover, // Assuming you have a hover color defined for primary
       textColor: "white",
     },
     red: {
-      backgroundColor: colors.red,
-      hoverColor: colors.redHover,
+      backgroundColor: colors.red, // Red color for deactivate
+      hoverColor: colors.redHover, // Red hover color
       textColor: "white",
     },
-    // You can add more variants if needed, such as 'green', 'warning', etc.
+    green: {
+      backgroundColor: colors.green, // Green color for activate
+      hoverColor: colors.greenHover, // Green hover color
+      textColor: "white",
+    },
+    // You can add more variants if needed, such as 'warning', 'blue', etc.
   };
 
+  // Select the variant based on the variant prop passed
   const selectedVariant = variantColors[variant] || variantColors.primary;
 
   return (

@@ -53,6 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
             "phonenumber",
             "address",
             "accType",
+            "isActive",
             "image",
         )
         extra_kwargs = {

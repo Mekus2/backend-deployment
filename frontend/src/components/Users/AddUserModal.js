@@ -91,6 +91,7 @@ const AddUserModal = ({ onClose, onSave }) => {
           // On successful response
           onSave(result);
           onClose();
+          logUserCreation(result); //Create user logs
         } else {
           // Handle validation errors for each field
           if (result.username) {
@@ -121,6 +122,42 @@ const AddUserModal = ({ onClose, onSave }) => {
       }
     }
   };
+
+  const logUserCreation = async (user) => {
+    // Fetch the user_id from localStorage
+    const userId = localStorage.getItem("user_id"); // Make sure "user_id" is the correct key
+
+    // Get first_name and last_name from the user object
+    const { first_name, last_name } = user;
+
+    // Prepare the log payload with the user's first name and last name
+    const logPayload = {
+        LLOG_TYPE: "User logs",
+        LOG_DESCRIPTION: `Added new user: ${first_name} ${last_name} successfully`,
+        USER_ID: userId, // Use the user_id from localStorage
+    };
+
+    try {
+        // Send the log data to the backend
+        const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+            method: "POST",
+            body: JSON.stringify(logPayload),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (response.ok) {
+            console.log("Log successfully created:", logPayload);
+        } else {
+            const errorData = await response.json();
+            console.error("Failed to create log:", errorData);
+        }
+    } catch (error) {
+        console.error("Error logging user creation:", error);
+    }
+};
+
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 

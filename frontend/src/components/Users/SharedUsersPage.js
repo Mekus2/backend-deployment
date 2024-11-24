@@ -22,90 +22,88 @@ const SharedUsersPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [imageUrls, setImageUrls] = useState({});
   const [showInactive, setShowInactive] = useState(false);
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUserType = localStorage.getItem("user_type");
     setUserType(storedUserType);
 
-    fetchStaff()
-      .then((data) => {
-        setStaffData(data);
-        const fetchImages = async () => {
-          const newImageUrls = {};
-          for (const member of data) {
-            try {
-              const imageResponse = await axios.get(
-                `http://127.0.0.1:8000/account/users/${member.id}/image/`
-              );
-              const imageUrl = imageResponse.data.image_url;
-              newImageUrls[member.id] = imageUrl || profilePic;
-            } catch (error) {
-              console.error("Failed to fetch image for user:", member.id);
-              newImageUrls[member.id] = profilePic;
-            }
-          }
-          setImageUrls(newImageUrls);
-          setLoading(false); // Set loading to false once data is ready
-        };
+    fetchUsers();
+  }, [showInactive]); // Re-fetch data when toggling active/inactive state
 
-        fetchImages();
-      })
-      .catch((error) => {
-        console.error(error);
-        setLoading(false); // Stop loading if there is an error
-      });
-  }, []);
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:8000/account/users/?isactive=${!showInactive}`
+      );
+      const data = response.data;
 
-  const filteredStaff = staffData.filter((member) => {
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    const isActiveFilter = showInactive
-      ? member.USER_ISACTIVE
-      : !member.USER_ISACTIVE;
-
-    // Only show "staff" for "admin" users, and show both "staff" and "admin" for "superadmin"
-    const isRelevantUser =
-      (userType === "superadmin" ||
-        (userType === "admin" && member.accType.toLowerCase() === "staff"));
-
-    return (
-      isActiveFilter &&
-      isRelevantUser &&
-      (member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
-        member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
-        member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
-        member.username.toLowerCase().includes(lowerCaseSearchTerm))
-    );
-  });
+      // Fetch user images
+      const newImageUrls = {};
+      for (const member of data) {
+        try {
+          const imageResponse = await axios.get(
+            `http://127.0.0.1:8000/account/users/${member.id}/image/`
+          );
+          const imageUrl = imageResponse.data.image_url;
+          newImageUrls[member.id] = imageUrl || profilePic;
+        } catch (error) {
+          console.error("Failed to fetch image for user:", member.id);
+          newImageUrls[member.id] = profilePic;
+        }
+      }
+      setImageUrls(newImageUrls);
+      setStaffData(data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddUser = (newUser) => {
     setStaffData((prevData) => [...prevData, newUser]);
   };
 
-  const handleActivateDeactivateUser = (id) => {
-    setStaffData((prevData) =>
-      prevData.map((member) =>
-        member.id === id
-          ? { ...member, USER_ISACTIVE: !member.USER_ISACTIVE }
-          : member
-      )
-    );
+  const handleActivateDeactivateUser = async (id) => {
+    try {
+      await axios.put(`http://127.0.0.1:8000/account/users/${id}/`, {
+        isActive: !showInactive, // Toggle the user's active state
+      });
+      fetchUsers(); // Refresh the data
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
   };
 
   const openDetailsModal = async (user) => {
     try {
+      // Fetch user details directly based on the user ID using the new URL
       const response = await axios.get(
-        `http://127.0.0.1:8000/account/users/${user.id}/`
+        `http://127.0.0.1:8000/account/details/${user.id}/` // Updated URL for fetching user details
       );
-      console.log("API Response:", response.data);
-      setSelectedUser(response.data);
-      setIsDetailsModalOpen(true);
+      
+      // Include the isActive field along with the other user details
+      setSelectedUser({ ...response.data, isActive: user.isActive }); // Add isActive field to the selected user
+      setIsDetailsModalOpen(true); // Open the details modal
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Error fetching user data:", error); // Handle any errors that occur
     }
   };
+    
 
   const headers = ["Image", "Name", "Role", "Actions"];
+
+  const filteredStaff = staffData.filter((member) => {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return (
+      member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
+      member.username.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+  });
 
   const rows = filteredStaff.map((member) => [
     <ImageContainer key={member.id}>

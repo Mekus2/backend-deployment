@@ -4,7 +4,7 @@ import axios from "axios";
 const LOGS_API_URL = "http://127.0.0.1:8000/logs/logs/";
 const USER_LOGS_API_URL = `${LOGS_API_URL}user/`;
 const TRANSACTION_LOGS_API_URL = `${LOGS_API_URL}transaction/`;
-const USERS_API_URL = "http://127.0.0.1:8000/account/users/";
+const USERS_API_URL = "http://127.0.0.1:8000/account/logs/";
 
 // Fetch all logs
 export const fetchLogs = async () => {
