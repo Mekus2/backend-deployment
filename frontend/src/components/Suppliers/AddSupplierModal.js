@@ -35,6 +35,7 @@ const AddSupplierModal = ({ onClose, onAdd }) => {
         const addedSupplier = await addSupplier(newSupplier); // Call API function to add supplier
         notify.success("Supplier added successfully!"); // Success toast notification
         onAdd(addedSupplier); // Pass the added supplier data to the parent
+        logUserCreation(addedSupplier);
         onClose(); // Close the modal
       } catch (error) {
         console.error("Error adding supplier:", error);
@@ -58,6 +59,49 @@ const AddSupplierModal = ({ onClose, onAdd }) => {
       setter(value.startsWith("0") ? value : "0" + value);
     }
   };
+
+  const logUserCreation = async (addedSupplier) => {
+    // Fetch the user_id from localStorage
+    const userId = localStorage.getItem("user_id");
+
+    // Destructure fields from the addedSupplier object
+    const {
+        Supp_Company_Name: supplierName,
+        Supp_Company_Num: supplierNumber,
+        Supp_Contact_Pname: contactPersonName,
+        Supp_Contact_Num: contactPersonNumber,
+    } = addedSupplier;
+
+    // Prepare the log payload
+    const logPayload = {
+        LLOG_TYPE: "User logs",
+        LOG_DESCRIPTION: `Added new supplier: Company name & number: ${supplierName} ${supplierNumber} 
+        -- Contact person and number: ${contactPersonName} ${contactPersonNumber}`,
+        USER_ID: userId,
+    };
+
+    try {
+        // Send the log data to the backend
+        const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+            method: "POST",
+            body: JSON.stringify(logPayload),
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
+        if (response.ok) {
+            console.log("Supplier Log successfully created:", logPayload);
+        } else {
+            const errorData = await response.json();
+            console.error("Failed to create log:", errorData);
+        }
+    } catch (error) {
+        console.error("Error logging user creation:", error);
+    }
+};
+
+
 
   return (
     <Modal title="Add New Supplier" onClose={onClose}>
