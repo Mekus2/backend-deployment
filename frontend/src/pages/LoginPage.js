@@ -1,44 +1,50 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, useNavigate } from 'react-router-dom'; 
 import styled from 'styled-components';
-import { useUserRole } from '../context/UserContext'; // Import useUserRole to set the role
-import { loginUser } from '../api/LoginApi'; // Import the loginUser function
+import { useUserRole } from '../context/UserContext'; 
+import { loginUser } from '../api/LoginApi'; 
 import logo from '../assets/roundlogo.png';
 import loginbg from '../assets/loginbg.png';
+
+// Import icons from react-icons
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
-  const { setRole } = useUserRole(); // Access setRole from context
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [isLoading, setIsLoading] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const { setRole } = useUserRole(); 
+  const navigate = useNavigate(); 
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(''); // Reset error state
-    setIsLoading(true); // Set loading to true
+    setError('');
+    setIsLoading(true); 
 
     try {
       const credentials = { username, password };
-      const data = await loginUser(credentials); // Call the login API
+      const data = await loginUser(credentials); 
 
-      // Check if the password is the default password
       if (password === "Password@123") {
-        // If the password is the default one, redirect to the change password page
-        navigate('/change-password'); // Redirect to the change password page
+        navigate('/change-password'); 
       } else {
-        // If the password is not the default, continue with normal login flow
-        setRole(data.type); // Set role based on API response
-        navigate(`/${data.type}/dashboard`); // Redirect based on role using navigate
+        setRole(data.type); 
+        navigate(`/${data.type}/dashboard`); 
       }
     } catch (err) {
-      // Handle error responses
-      setError(err.detail || 'Login failed'); // Display detailed error message from the response
-      console.error('Login failed:', err); // Log the error for debugging
+      setError(err.detail || 'Login failed');
+      console.error('Login failed:', err); 
     } finally {
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
     }
+  };
+
+  // Prevent form submission when toggling password visibility
+  const handlePasswordToggle = (e) => {
+    e.preventDefault(); // Prevent form submission when clicking the toggle button
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -49,26 +55,31 @@ const LoginPage = () => {
         </LogoContainer>
         <Title>Login to your account</Title>
         {error && <ErrorMessage>{error}</ErrorMessage>}
-        <form onSubmit={handleLogin}>
+        <Form onSubmit={handleLogin}>
           <Input
             type="text"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <PasswordContainer>
+            <Input
+              type={showPassword ? "text" : "password"}  // Toggle password visibility
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <PasswordToggleButton onClick={handlePasswordToggle}>
+              {showPassword ? <FaEye /> : <FaEyeSlash />}  {/* Use FaEye and FaEyeSlash */}
+            </PasswordToggleButton>
+          </PasswordContainer>
           <Link to="/forgot-password">
             <ForgotPasswordText>Forgot password?</ForgotPasswordText>
           </Link>
           <LoginButton type="submit" disabled={isLoading}>
             {isLoading ? 'Logging In...' : 'Login'}
           </LoginButton>
-        </form>
+        </Form>
       </FormContainer>
     </BackgroundContainer>
   );
@@ -94,13 +105,8 @@ const FormContainer = styled.div`
   padding: 30px;
   border-radius: 15px;
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;  /* Adjust max width */
   box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-
-  @media (min-width: 768px) {
-    padding: 40px;
-    max-width: 450px;
-  }
 `;
 
 const LogoContainer = styled.div`
@@ -131,8 +137,8 @@ const Title = styled.h1`
 `;
 
 const Input = styled.input`
-  width: 100%;
-  padding: 12px;
+  width: 100%;  /* Ensures the input takes up full width inside the form */
+  padding: 14px;  
   margin-bottom: 15px;
   border: 2px solid #000;
   border-radius: 10px;
@@ -145,7 +151,24 @@ const Input = styled.input`
 
   &::placeholder {
     color: #aaa;
+    font-size: 16px;
   }
+`;
+
+const PasswordContainer = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const PasswordToggleButton = styled.button`
+  position: absolute;
+  right: 10px;
+  top: 40%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
 `;
 
 const ForgotPasswordText = styled.p`
@@ -157,6 +180,7 @@ const ForgotPasswordText = styled.p`
   &:hover {
     text-decoration: underline;
     cursor: pointer;
+    color: darkgray;
   }
 `;
 
@@ -182,9 +206,14 @@ const LoginButton = styled.button`
   }
 `;
 
+const Form = styled.form`
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+`;
+
 const ErrorMessage = styled.p`
   color: red;
-  margin-bottom: 15px;
 `;
 
 export default LoginPage;

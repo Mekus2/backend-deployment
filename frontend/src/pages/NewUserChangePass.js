@@ -69,7 +69,7 @@ const NewUserChangePass = () => {
         </LogoContainer>
         <Title>Change Your Password</Title>
         <InstructionText>
-        Please set a new password, as you're using the default one. Choose a strong password and keep it in a safe place.
+             Please set a new password. Choose a strong password and keep it in a safe place.
         </InstructionText>
         {error && <ErrorText>{error}</ErrorText>}
         {passwordChanged ? (
@@ -86,7 +86,7 @@ const NewUserChangePass = () => {
                 onChange={(e) => setNewPassword(e.target.value)}
               />
               <TogglePasswordVisibility onClick={() => setShowPassword(!showPassword)}>
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                {showPassword ? <FaEye /> : <FaEyeSlash />}
               </TogglePasswordVisibility>
             </PasswordContainer>
             <PasswordContainer>
@@ -97,7 +97,7 @@ const NewUserChangePass = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
               <TogglePasswordVisibility onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                {showConfirmPassword ? <FaEye /> : <FaEyeSlash />}
               </TogglePasswordVisibility>
             </PasswordContainer>
             <SubmitButton onClick={handleChangePassword}>Change Password</SubmitButton>

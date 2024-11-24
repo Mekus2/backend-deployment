@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react"; 
 import styled from "styled-components";
 import { colors } from "../../colors";
 import AddUserModal from "../../components/Users/AddUserModal";
@@ -7,7 +7,7 @@ import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
 import Button from "../../components/Layout/Button";
 import Card from "../../components/Layout/Card";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaUsers } from "react-icons/fa";
 import axios from "axios";
 import profilePic from "../../assets/profile.png";
 import Loading from "../../components/Layout/Loading"; // Add your Loading component
@@ -23,14 +23,7 @@ const SharedUsersPage = () => {
   const [showInactive, setShowInactive] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const storedUserType = localStorage.getItem("user_type");
-    setUserType(storedUserType);
-
-    fetchUsers();
-  }, [showInactive]); // Re-fetch data when toggling active/inactive state
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(
@@ -59,7 +52,14 @@ const SharedUsersPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showInactive]); // Re-fetch data when toggling active/inactive state
+
+  useEffect(() => {
+    const storedUserType = localStorage.getItem("user_type");
+    setUserType(storedUserType);
+
+    fetchUsers();
+  }, [fetchUsers]); // Added fetchUsers to the dependency array
 
   const handleAddUser = (newUser) => {
     setStaffData((prevData) => [...prevData, newUser]);
@@ -96,13 +96,26 @@ const SharedUsersPage = () => {
 
   const filteredStaff = staffData.filter((member) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return (
+    const matchesSearchTerm =
       member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
       member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
       member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
-      member.username.toLowerCase().includes(lowerCaseSearchTerm)
-    );
+      member.username.toLowerCase().includes(lowerCaseSearchTerm);
+  
+    // If the user is admin, show only staff
+    if (userType === "admin") {
+      return matchesSearchTerm && member.accType.toLowerCase() === "staff";
+    }
+  
+    // If the user is superadmin, show both staff and admin
+    if (userType === "superadmin") {
+      return matchesSearchTerm;
+    }
+  
+    // Default case (for staff or any other case)
+    return matchesSearchTerm && member.accType.toLowerCase() === "staff";
   });
+  
 
   const rows = filteredStaff.map((member) => [
     <ImageContainer key={member.id}>
@@ -123,6 +136,10 @@ const SharedUsersPage = () => {
       Details
     </Button>,
   ]);
+
+  // Count the number of admins and staff if the user is a superadmin
+  const adminCount = staffData.filter((member) => member.accType.toLowerCase() === "admin").length;
+  const staffCount = staffData.filter((member) => member.accType.toLowerCase() === "staff").length;
 
   if (loading) {
     return <Loading />; // Show loading spinner while fetching data
@@ -156,12 +173,22 @@ const SharedUsersPage = () => {
         </ButtonGroup>
       </Controls>
       <AnalyticsContainer>
+        {/* Show Staff card for both admin and superadmin */}
         {(userType === "admin" || userType === "superadmin") && (
           <Card
-            label={showInactive ? "Inactive Users" : "Active Users"}
-            value={`${filteredStaff.length}`}
+            label="Staff"
+            value={`${staffCount}`}
             bgColor={colors.primary}
-            icon={<FaPlus />}
+            icon={<FaUsers />}
+          />
+        )}
+        {/* Show Admin card only for superadmin */}
+        {userType === "superadmin" && (
+          <Card
+            label="Admin"
+            value={`${adminCount}`}
+            bgColor={colors.primary}
+            icon={<FaUsers />}
           />
         )}
       </AnalyticsContainer>
@@ -180,7 +207,7 @@ const SharedUsersPage = () => {
         />
       )}
     </>
-  );
+  );  
 };
 
 // Styled Components

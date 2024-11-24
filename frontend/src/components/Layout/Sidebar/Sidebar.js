@@ -247,14 +247,19 @@ const ChevronIconContainer = styled.div`
 `;
 
 const DropdownContainer = styled.div`
-  padding-left: 10px; /* Indent dropdown items */
+  padding: 2px; /* Indent dropdown items */
+  border-radius: 4px;
   margin-top: 4px;
+  margin-bottom: 4px;
+  margin-left: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   
   .dropdown-item {
     display: flex;
     align-items: center;
     padding: 6px;
-    margin-bottom: 4px;
+    margin: 4px;
     border-radius: 4px;
     color: ${theme.text}; /* Keep text color black for dropdown items */
     text-decoration: none;
