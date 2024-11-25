@@ -134,7 +134,7 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
     // Prepare the log payload
     const logPayload = {
       LLOG_TYPE: "User logs",
-      LOG_DESCRIPTION: `Edited supplier details:\n${changes.join("\n")}`,
+      LOG_DESCRIPTION: `Updated Supplier details:\n${changes.join("\n")}`,
       USER_ID: userId,
     };
   

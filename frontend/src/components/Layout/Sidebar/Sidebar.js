@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { useLocation, NavLink } from "react-router-dom";
+import { useLocation, NavLink, useNavigate } from "react-router-dom"; // Import useNavigate
 import { TbChevronDown } from "react-icons/tb";
 import philvetsLogo from "../../../assets/philvets.png";
 import { adminSidebarItems, staffSidebarItems, superadminSidebarItems } from "./sidebarItems"; // Imported superadmin items
@@ -17,6 +17,7 @@ const theme = {
 };
 
 const Sidebar = ({ isOpen, onClose, userRole }) => {
+  const navigate = useNavigate(); // Initialize navigate
   const sidebarRef = useRef(null);
   const location = useLocation(); // Get the current location
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -60,6 +61,18 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
   // Only toggle the dropdown when the button is clicked
   const handleDropdownToggle = (index) => {
     setOpenDropdown(openDropdown === index ? null : index); // Toggle only on click
+  };
+
+  const handleSignOut = () => {
+    // Clear access token and any other user-related data from localStorage
+    localStorage.removeItem("access_tokenStorage");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_first_name");
+    localStorage.removeItem("user_type"); // Clear any other stored user info
+
+    console.log("User signed out. Tokens cleared."); // Logs the sign-out action
+    navigate("/login"); // Redirect to the login page
   };
 
   return (
@@ -120,13 +133,12 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
       <SidebarFooter>
         <SidebarLink to="/login">
           <TbLogout2 size={20} className="icon" />
-          <span className="label">Logout</span>
+          <span className="label" onClick={handleSignOut}>Logout</span>
         </SidebarLink>
       </SidebarFooter>
     </SidebarContainer>
   );
 };
-
 
 // Styled Components (make sure 'theme' is in scope)
 const SidebarContainer = styled.div`
@@ -195,7 +207,6 @@ const SidebarLink = styled(NavLink)`
   text-decoration: none;
   transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 
-  /* Ensure the background and text color of active dropdown parent item */
   ${({ active }) =>
     active &&
     `
@@ -234,57 +245,26 @@ const SidebarLink = styled(NavLink)`
   }
 
   .label {
-    margin-left: 8px;
-    font-size: 15px;
-    transition: color 0.1s ease-in-out;
+    margin-left: 10px;
+    font-size: 16px;
+    color: inherit;
   }
 `;
 
 const ChevronIconContainer = styled.div`
   margin-left: auto;
   transform: ${({ isOpen }) => (isOpen ? "rotate(180deg)" : "rotate(0deg)")};
-  transition: transform 0.3s ease-in-out;
+  transition: transform 0.2s ease-in-out;
+
+  .arrow-icon {
+    color: inherit;
+  }
 `;
 
 const DropdownContainer = styled.div`
-  padding: 2px; /* Indent dropdown items */
-  border-radius: 4px;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  margin-left: 10px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  
-  .dropdown-item {
-    display: flex;
-    align-items: center;
-    padding: 6px;
-    margin: 4px;
-    border-radius: 4px;
-    color: ${theme.text}; /* Keep text color black for dropdown items */
-    text-decoration: none;
-    transition: background-color 0.1s ease-in-out;
-
-    &.active {
-      background-color: ${theme.primary}; /* Change background when active */
-      color: ${theme.background}; /* Keep text white */
-    }
-
-    &:hover {
-      background-color: ${theme.backgroundHover};
-      color: ${theme.background};
-    }
-
-    .icon {
-      margin-right: 8px;
-      width: 15px;
-      height: 15px;
-    }
-
-    .dropdown-label {
-      font-size: 14px;
-    }
-  }
+  margin-left: 20px;
+  padding-left: 10px;
+  border-left: 2px solid #f1f1f1;
 `;
 
 export default Sidebar;

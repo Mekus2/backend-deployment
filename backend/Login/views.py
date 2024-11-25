@@ -33,6 +33,7 @@ class LoginView(TokenObtainPairView):
             'type': user.accType,
             'username': user.username,
             'first_name': user.first_name,
+            'last_name': user.last_name,
             'message': 'Login Successful',
             'access': str(token_serializer.access_token),
             'refresh': str(token_serializer),
@@ -62,7 +63,7 @@ class LoginView(TokenObtainPairView):
 
 
 class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]  # Only authenticated users can access this view
+    permission_classes = [AllowAny]  # Only authenticated users can access this view
 
     def post(self, request, *args, **kwargs):
         try:

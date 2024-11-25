@@ -26,7 +26,7 @@ export const fetchUserData = async (userId = null) => {
         console.log("Using access token:", token); // Check token value here
 
         // Make the request and directly set the headers
-        const response = await axios.get(`http://127.0.0.1:8000/account/users/${resolvedUserId}/`, {
+        const response = await axios.get(`http://127.0.0.1:8000/account/logs/${resolvedUserId}/`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json',
