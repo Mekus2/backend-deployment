@@ -6,23 +6,22 @@ import Button from "../../Layout/Button"; // Ensure you import the Button compon
 
 // Import api functions
 import { fetchOrderDetailsById } from "../../../api/fetchCustomerOrders";
-import { addNewCustomerDelivery } from "../../../api/CustomerDeliveryApi";
+import { addNewCustomerDelivery } from "../../../api/CustomerDeliveryApi"; // Assume there's an API to handle customer deliveries
 
 const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const abortControllerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false); // State to toggle edit mode
+  const [suggestions, setSuggestions] = useState([]);
   const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
     const fetchDetails = async () => {
-      // Abort any existing request before starting a new one
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-
-      // Create a new AbortController instance for the current request
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
@@ -30,18 +29,15 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
         setLoading(true);
         setError(null);
         try {
-          console.log(`Fetching details for Order ID: ${order.SALES_ORDER_ID}`); // Debug line
           const details = await fetchOrderDetailsById(
             order.SALES_ORDER_ID,
             controller.signal
           );
-          console.log("Received Details:", details); // Debug line
           setOrderDetails(details);
         } catch (err) {
           if (err.name === "AbortError") {
-            console.log("Fetch aborted"); // Request was canceled
+            console.log("Fetch aborted");
           } else {
-            console.error("Failed to fetch order details:", err); // Improved debug line for errors
             setError("Failed to fetch order details.");
           }
         } finally {
@@ -51,8 +47,6 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     };
 
     fetchDetails();
-
-    // Clean-up function to abort any ongoing fetch when the component unmounts or order changes
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -61,37 +55,57 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   }, [order, userRole]);
 
   const formatCurrency = (amount) => {
-    const numericAmount = parseFloat(amount); // Convert to a number if possible
-
-    if (
-      isNaN(numericAmount) ||
-      numericAmount === undefined ||
-      numericAmount === null
-    ) {
-      return "₱0.00"; // Default value if input is undefined, null, or not a number
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) {
+      return "₱0.00";
     }
-    return `₱${numericAmount.toFixed(2)}`; // Format to two decimal places
+    return `₱${numericAmount.toFixed(2)}`;
   };
 
-  // const orderDetails = order.ORDER_DETAILS || [];
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
-  if (!orderDetails) return null; // Early return if no order details
+  if (!orderDetails) return null;
   if (!order) return null;
 
   const totalQuantity = orderDetails.reduce(
-    (total, detail) => total + (detail.SALES_ORDER_QTY || 0),
+    (total, detail) => total + (detail.SALES_ORDER_LINE_QTY || 0),
     0
   );
 
-  const totalAmount = orderDetails.reduce(
-    (total, detail) => total + (detail.SALES_ORDER_LINE_TOTAL || 0),
+  const calculateLineTotal = (line) => {
+    const price = parseFloat(line.SALES_ORDER_LINE_PRICE) || 0;
+    const quantity = parseInt(line.SALES_ORDER_LINE_QTY) || 0;
+    const discount = parseFloat(line.SALES_ORDER_LINE_DISCOUNT) || 0;
+
+    // Calculate total: (Qty * Price) - (Qty * Price * Discount)
+    const total = price * quantity * (1 - discount / 100);
+    return total.toFixed(2); // Ensure it's returned as a string with two decimals
+  };
+
+  // Update the total amount calculation logic to sum the calculated totals for each line
+  const totalAmount = orderDetails.reduce((total, detail) => {
+    const lineTotal = calculateLineTotal(detail);
+    return total + parseFloat(lineTotal);
+  }, 0);
+
+  const handleLineUpdate = (index, field, value) => {
+    const updatedDetails = [...orderDetails];
+    updatedDetails[index][field] = value;
+    updatedDetails[index].SALES_ORDER_LINE_TOTAL = calculateLineTotal(
+      updatedDetails[index]
+    );
+    setOrderDetails(updatedDetails);
+  };
+
+  const totalDiscount = orderDetails.reduce(
+    (total, detail) =>
+      total +
+      (parseFloat(detail.SALES_ORDER_LINE_PRICE) *
+        parseInt(detail.SALES_ORDER_LINE_QTY) *
+        (parseFloat(detail.SALES_ORDER_LINE_DISCOUNT) / 100) || 0),
     0
   );
-
-  // Handlers for the buttons
   const handleAcceptOrder = async () => {
-    // Logic to accept the order
     const newOrderDelivery = {
       SALES_ORDER_ID: order.SALES_ORDER_ID,
       OUTBOUND_DEL_CUSTOMER_NAME: order.SALES_ORDER_CLIENT_NAME,
@@ -108,13 +122,11 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     try {
       const response = await addNewCustomerDelivery(newOrderDelivery);
       if (response) {
-        console.info("New Customer Delivery created:", response);
         alert("Customer delivery accepted");
       } else {
         alert("Customer delivery rejected");
       }
     } catch (err) {
-      console.error("Error accepting the order:", err);
       alert("An error occurred while accepting the order.");
     } finally {
       onClose();
@@ -123,16 +135,55 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   };
 
   const handleCancelOrder = () => {
-    // Logic to cancel the order
     console.log("Order cancelled");
-    onClose(); // Close modal after action
+    onClose();
   };
 
-  // Conditionally render the Accept and Cancel buttons if status is "Pending" and role is either admin or superadmin
+  const handleUpdateOrder = () => {
+    setIsEditMode(true); // Toggle edit mode
+  };
+
+  const handleSaveOrder = () => {
+    // Add the save functionality here if you have the backend set up
+    console.log("Save order functionality triggered");
+    alert("Save functionality coming soon!");
+    setIsEditMode(false); // Exit edit mode after saving
+  };
+
+  const roundedDiscount = Math.round(totalDiscount);
+
   const canModifyOrder =
     order.SALES_ORDER_STATUS === "Pending" &&
     (userRole === "admin" || userRole === "superadmin");
 
+  const handleAddProduct = () => {
+    const newProduct = {
+      SALES_ORDER_PROD_NAME: "",
+      SALES_ORDER_LINE_QTY: 0,
+      SALES_ORDER_LINE_PRICE: 0,
+      SALES_ORDER_LINE_DISCOUNT: 0,
+      SALES_ORDER_LINE_TOTAL: 0,
+    };
+
+    setOrderDetails([...orderDetails, newProduct]);
+  };
+  const handleProductSearch = async (query) => {
+    try {
+      // Replace this mock fetch with an API call to get product suggestions
+      const response = await fetch('/api/products?search=' + query);
+      const data = await response.json();
+  
+      if (response.ok && Array.isArray(data)) {
+        setSuggestions(data); // Update suggestions with API results
+      } else {
+        setSuggestions([]); // Reset if no results found
+      }
+    } catch (error) {
+      console.error("Error fetching product suggestions:", error);
+      setSuggestions([]); // Clear suggestions on error
+    }
+  };
+  
   return (
     <Modal
       title="Customer Order Details"
@@ -141,7 +192,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     >
       <Section>
         <p>
-          <strong>Order ID: </strong> {(" ", order.SALES_ORDER_ID)}
+          <strong>Order ID: </strong> {order.SALES_ORDER_ID}
         </p>
         <p>
           <strong>Order Created Date:</strong>{" "}
@@ -156,28 +207,91 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
             return "Invalid Date";
           })()}
         </p>
-        {/* <p>
-          <strong>Delivery Date:</strong>{" "}
-          {order.SALES_ORDER_DLVRY_DATE || "N/A"}
-        </p> */}
+        {/* Delivery Option */}
         <p>
-          <strong>Discount:</strong>{" "}
-          {formatCurrency(order.SALES_ORDER_TOTAL_DISCOUNT || 0)}
+          <strong>Delivery Option:</strong>
+          <div>
+            {isEditMode ? (
+              <InputField
+                type="text"
+                value={order.SALES_ORDER_DLVRY_OPTION || ""}
+                onChange={(e) =>
+                  setOrderDetails({
+                    ...orderDetails,
+                    SALES_ORDER_DLVRY_OPTION: e.target.value,
+                  })
+                }
+              />
+            ) : (
+              order.SALES_ORDER_DLVRY_OPTION
+            )}
+          </div>
         </p>
+
+        {/* Client Name */}
         <p>
-          <strong>Delivery Option:</strong>{" "}
-          {order.SALES_ORDER_DLVRY_OPTION || "N/A"}
+          <strong>Client:</strong>
+          <div>
+            {isEditMode ? (
+              <InputField
+                type="text"
+                value={order.SALES_ORDER_CLIENT_NAME || ""}
+                onChange={(e) =>
+                  setOrderDetails({
+                    ...orderDetails,
+                    SALES_ORDER_CLIENT_NAME: e.target.value,
+                  })
+                }
+              />
+            ) : (
+              order.SALES_ORDER_CLIENT_NAME
+            )}
+          </div>
         </p>
+
+        {/* City */}
         <p>
-          <strong>Client :</strong> {order.SALES_ORDER_CLIENT_NAME}
+          <strong>City:</strong>
+          <div>
+            {isEditMode ? (
+              <InputField
+                type="text"
+                value={order.SALES_ORDER_CLIENT_CITY || ""}
+                onChange={(e) =>
+                  setOrderDetails({
+                    ...orderDetails,
+                    SALES_ORDER_CLIENT_CITY: e.target.value,
+                  })
+                }
+              />
+            ) : (
+              order.SALES_ORDER_CLIENT_CITY
+            )}
+          </div>
         </p>
+
+        {/* Province */}
         <p>
-          <strong>City:</strong> {order.SALES_ORDER_CLIENT_CITY}
-        </p>
-        <p>
-          <strong>Province:</strong> {order.SALES_ORDER_CLIENT_PROVINCE}
+          <strong>Province:</strong>
+          <div>
+            {isEditMode ? (
+              <InputField
+                type="text"
+                value={order.SALES_ORDER_CLIENT_PROVINCE || ""}
+                onChange={(e) =>
+                  setOrderDetails({
+                    ...orderDetails,
+                    SALES_ORDER_CLIENT_PROVINCE: e.target.value,
+                  })
+                }
+              />
+            ) : (
+              order.SALES_ORDER_CLIENT_PROVINCE
+            )}
+          </div>
         </p>
       </Section>
+
       <Section>
         <TableWrapper>
           <Table>
@@ -186,6 +300,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
                 <TableHeader>Product Name</TableHeader>
                 <TableHeader>Quantity</TableHeader>
                 <TableHeader>Price</TableHeader>
+                <TableHeader>Discount</TableHeader>
                 <TableHeader>Total</TableHeader>
               </tr>
             </thead>
@@ -193,43 +308,160 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
               {orderDetails.length > 0 ? (
                 orderDetails.map((detail, index) => (
                   <TableRow key={index}>
+<TableCell>
+  {isEditMode ? (
+    <div style={{ position: "relative" }}>
+      <input
+        type="text"
+        value={detail.SALES_ORDER_PROD_NAME || ""}
+        placeholder="Search to add Product"
+        onChange={(e) => {
+          const value = e.target.value;
+          handleLineUpdate(index, "SALES_ORDER_PROD_NAME", value);
+          handleProductSearch(value); // Trigger search on input change
+        }}
+      />
+      {suggestions.length > 0 && (
+        <SuggestionsContainer>
+          {suggestions.map((product, i) => (
+            <SuggestionItem
+              key={i}
+              onClick={() => {
+                handleLineUpdate(index, "SALES_ORDER_PROD_NAME", product);
+                setSuggestions([]); // Clear suggestions on selection
+              }}
+            >
+              {product}
+            </SuggestionItem>
+          ))}
+        </SuggestionsContainer>
+      )}
+    </div>
+  ) : (
+    detail.SALES_ORDER_PROD_NAME || "Unknown Product"
+  )}
+</TableCell>
+
+
                     <TableCell>
-                      {detail.SALES_ORDER_PROD_NAME || "Unknown Product"}
+                      {isEditMode ? (
+                        <input
+                          type="number"
+                          value={detail.SALES_ORDER_LINE_QTY || ""}
+                          onChange={(e) =>
+                            handleLineUpdate(
+                              index,
+                              "SALES_ORDER_LINE_QTY",
+                              e.target.value.replace(/^0+/, "") // Remove leading zeros
+                            )
+                          }
+                          style={{ textAlign: "center" }}
+                        />
+                      ) : (
+                        detail.SALES_ORDER_LINE_QTY || 0
+                      )}
                     </TableCell>
-                    <TableCell>{detail.SALES_ORDER_LINE_QTY || 0}</TableCell>
+
                     <TableCell>
-                      {formatCurrency(detail.SALES_ORDER_LINE_PRICE || 0)}
+                      {isEditMode ? (
+                        <input
+                          type="number"
+                          value={detail.SALES_ORDER_LINE_PRICE || ""}
+                          onChange={(e) =>
+                            handleLineUpdate(
+                              index,
+                              "SALES_ORDER_LINE_PRICE",
+                              e.target.value.replace(/^0+/, "") // Remove leading zeros
+                            )
+                          }
+                          style={{ textAlign: "center" }}
+                        />
+                      ) : (
+                        formatCurrency(detail.SALES_ORDER_LINE_PRICE || 0)
+                      )}
                     </TableCell>
+
                     <TableCell>
-                      {formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)}
+                      {isEditMode ? (
+                        <input
+                          type="number"
+                          value={detail.SALES_ORDER_LINE_DISCOUNT || ""}
+                          onChange={(e) =>
+                            handleLineUpdate(
+                              index,
+                              "SALES_ORDER_LINE_DISCOUNT",
+                              e.target.value
+                            )
+                          }
+                          style={{ textAlign: "center" }}
+                        />
+                      ) : (
+                        `${detail.SALES_ORDER_LINE_DISCOUNT || ""}%`
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {isEditMode ? (
+                        <input
+                          type="number"
+                          value={calculateLineTotal(detail)}
+                          readOnly
+                          style={{ textAlign: "center" }}
+                        />
+                      ) : (
+                        formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4}>No order details available.</TableCell>
+                  <TableCell colSpan={5}>No order details available.</TableCell>
                 </TableRow>
               )}
             </tbody>
           </Table>
+          {isEditMode && (
+            <ButtonWrapper>
+              <Button variant="primary" onClick={handleAddProduct}>
+                Add Product
+              </Button>
+            </ButtonWrapper>
+          )}
         </TableWrapper>
+
         <TotalSummary>
           <TotalItem>
             <strong>Total Quantity:</strong> {totalQuantity}
           </TotalItem>
           <TotalItem>
-            <strong>Total Amount:</strong>{" "}
+            <strong>Total Discount: </strong>
+            <HighlightedDiscount>
+              {formatCurrency(totalDiscount)}{" "}
+              {/* Display the exact discount value */}
+            </HighlightedDiscount>
+          </TotalItem>
+          <TotalItem>
+            <strong>Total Amount: </strong>
             <HighlightedTotal>{formatCurrency(totalAmount)}</HighlightedTotal>
           </TotalItem>
         </TotalSummary>
       </Section>
 
-      {/* Conditionally render the Accept and Cancel buttons if the user has permission */}
       {canModifyOrder && (
         <ButtonGroup>
           <Button variant="red" onClick={handleCancelOrder}>
             Cancel Order
           </Button>
+          {isEditMode ? (
+            <Button variant="green" onClick={handleSaveOrder}>
+              Save Order
+            </Button>
+          ) : (
+            <Button variant="green" onClick={handleUpdateOrder}>
+              Update Order
+            </Button>
+          )}
           <Button variant="primary" onClick={handleAcceptOrder}>
             Accept Order
           </Button>
@@ -240,6 +472,47 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
 };
 
 // Styled Components
+const SuggestionsContainer = styled.div`
+  position: absolute;
+  top: calc(100% + 4px); /* 4px gap between input and dropdown */
+  left: 0;
+  width: 100%;
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+`;
+
+const SuggestionItem = styled.div`
+  padding: 8px 10px;
+  cursor: pointer;
+  &:hover {
+    background-color: ${colors.lightGrey};
+  }
+`;
+const ButtonWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  width: 100%;
+`;
+
+const InputField = styled.input`
+  width: 100%;
+  max-width: 300px;
+  text-align: center;
+  border: 1px solid #ddd;
+  padding: 8px;
+  margin-top: 5px;
+  font-size: 14px;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: #f9f9f9;
+`;
+
 const Section = styled.div`
   margin-bottom: 20px;
 `;
@@ -272,30 +545,47 @@ const TableCell = styled.td`
   padding: 8px;
   font-size: 14px;
   border-bottom: 1px solid #ddd;
+
+  input {
+    width: 80%; /* Adjust the width to fit nicely in the cell */
+    padding: 5px;
+    font-size: 14px;
+    border: 1px solid #ccc; /* Add border */
+    border-radius: 4px; /* Optional: for rounded corners */
+    box-sizing: border-box;
+  }
 `;
+
 
 const TotalSummary = styled.div`
   display: flex;
-  flex-direction: column; /* Stack items vertically */
-  align-items: flex-end; /* Align items to the right */
+  flex-direction: column;
+  align-items: flex-end;
   margin-top: 20px;
   font-weight: bold;
 `;
 
 const TotalItem = styled.p`
-  margin: 5px 0; /* Add some margin for spacing */
+  margin: 5px 0;
+  font-size: 14px;
 `;
 
 const HighlightedTotal = styled.span`
-  color: green; /* Highlight total amount in green */
+  color: green;
+  font-size: 16px;
+`;
+
+const HighlightedDiscount = styled.span`
+  color: red;
   font-size: 16px;
 `;
 
 const ButtonGroup = styled.div`
   display: flex;
-  justify-content: flex-end; /* Align buttons to the right */
-  margin-top: 20px; /* Space above the buttons */
-  gap: 10px; /* Optional: add some space between buttons */
+  justify-content: flex-end;
+  margin-top: 20px;
+  gap: 10px;
 `;
 
 export default CustomerOrderDetailsModal;
+

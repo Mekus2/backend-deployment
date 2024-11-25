@@ -159,30 +159,30 @@ const FormContainer = styled.div`
   padding: 30px;
   border-radius: 15px;
   width: 100%;
-  max-width: 500px;  /* Adjust max width */
+  max-width: 450px;  /* Adjust max width */
   box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
 `;
 
 const LogoContainer = styled.div`
   position: absolute;
-  top: -60px;
+  top: -90px;
   display: flex;
   justify-content: center;
   width: 100%;
 `;
 
 const Logo = styled.img`
-  width: 140px;
+  width: 170px;
 
   @media (min-width: 768px) {
-    width: 150px;
+    width: 180px;
   }
 `;
 
 const Title = styled.h1`
   font-size: 24px;
   font-weight: bold;
-  margin: 70px 0 20px 0;
+  margin: 60px 0 -5px 0;
   text-align: center;
 
   @media (min-width: 768px) {

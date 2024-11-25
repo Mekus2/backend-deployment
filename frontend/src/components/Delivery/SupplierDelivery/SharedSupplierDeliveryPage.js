@@ -202,11 +202,11 @@ const SpinnerWrapper = styled.div`
 
 const Status = styled.span`
   background-color: ${(props) =>
-    props.status === "Received"
+    props.status === "Delivered"
       ? "#1DBA0B"
-      : props.status === "In Transit"
+      : props.status === "Dispatched"
       ? "#f08400"
-      : props.status === "Awaiting"
+      : props.status === "Pending"
       ? "#ff5757"
       : "gray"};
   color: white;

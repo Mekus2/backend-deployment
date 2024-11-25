@@ -3,10 +3,9 @@
 import {
   TbLayoutDashboard,
   TbTruckDelivery,
-  TbChevronRight,
   TbUserDollar,
   TbBasketDollar,
-  TbTruckReturn,
+  TbChevronRight,
   TbHistory,
   TbFileReport,
 } from "react-icons/tb";
@@ -56,6 +55,7 @@ export const superadminSidebarItems = [
         label: "Supplier",
         link: "/superadmin/supplier-delivery",
       },
+      { icon: TbChevronRight, label: "Issues", link: "/superadmin/returns" },
     ],
   },
   {
@@ -106,7 +106,6 @@ export const superadminSidebarItems = [
       },
     ],
   },
-  { icon: TbTruckReturn, label: "Return", link: "/superadmin/returns" },
   { icon: TbBasketDollar, label: "Sales", link: "/superadmin/sales" },
   { icon: TbHistory, label: "Logs", link: "/superadmin/logs" },
   { icon: TbFileReport, label: "Report", link: "/superadmin/reports" },
@@ -150,6 +149,7 @@ export const adminSidebarItems = [
         label: "Supplier",
         link: "/admin/supplier-delivery",
       },
+      { icon: TbChevronRight, label: "Issues", link: "/admin/returns" },
     ],
   },
   {
@@ -200,7 +200,7 @@ export const adminSidebarItems = [
       },
     ],
   },
-  { icon: TbTruckReturn, label: "Return", link: "/admin/returns" },
+
   { icon: TbHistory, label: "Logs", link: "/admin/logs" },
   { icon: TbFileReport, label: "Report", link: "/admin/reports" },
 ];
@@ -233,6 +233,7 @@ export const staffSidebarItems = [
         label: "Customer",
         link: "/staff/customer-delivery",
       },
+      { icon: TbChevronRight, label: "Issues", link: "/staff/returns" },
     ],
   },
   {
@@ -258,6 +259,5 @@ export const staffSidebarItems = [
   },
 
   { icon: TbUserDollar, label: "Customer", link: "/staff/customers" },
-  { icon: TbTruckReturn, label: "Return", link: "/staff/returns" },
   // { icon: TbFileReport, label: "Report", link: "/staff/reports" },
 ];
