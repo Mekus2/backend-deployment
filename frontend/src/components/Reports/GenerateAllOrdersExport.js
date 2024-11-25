@@ -104,7 +104,7 @@ const generatePDF = (
 
   // Sales
   doc.setFont("helvetica", "bold"); // Reset font to bold for the label
-  doc.text(`Sales:`, 14, summaryY + 6);
+  doc.text(`Revenue:`, 14, summaryY + 6);
   doc.setFont("helvetica", "italic").setFont("helvetica", "bold"); // Set italic and bold for the value
   doc.text(`${formatNumber(totalSales.toFixed(2))}`, 100, summaryY + 6, {
     align: "right",
@@ -112,15 +112,15 @@ const generatePDF = (
 
   // Expenses
   doc.setFont("helvetica", "bold"); // Reset font to bold for the label
-  doc.text(`Expenses:`, 14, summaryY + 12);
+  doc.text(`Cost:`, 14, summaryY + 12);
   doc.setFont("helvetica", "italic").setFont("helvetica", "bold"); // Set italic and bold for the value
   doc.text(`${formatNumber(totalExpenses.toFixed(2))}`, 100, summaryY + 12, {
     align: "right",
   });
 
-  // Profit
+  // Gross Profit
   doc.setFont("helvetica", "bold"); // Reset font to bold for the label
-  doc.text(`Profit:`, 14, summaryY + 18);
+  doc.text(`Gross Profit:`, 14, summaryY + 18);
   doc.setFont("helvetica", "italic").setFont("helvetica", "bold"); // Set italic and bold for the value
   doc.text(`${formatNumber(netProfit.toFixed(2))}`, 100, summaryY + 18, {
     align: "right",
@@ -170,7 +170,7 @@ const generateExcel = async (
   }; // Bold and italic for the value
   worksheet.getCell("C" + worksheet.lastRow.number).value = totalOrders; // No peso sign for Total Orders
 
-  worksheet.addRow(["", "Sales:"]).getCell(2).font = { bold: true }; // Column B for Sales label
+  worksheet.addRow(["", "Revenue:"]).getCell(2).font = { bold: true }; // Column B for Sales label
   worksheet.getCell("C" + worksheet.lastRow.number).font = {
     bold: true,
     italic: true,
@@ -179,7 +179,7 @@ const generateExcel = async (
     totalSales
   )}`; // Format with peso sign and commas
 
-  worksheet.addRow(["", "Expenses:"]).getCell(2).font = { bold: true }; // Column B for Expenses label
+  worksheet.addRow(["", "Cost:"]).getCell(2).font = { bold: true }; // Column B for Expenses label
   worksheet.getCell("C" + worksheet.lastRow.number).font = {
     bold: true,
     italic: true,
@@ -188,7 +188,7 @@ const generateExcel = async (
     totalExpenses
   )}`; // Format with peso sign and commas
 
-  worksheet.addRow(["", "Profit:"]).getCell(2).font = { bold: true }; // Column B for Profit label
+  worksheet.addRow(["", "Gross Profit:"]).getCell(2).font = { bold: true }; // Column B for Gross Profit label
   worksheet.getCell("C" + worksheet.lastRow.number).font = {
     bold: true,
     italic: true,
