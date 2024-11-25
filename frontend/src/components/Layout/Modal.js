@@ -95,9 +95,10 @@ const StatusContainer = styled.span`
     props.status === "In stock" ||
     props.status === "Received" ||
     props.status === "Paid" ||
+    props.status === "Accepted" ||
     props.status === "Delivered"
       ? "#1DBA0B"
-      : props.status === "Shipped" || props.status === "Low stock" || props.status === "In Progress" || props.status === "In Transit"
+      : props.status === "Shipped" || props.status === "Low stock" || props.status === "In Progress" || props.status === "In Transit" || props.status === "Dispatched"
       ? "#f08400"
       : props.status === "Cancelled" || props.status === "Out of stock" || props.status === "Awaiting" || props.status === "Pending" 
       ? "#ff5757"

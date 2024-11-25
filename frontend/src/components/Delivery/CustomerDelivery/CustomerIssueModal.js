@@ -52,7 +52,7 @@ const CustomerIssueModal = ({ orderDetails, onClose, onSubmit }) => {
           <tr>
             <TableHeader>Product Name</TableHeader>
             <TableHeader>Quantity Shipped</TableHeader>
-            <TableHeader>Updated Quantity</TableHeader>
+            <TableHeader>Defective Products</TableHeader>
             <TableHeader>Price</TableHeader>
             <TableHeader>Total</TableHeader>
           </tr>

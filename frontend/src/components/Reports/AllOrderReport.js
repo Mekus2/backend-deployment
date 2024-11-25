@@ -151,18 +151,18 @@ const AllOrderReport = () => {
     <>
       <CardContainer>
         <Card>
-          <CardTitle>Sales</CardTitle>
+          <CardTitle>Revenue</CardTitle>
           <CardValue color="#f08400">{formatCurrency(totalSales)}</CardValue>
         </Card>
         <Card>
-          <CardTitle>Expenses</CardTitle>
+          <CardTitle>Cost</CardTitle>
           <CardValue color="#ff5757">
             {formatCurrency(-totalExpenses)}
           </CardValue>{" "}
           {/* Added negative sign */}
         </Card>
         <Card>
-          <CardTitle>Profit</CardTitle>
+          <CardTitle>Gross Profit</CardTitle>
           <CardValue color="#1DBA0B">{formatCurrency(netProfit)}</CardValue>
         </Card>
       </CardContainer>

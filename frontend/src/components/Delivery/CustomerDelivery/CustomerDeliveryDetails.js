@@ -6,6 +6,7 @@ import { colors } from "../../../colors";
 import { fetchCustomerDelDetails } from "../../../api/CustomerDeliveryApi";
 import CustomerIssueModal from "./CustomerIssueModal"; // Import the Issue Modal
 import IssueDetails from "./IssueDetails";
+import { notify } from "../../Layout/CustomToast";
 
 const getProgressForStatus = (status) => {
   switch (status) {
@@ -82,18 +83,22 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     let newStatus;
     if (status === "Pending") {
       newStatus = "In Transit";
+      notify.info("Delivery status updated to In Transit.");
     } else if (status === "In Transit") {
       newStatus = "Delivered";
       const currentDate = new Date().toISOString().split("T")[0];
       setReceivedDate(currentDate);
       delivery.OUTBOUND_DEL_DATE_CUST_RCVD = currentDate;
+      notify.success("Delivery marked as Delivered.");
     } else if (status === "Delivered") {
       newStatus = "Delivered with Issues";
+      notify.warning("Delivery marked as Delivered with Issues.");
     } else if (status === "Delivered with Issues") {
       newStatus = "Pending";
       setReceivedDate("Not Received");
+      notify.error("Delivery status reset to Pending.");
     }
-
+  
     setStatus(newStatus);
   };
 

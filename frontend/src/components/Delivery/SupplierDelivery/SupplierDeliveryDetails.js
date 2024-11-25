@@ -3,7 +3,7 @@ import Modal from "../../Layout/Modal";
 // import INBOUND_DELIVERY from "../../../data/InboundData"; // Import the data
 import { fetchOrderDetails } from "../../../api/SupplierDeliveryApi";
 import { updateOrderStatus } from "../../../api/SupplierDeliveryApi";
-
+import Button from "../../Layout/Button";
 // Import the styles
 import {
   DetailsContainer,
@@ -28,6 +28,8 @@ import {
   Asterisk,
 } from "./SupplierDeliveryStyles"; // Adjust the import path as needed
 import { addNewInventoy } from "../../../api/InventoryApi";
+import { notify } from "../../Layout/CustomToast";
+import styled from "styled-components";
 
 const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   const abortControllerRef = useRef(null);
@@ -44,7 +46,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   );
   const [receivedClicked, setReceivedClicked] = useState(false); // Track if the Mark as Received button was clicked
   const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
-
+  const [issueReported, setIssueReported] = useState(false);
   useEffect(() => {
     const fetchDetails = async () => {
       if (abortControllerRef.current) {
@@ -103,48 +105,80 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  // Function to handle status update
+  const handleIssueModalOpen = () => {
+    setIssueReported(true); // Open the issue modal
+    // You can add logic here to show the modal or update other state related to the issue
+  };
+
   const handleStatusChange = async (
     orderId,
     currentStatus,
     expiryDates = []
   ) => {
-    // Validate expiry dates only for 'Dispatched' to 'Delivered' transition
-    if (currentStatus === "Dispatched") {
-      const areAllExpiryDatesFilled = expiryDates.every((date) => date !== "");
-      if (!areAllExpiryDatesFilled) {
-        console.error("Please fill in all expiry dates.");
-        return; // Stop the status change if expiry dates are empty
-      }
-    }
-
     let newStatus;
-
+    let toastMessage = "";
+    let toastType = "info"; // Default to info toast type
+  
+    // Define the cyclical transitions
     switch (currentStatus) {
       case "Pending":
         newStatus = "Dispatched";
+        toastMessage = "Order has been dispatched.";
+        toastType = "info"; // Informational toast
         break;
       case "Dispatched":
         newStatus = "Delivered";
+        toastMessage = "Order has been delivered successfully.";
+        toastType = "success"; // Success toast
+        break;
+      case "Delivered":
+        newStatus = "Delivered with Issues"; // Change to Delivered with Issues
+        toastMessage = "Order delivered with issues.";
+        toastType = "warning"; // Warning toast
+        break;
+      case "Delivered with Issues":
+        newStatus = "Pending"; // Revert back to "Pending"
+        toastMessage = "Order status has been reset to 'Pending'.";
+        toastType = "warning"; // Warning toast
         break;
       default:
         console.error("Invalid status:", currentStatus);
-        return;
+        toastMessage = "Invalid status, update failed.";
+        toastType = "error"; // Error toast
+        break;
     }
-
+  
+    // Validation for specific transitions
+    if (currentStatus === "Dispatched" && newStatus === "Delivered") {
+      const areAllExpiryDatesFilled = expiryDates.every((date) => date !== "");
+      if (!areAllExpiryDatesFilled) {
+        console.error("Please fill in all expiry dates.");
+        toastMessage = "Please fill in all expiry dates before proceeding.";
+        toastType = "warning"; // Warning toast for missing expiry dates
+        notify[toastType](toastMessage); // Show the warning toast and exit
+        return;
+      }
+    }
+  
     try {
       const updatedOrder = await updateOrderStatus(orderId, newStatus);
       if (updatedOrder) {
         console.log("Order updated successfully:", updatedOrder);
-        alert("Order updated successfully");
+        setStatus(newStatus); // Update the status state
+  
+        // If the update was successful, show the relevant toast
+        notify[toastType](toastMessage); // Display the appropriate toast type
       }
     } catch (error) {
       console.error("Error updating order status:", error);
-      alert("Order update failed");
-      onClose();
+  
+      // Show an error toast if the update fails
+      toastMessage = "Failed to update the order status. Please try again.";
+      toastType = "error";
+      notify[toastType](toastMessage);
     }
   };
-
+  
   // Function to handle Qty Accepted input change
   const handleQtyAcceptedChange = (index, value) => {
     const qtyOrdered = orderDetails[index].INBOUND_DEL_DETAIL_ORDERED_QTY;
@@ -335,7 +369,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           </FormGroup>
         </Column>
       </DetailsContainer>
-
       {/* Product Table */}
       {/* Product Table */}
       <ProductTable>
@@ -440,7 +473,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           ))}
         </tbody>
       </ProductTable>
-
       {/* Summary Section */}
       <TotalSummary>
         <SummaryItem>
@@ -455,7 +487,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
         </SummaryItem>
       </TotalSummary>
-
       {/* Progress Bar */}
       {/* Progress Bar */}
       <ProgressSection>
@@ -464,31 +495,38 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         </ProgressBar>
         <ProgressText>{getProgressPercentage()}%</ProgressText>
       </ProgressSection>
-
       {/* Status Change Buttons */}
       <ModalFooter>
-        {status === "Pending" && (
-          <StatusButton
-            onClick={() => handleStatusChange(delivery.INBOUND_DEL_ID, status)}
-          >
-            Mark as In Transit
-          </StatusButton>
-        )}
-        {status === "Dispatched" && (
-          <StatusButton onClick={handleMarkAsReceivedClick}>
-            Mark as Received
-          </StatusButton>
-        )}
-        {/* {status === "Delivered" && (
-          <StatusButton
-            onClick={() => handleStatusChange(delivery.INBOUND_DEL_ID, status)}
-          >
-            Mark as Awaiting
-          </StatusButton>
-        )} */}
+        <Button
+          onClick={() =>
+            handleStatusChange(delivery.INBOUND_DEL_ID, status, expiryDates)
+          }
+          variant="primary"
+          size="medium"
+        >
+          {status === "Pending" && "Mark as Dispatched"}
+          {status === "Dispatched" && "Mark as Delivered"}
+          {status === "Delivered" && "Mark as Delivered with Issues"}
+          {status === "Delivered with Issues" && "Revert to Pending"}
+        </Button>
       </ModalFooter>
+      ;
     </Modal>
   );
 };
+
+const IssueButton = styled.button`
+  color: Gray;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 5px;
+  margin-right: 10px;
+
+  &:hover {
+    color: black;
+  }
+`;
 
 export default SupplierDeliveryDetails;
