@@ -14,6 +14,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false); // State to toggle edit mode
+  const [suggestions, setSuggestions] = useState([]);
   const userId = localStorage.getItem("user_id");
 
   useEffect(() => {
@@ -155,6 +156,34 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     order.SALES_ORDER_STATUS === "Pending" &&
     (userRole === "admin" || userRole === "superadmin");
 
+  const handleAddProduct = () => {
+    const newProduct = {
+      SALES_ORDER_PROD_NAME: "",
+      SALES_ORDER_LINE_QTY: 0,
+      SALES_ORDER_LINE_PRICE: 0,
+      SALES_ORDER_LINE_DISCOUNT: 0,
+      SALES_ORDER_LINE_TOTAL: 0,
+    };
+
+    setOrderDetails([...orderDetails, newProduct]);
+  };
+  const handleProductSearch = async (query) => {
+    try {
+      // Replace this mock fetch with an API call to get product suggestions
+      const response = await fetch('/api/products?search=' + query);
+      const data = await response.json();
+  
+      if (response.ok && Array.isArray(data)) {
+        setSuggestions(data); // Update suggestions with API results
+      } else {
+        setSuggestions([]); // Reset if no results found
+      }
+    } catch (error) {
+      console.error("Error fetching product suggestions:", error);
+      setSuggestions([]); // Clear suggestions on error
+    }
+  };
+  
   return (
     <Modal
       title="Customer Order Details"
@@ -279,35 +308,51 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
               {orderDetails.length > 0 ? (
                 orderDetails.map((detail, index) => (
                   <TableRow key={index}>
-                    <TableCell>
-                      {isEditMode ? (
-                        <input
-                          type="text"
-                          value={
-                            detail.SALES_ORDER_PROD_NAME || "Unknown Product"
-                          }
-                          onChange={(e) =>
-                            handleLineUpdate(
-                              index,
-                              "SALES_ORDER_PROD_NAME",
-                              e.target.value
-                            )
-                          }
-                        />
-                      ) : (
-                        detail.SALES_ORDER_PROD_NAME || "Unknown Product"
-                      )}
-                    </TableCell>
+<TableCell>
+  {isEditMode ? (
+    <div style={{ position: "relative" }}>
+      <input
+        type="text"
+        value={detail.SALES_ORDER_PROD_NAME || ""}
+        placeholder="Search to add Product"
+        onChange={(e) => {
+          const value = e.target.value;
+          handleLineUpdate(index, "SALES_ORDER_PROD_NAME", value);
+          handleProductSearch(value); // Trigger search on input change
+        }}
+      />
+      {suggestions.length > 0 && (
+        <SuggestionsContainer>
+          {suggestions.map((product, i) => (
+            <SuggestionItem
+              key={i}
+              onClick={() => {
+                handleLineUpdate(index, "SALES_ORDER_PROD_NAME", product);
+                setSuggestions([]); // Clear suggestions on selection
+              }}
+            >
+              {product}
+            </SuggestionItem>
+          ))}
+        </SuggestionsContainer>
+      )}
+    </div>
+  ) : (
+    detail.SALES_ORDER_PROD_NAME || "Unknown Product"
+  )}
+</TableCell>
+
+
                     <TableCell>
                       {isEditMode ? (
                         <input
                           type="number"
-                          value={detail.SALES_ORDER_LINE_QTY || 0}
+                          value={detail.SALES_ORDER_LINE_QTY || ""}
                           onChange={(e) =>
                             handleLineUpdate(
                               index,
                               "SALES_ORDER_LINE_QTY",
-                              e.target.value.replace(/^0+/, "")
+                              e.target.value.replace(/^0+/, "") // Remove leading zeros
                             )
                           }
                           style={{ textAlign: "center" }}
@@ -316,16 +361,17 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
                         detail.SALES_ORDER_LINE_QTY || 0
                       )}
                     </TableCell>
+
                     <TableCell>
                       {isEditMode ? (
                         <input
                           type="number"
-                          value={detail.SALES_ORDER_LINE_PRICE || 0}
+                          value={detail.SALES_ORDER_LINE_PRICE || ""}
                           onChange={(e) =>
                             handleLineUpdate(
                               index,
                               "SALES_ORDER_LINE_PRICE",
-                              e.target.value.replace(/^0+/, "")
+                              e.target.value.replace(/^0+/, "") // Remove leading zeros
                             )
                           }
                           style={{ textAlign: "center" }}
@@ -334,6 +380,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
                         formatCurrency(detail.SALES_ORDER_LINE_PRICE || 0)
                       )}
                     </TableCell>
+
                     <TableCell>
                       {isEditMode ? (
                         <input
@@ -358,15 +405,8 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
                         <input
                           type="number"
                           value={calculateLineTotal(detail)}
-                          onChange={(e) =>
-                            handleLineUpdate(
-                              index,
-                              "SALES_ORDER_LINE_TOTAL",
-                              calculateLineTotal(detail)
-                            )
-                          }
-                          style={{ textAlign: "center" }}
                           readOnly
+                          style={{ textAlign: "center" }}
                         />
                       ) : (
                         formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)
@@ -381,6 +421,13 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
               )}
             </tbody>
           </Table>
+          {isEditMode && (
+            <ButtonWrapper>
+              <Button variant="primary" onClick={handleAddProduct}>
+                Add Product
+              </Button>
+            </ButtonWrapper>
+          )}
         </TableWrapper>
 
         <TotalSummary>
@@ -388,14 +435,14 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
             <strong>Total Quantity:</strong> {totalQuantity}
           </TotalItem>
           <TotalItem>
-            <strong>Total Discount:</strong>
+            <strong>Total Discount: </strong>
             <HighlightedDiscount>
               {formatCurrency(totalDiscount)}{" "}
               {/* Display the exact discount value */}
             </HighlightedDiscount>
           </TotalItem>
           <TotalItem>
-            <strong>Total Amount:</strong>
+            <strong>Total Amount: </strong>
             <HighlightedTotal>{formatCurrency(totalAmount)}</HighlightedTotal>
           </TotalItem>
         </TotalSummary>
@@ -425,6 +472,34 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
 };
 
 // Styled Components
+const SuggestionsContainer = styled.div`
+  position: absolute;
+  top: calc(100% + 4px); /* 4px gap between input and dropdown */
+  left: 0;
+  width: 100%;
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  background-color: #fff;
+  z-index: 10;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+`;
+
+const SuggestionItem = styled.div`
+  padding: 8px 10px;
+  cursor: pointer;
+  &:hover {
+    background-color: ${colors.lightGrey};
+  }
+`;
+const ButtonWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  width: 100%;
+`;
+
 const InputField = styled.input`
   width: 100%;
   max-width: 300px;
@@ -470,7 +545,17 @@ const TableCell = styled.td`
   padding: 8px;
   font-size: 14px;
   border-bottom: 1px solid #ddd;
+
+  input {
+    width: 80%; /* Adjust the width to fit nicely in the cell */
+    padding: 5px;
+    font-size: 14px;
+    border: 1px solid #ccc; /* Add border */
+    border-radius: 4px; /* Optional: for rounded corners */
+    box-sizing: border-box;
+  }
 `;
+
 
 const TotalSummary = styled.div`
   display: flex;
@@ -503,3 +588,4 @@ const ButtonGroup = styled.div`
 `;
 
 export default CustomerOrderDetailsModal;
+
