@@ -6,7 +6,6 @@ import Button from "../Layout/Button";
 
 const AddProductModal = ({ onClose, onSave }) => {
   const [productName, setProductName] = useState("");
-  const [detailsCode, setDetailsCode] = useState("");
   const [roLevel, setRoLevel] = useState("");
   const [roQty, setRoQty] = useState("");
   const [qoh, setQoh] = useState("");
@@ -18,6 +17,7 @@ const AddProductModal = ({ onClose, onSave }) => {
   const [measurement, setMeasurement] = useState("");
   const [image, setImage] = useState(null);
   const [errors, setErrors] = useState({});
+  const [purchasePrice, setPurchasePrice] = useState(""); // Add this line
 
   const modalRef = useRef();
 
@@ -44,7 +44,6 @@ const AddProductModal = ({ onClose, onSave }) => {
   const validate = () => {
     const newErrors = {};
     if (!productName) newErrors.productName = "This field is required.";
-    if (!detailsCode) newErrors.detailsCode = "This field is required.";
     if (!roLevel || isNaN(roLevel) || roLevel < 1)
       newErrors.roLevel = "RO Level must be a positive number.";
     if (!roQty || isNaN(roQty) || roQty < 0)
@@ -54,6 +53,9 @@ const AddProductModal = ({ onClose, onSave }) => {
     if (!description) newErrors.description = "This field is required.";
     if (!price || isNaN(price) || price <= 0)
       newErrors.price = "This field is required.";
+    if (!purchasePrice || isNaN(purchasePrice) || purchasePrice <= 0)
+      newErrors.purchasePrice =
+        "Purchase price must be a valid number greater than 0.";
     if (!supplier) newErrors.supplier = "This field is required.";
     if (!size) newErrors.size = "This field is required.";
     if (!measurement) newErrors.measurement = "This field is required.";
@@ -61,6 +63,7 @@ const AddProductModal = ({ onClose, onSave }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
   // Handle tag input and adding tags to the list
   const handleTagInputChange = (e) => {
     const value = e.target.value;
@@ -69,7 +72,7 @@ const AddProductModal = ({ onClose, onSave }) => {
         .split(",")
         .map((tag) => tag.trim())
         .filter((tag) => tag && !tags.includes(tag)); // Filter out empty or duplicate tags
-      setTags([...tags, ...newTags]);
+      setTags((prevTags) => [...prevTags, ...newTags]); // Update with previous tags
       e.target.value = ""; // Clear input after processing
     }
   };
@@ -78,14 +81,13 @@ const AddProductModal = ({ onClose, onSave }) => {
   const handleRemoveTag = (tagToRemove) => {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
-  // Modify the handleSave function to include tags in the saved product
+  // Modify handleSave function to include purchasePrice
   const handleSave = () => {
     if (!validate()) return;
 
     const newProduct = {
       PROD_ID: `P00${Math.floor(Math.random() * 1000)}`, // Example ID, should be unique
       PROD_NAME: productName,
-      PROD_DETAILS_CODE: detailsCode,
       PROD_RO_LEVEL: parseInt(roLevel),
       PROD_RO_QTY: parseInt(roQty),
       PROD_QOH: parseInt(qoh),
@@ -96,11 +98,11 @@ const AddProductModal = ({ onClose, onSave }) => {
     };
 
     const newProductDetails = {
-      PROD_DETAILS_CODE: detailsCode,
-      PROD_DETAILS_DESCRIPTION: description,
+      PROD_DETAILS_PURCHASE_PRICE: parseFloat(purchasePrice), // Save purchase price
       PROD_DETAILS_PRICE: parseFloat(price),
+      PROD_DETAILS_DESCRIPTION: description,
       PROD_DETAILS_SUPPLIER: supplier,
-      PROD_DETAILS_SIZE: size,
+      PROD_DETAILS_UNITS: size,
       PROD_DETAILS_MEASUREMENT: measurement,
       PROD_TAGS: tags, // Save the tags instead of category
     };
@@ -133,13 +135,31 @@ const AddProductModal = ({ onClose, onSave }) => {
             {errors.productName && <ErrorText>{errors.productName}</ErrorText>}
           </Field>
           <Field>
-            <Label>Details Code</Label>
+            <Label>Purchase Price</Label>
             <Input
-              value={detailsCode}
-              onChange={(e) => setDetailsCode(e.target.value)}
-              placeholder="Enter details code"
+              type="number"
+              value={purchasePrice}
+              onChange={(e) => setPurchasePrice(e.target.value)}
+              placeholder="Enter purchase price"
+              min="0.01"
+              step="0.01"
             />
-            {errors.detailsCode && <ErrorText>{errors.detailsCode}</ErrorText>}
+            {errors.purchasePrice && (
+              <ErrorText>{errors.purchasePrice}</ErrorText>
+            )}
+          </Field>
+
+          <Field>
+            <Label>Price</Label>
+            <Input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Enter product price"
+              min="0.01"
+              step="0.01"
+            />
+            {errors.price && <ErrorText>{errors.price}</ErrorText>}
           </Field>
           <Field>
             <Label>RO Level</Label>
@@ -201,18 +221,6 @@ const AddProductModal = ({ onClose, onSave }) => {
             {errors.description && <ErrorText>{errors.description}</ErrorText>}
           </Field>
           <Field>
-            <Label>Price</Label>
-            <Input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Enter product price"
-              min="0.01"
-              step="0.01"
-            />
-            {errors.price && <ErrorText>{errors.price}</ErrorText>}
-          </Field>
-          <Field>
             <Label>Supplier</Label>
             <Input
               value={supplier}
@@ -222,29 +230,34 @@ const AddProductModal = ({ onClose, onSave }) => {
             {errors.supplier && <ErrorText>{errors.supplier}</ErrorText>}
           </Field>
           <Field>
-            <Label>Size</Label>
-            <Select value={size} onChange={(e) => setSize(e.target.value)}>
-              <option value="">Select Size</option>
-              <option value="Small">Small</option>
-              <option value="Medium">Medium</option>
-              <option value="Large">Large</option>
-            </Select>
+            <Label>Units</Label>
+            <Input
+              list="units-list" // Link the input field to the datalist
+              value={size}
+              onChange={(e) => setSize(e.target.value)}
+              placeholder="Enter or select unit"
+            />
+            <datalist id="units-list">
+              <option value="unit" />
+              <option value="pack" />
+              <option value="box" />
+              <option value="bundle" />
+              <option value="case" />
+              <option value="carton" />
+              <option value="bottle" />
+              <option value="can" />
+              <option value="kg" />
+              <option value="g" />
+              <option value="liter" />
+              <option value="ml" />
+              <option value="meter" />
+              <option value="dozen" />
+              <option value="roll" />
+              <option value="sheet" />
+              <option value="tile" />
+            </datalist>
+
             {errors.size && <ErrorText>{errors.size}</ErrorText>}
-          </Field>
-          <Field>
-            <Label>Measurement</Label>
-            <Select
-              value={measurement}
-              onChange={(e) => setMeasurement(e.target.value)}
-            >
-              <option value="">Select Measurement</option>
-              <option value="cm">Centimeters (cm)</option>
-              <option value="inches">Inches (in)</option>
-              <option value="kg">Kilograms (kg)</option>
-              <option value="lbs">Pounds (lbs)</option>
-              <option value="liter">Liters (L)</option>
-            </Select>
-            {errors.measurement && <ErrorText>{errors.measurement}</ErrorText>}
           </Field>
         </ModalBody>
         <ModalFooter>
