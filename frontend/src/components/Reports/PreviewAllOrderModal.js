@@ -109,7 +109,7 @@ const PreviewAllOrderModal = ({
                   </tr>
                   <tr>
                     <td colSpan={excelData?.header.length - 1}>
-                      <strong>Expenses:</strong>
+                      <strong>Cost:</strong>
                     </td>
                     <td>
                       <strong>₱{totalExpenses.toFixed(2)}</strong>
@@ -117,7 +117,7 @@ const PreviewAllOrderModal = ({
                   </tr>
                   <tr>
                     <td colSpan={excelData?.header.length - 1}>
-                      <strong>Profit:</strong>
+                      <strong>Gross Profit:</strong>
                     </td>
                     <td>
                       <strong>₱{netProfit.toFixed(2)}</strong>

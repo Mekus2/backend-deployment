@@ -7,7 +7,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 
 const PieChart = ({ totalSales, totalExpenses, netProfit }) => {
   const data = {
-    labels: ["Sales", "Expenses", "Profit"],
+    labels: ["Sales", "Expenses", "Gross Profit"],
     datasets: [
       {
         label: "Amount (₱)",

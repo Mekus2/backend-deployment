@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ReportBody from "./ReportBody"; // Ensure you have this component
-import { SALES_ORDER } from "../../data/CustomerOrderData"; // Import customer orders data
-import PURCHASE_ORDERS from "../../data/SupplierOrderData"; // Import purchase orders data as default export
+import { SALES_ORDR } from "../../data/CusOrderData"; // Import customer orders data
+import PURCHASE_ORDR from "../../data/SuppOrderData"; // Import purchase orders data as default export
 import { generatePDF, generateExcel } from "./GenerateAllOrdersExport"; // Import the combined export functions
 import PreviewAllOrderModal from "./PreviewAllOrderModal"; // Updated import
 import styled from "styled-components";
@@ -17,23 +17,28 @@ const AllOrderReport = () => {
   // Combine customer and purchase orders
   const combinedOrders = [];
 
-  // Process customer orders
-  SALES_ORDER.forEach((order) => {
+  // Process customer orders (Sales Orders)
+  SALES_ORDR.forEach((order) => {
+    const grossProfit = order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST;
     combinedOrders.push({
-      id: order.SALES_ORDER_ID,
-      date: new Date(order.SALES_ORDER_DLVRY_DATE),
-      quantity: order.SALES_ORDER_TOT_QTY,
-      amount: order.SALES_ORDER_PROD_TOTAL, // Positive amount for sales
+      type: "Sales",
+      date: new Date(order.SALES_ORDER_DATE),
+      cost: order.SALES_ORDER_COST,
+      revenue: order.SALES_ORDER_REVENUE,
+      grossProfit,
     });
   });
 
-  // Process purchase orders
-  PURCHASE_ORDERS.forEach((order) => {
+  // Process purchase orders (Supplier Orders)
+  PURCHASE_ORDR.forEach((order) => {
+    const grossProfit =
+      order.PURCHASE_ORDER_REVENUE - order.PURCHASE_ORDER_COST;
     combinedOrders.push({
-      id: order.PURCHASE_ORDER_ID,
+      type: "Purchase",
       date: new Date(order.PURCHASE_ORDER_DATE),
-      quantity: order.PURCHASE_ORDER_TOT_QTY,
-      amount: -order.PURCHASE_ORDER_TOTAL, // Negative amount for expenses
+      cost: order.PURCHASE_ORDER_COST,
+      revenue: order.PURCHASE_ORDER_REVENUE,
+      grossProfit,
     });
   });
 
@@ -41,15 +46,10 @@ const AllOrderReport = () => {
   const filteredOrders = combinedOrders
     .filter((order) => {
       const matchesSearchTerm =
-        order.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.quantity
-          .toString()
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        order.amount
-          .toFixed(2)
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
+        order.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.cost.toString().includes(searchTerm.toLowerCase()) ||
+        order.revenue.toString().includes(searchTerm.toLowerCase()) ||
+        order.grossProfit.toString().includes(searchTerm.toLowerCase()) ||
         order.date
           .toISOString()
           .slice(0, 10)
@@ -67,12 +67,12 @@ const AllOrderReport = () => {
 
   // Calculate total sales and expenses based on filtered orders
   const totalSales = filteredOrders.reduce(
-    (acc, order) => acc + (order.amount > 0 ? order.amount : 0),
+    (acc, order) => acc + (order.revenue > 0 ? order.revenue : 0),
     0
   ); // Sum only sales from filtered orders
 
   const totalExpenses = filteredOrders.reduce(
-    (acc, order) => acc + (order.amount < 0 ? -order.amount : 0),
+    (acc, order) => acc + (order.cost > 0 ? order.cost : 0),
     0
   ); // Sum only expenses from filtered orders
 
@@ -83,15 +83,16 @@ const AllOrderReport = () => {
     return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
 
-  // Map the filtered orders to display only the necessary fields
+  // Map the filtered orders to display necessary fields
   const tableData = filteredOrders.map((order) => [
-    order.id,
+    order.type,
     order.date.toISOString().slice(0, 10), // Change to YYYY-MM-DD format
-    order.quantity,
-    formatCurrency(order.amount),
+    formatCurrency(order.cost),
+    formatCurrency(order.revenue),
+    formatCurrency(order.grossProfit),
   ]);
 
-  const header = ["Order ID", "Date", "Quantity", "Order Amount"];
+  const header = ["Type", "Date", "Cost", "Revenue", "Gross Profit"];
 
   const handlePreviewPDF = async () => {
     const pdfData = await generatePDF(
@@ -151,18 +152,18 @@ const AllOrderReport = () => {
     <>
       <CardContainer>
         <Card>
-          <CardTitle>Revenue</CardTitle>
+          <CardTitle>Total Revenue</CardTitle>
           <CardValue color="#f08400">{formatCurrency(totalSales)}</CardValue>
         </Card>
         <Card>
-          <CardTitle>Cost</CardTitle>
+          <CardTitle>Total Cost</CardTitle>
           <CardValue color="#ff5757">
             {formatCurrency(-totalExpenses)}
           </CardValue>{" "}
           {/* Added negative sign */}
         </Card>
         <Card>
-          <CardTitle>Gross Profit</CardTitle>
+          <CardTitle>Total Gross Profit</CardTitle>
           <CardValue color="#1DBA0B">{formatCurrency(netProfit)}</CardValue>
         </Card>
       </CardContainer>

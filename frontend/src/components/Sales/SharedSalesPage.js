@@ -4,8 +4,8 @@ import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
 import ReportCard from "../Layout/ReportCard";
 import { FaShoppingCart, FaDollarSign } from "react-icons/fa";
-import { SALES_ORDER } from "../../data/CustomerOrderData";
-import PURCHASE_ORDERS from "../../data/SupplierOrderData";
+import { SALES_ORDR } from "../../data/CusOrderData"; // Import customer orders data
+import PURCHASE_ORDR from "../../data/SuppOrderData"; // Import purchase orders data
 
 const SharedSalesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,37 +15,36 @@ const SharedSalesPage = () => {
   const combinedOrders = [];
 
   // Process sales orders
-  SALES_ORDER.forEach((order) => {
+  SALES_ORDR.forEach((order) => {
+    const grossProfit = order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST;
     combinedOrders.push({
-      id: order.SALES_ORDER_ID,
-      date: new Date(order.SALES_ORDER_DLVRY_DATE),
-      quantity: order.SALES_ORDER_TOT_QTY,
-      amount: order.SALES_ORDER_PROD_TOTAL,
-      type: "Sales Order",
+      type: "Sales",
+      date: new Date(order.SALES_ORDER_DATE),
+      cost: order.SALES_ORDER_COST,
+      revenue: order.SALES_ORDER_REVENUE,
+      grossProfit,
     });
   });
 
   // Process purchase orders
-  PURCHASE_ORDERS.forEach((order) => {
+  PURCHASE_ORDR.forEach((order) => {
+    const grossProfit = order.PURCHASE_ORDER_REVENUE - order.PURCHASE_ORDER_COST;
     combinedOrders.push({
-      id: order.PURCHASE_ORDER_ID,
+      type: "Purchase",
       date: new Date(order.PURCHASE_ORDER_DATE),
-      quantity: -order.PURCHASE_ORDER_TOT_QTY,
-      amount: -order.PURCHASE_ORDER_TOTAL,
-      type: "Supplier Order",
+      cost: order.PURCHASE_ORDER_COST,
+      revenue: order.PURCHASE_ORDER_REVENUE,
+      grossProfit,
     });
   });
 
   const filteredOrders = combinedOrders.filter((order) => {
     const matchesSearchTerm =
-      order.type.toLowerCase().includes(searchTerm.toLowerCase()) || // Filter by Type
-      order.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) || // Filter by Order ID
-      order.date.toLocaleDateString().includes(searchTerm) || // Filter by Date
-      order.quantity
-        .toString()
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) || // Filter by Quantity
-      order.amount.toFixed(2).toLowerCase().includes(searchTerm.toLowerCase()); // Filter by Amount
+      order.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.cost.toString().includes(searchTerm.toLowerCase()) ||
+      order.revenue.toString().includes(searchTerm.toLowerCase()) ||
+      order.grossProfit.toString().includes(searchTerm.toLowerCase()) ||
+      order.date.toISOString().slice(0, 10).includes(searchTerm.toLowerCase()); // Include date search
 
     const matchesDateRange =
       (!startDate || order.date >= new Date(startDate)) &&
@@ -54,15 +53,16 @@ const SharedSalesPage = () => {
     return matchesSearchTerm && matchesDateRange;
   });
 
-  // Sort orders by date in descending order (latest first)
+  // Sort orders by date descending
   const sortedOrders = filteredOrders.sort((a, b) => b.date - a.date);
+
   const totalOrders = sortedOrders.length;
   const totalSales = sortedOrders.reduce(
-    (acc, order) => acc + (order.amount > 0 ? order.amount : 0),
+    (acc, order) => acc + (order.revenue > 0 ? order.revenue : 0),
     0
   );
   const totalExpenses = sortedOrders.reduce(
-    (acc, order) => acc + (order.amount < 0 ? -order.amount : 0),
+    (acc, order) => acc + (order.cost > 0 ? order.cost : 0),
     0
   );
   const netProfit = totalSales - totalExpenses;
@@ -71,15 +71,16 @@ const SharedSalesPage = () => {
     return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
 
+  // Prepare table data with required columns: TYPE, DATE, COST, REVENUE, GROSS PROFIT
   const tableData = sortedOrders.map((order) => [
     order.type,
-    order.id,
-    order.date.toLocaleDateString(),
-    order.quantity,
-    formatCurrency(order.amount),
+    order.date.toISOString().slice(0, 10), // Format date as YYYY-MM-DD
+    formatCurrency(order.cost),
+    formatCurrency(order.revenue),
+    formatCurrency(order.grossProfit),
   ]);
 
-  const header = ["Type", "Order ID", "Date", "Quantity", "Amount"];
+  const header = ["Type", "Date", "Cost", "Revenue", "Gross Profit"];
 
   return (
     <>
@@ -116,17 +117,17 @@ const SharedSalesPage = () => {
           icon={<FaShoppingCart />}
         />
         <ReportCard
-          label="Sales Value"
+          label="Revenue"
           value={formatCurrency(totalSales)}
           icon={<FaDollarSign />}
         />
         <ReportCard
-          label="Expenses"
-          value={`${formatCurrency(-totalExpenses)}`}
+          label="Cost"
+          value={formatCurrency(-totalExpenses)} // Negative value for cost
           icon={<FaDollarSign />}
         />
         <ReportCard
-          label="Profit"
+          label="Gross Profit"
           value={formatCurrency(netProfit)}
           icon={<FaDollarSign />}
         />

@@ -104,7 +104,22 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
       [field]: undefined,
     }));
   };
+  const handleAddProductWithValidation = () => {
+    // Check if any product name field is empty
+    const hasEmptyProductName = orderDetails.some(
+      (detail) => !detail.productName
+    );
 
+    if (hasEmptyProductName) {
+      notify.error(
+        "Please fill in all product names before adding a new product."
+      ); // Show an error notification
+      return;
+    }
+
+    // Call the original handleAddProduct function to add a new product
+    handleAddProduct();
+  };
   const handleAddClientWithNotification = () => {
     handleAddClient();
     notify.success("You can now add a new client!"); // Add Client toast notification
@@ -236,7 +251,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
               <th>Product Name</th>
               <th>Quantity</th>
               <th>Price</th>
-              <th>Discount</th>
+              <th>Discount (%)</th>
               <th>Total</th>
               <th></th>
             </tr>
@@ -300,6 +315,9 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                 <td>
                   <QuantityInput
                     type="number"
+                    style={{
+                      textAlign: "center", // Centering the input
+                    }}
                     value={orderDetail.quantity}
                     onChange={(e) => {
                       const quantity = parseInt(e.target.value, 10);
@@ -308,36 +326,55 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                         isNaN(quantity) ? 0 : quantity
                       );
                     }}
-                    onBlur={(e) => {
-                      if (e.target.value.startsWith("0")) {
-                        handleQuantityChange(
-                          index,
-                          parseInt(e.target.value, 10)
-                        );
-                      }
-                    }}
                     placeholder="Quantity"
                   />
                 </td>
                 <td>
                   <Input
                     type="text"
-                    value={orderDetail.price}
+                    value={orderDetail.price || ""}
                     onChange={(e) => {
-                      let inputValue = e.target.value;
-                      // Strip leading zeros
-                      if (inputValue.startsWith("0") && inputValue.length > 1) {
-                        inputValue = inputValue.replace(/^0+/, "");
+                      let value = e.target.value;
+
+                      // Remove non-numeric characters except `.`
+                      value = value.replace(/[^0-9.]/g, "");
+
+                      // Prevent multiple leading zeros
+                      if (value.startsWith("0") && !value.startsWith("0.")) {
+                        value = value.replace(/^0+/, "");
                       }
-                      // Update state
-                      const price = parseFloat(inputValue);
-                      handlePriceChange(index, isNaN(price) ? 0 : price);
+
+                      // Ensure only one `.` is allowed
+                      if (value.split(".").length > 2) {
+                        value = value.substring(0, value.lastIndexOf("."));
+                      }
+
+                      const updatedOrderDetails = [...orderDetails];
+                      updatedOrderDetails[index] = {
+                        ...updatedOrderDetails[index],
+                        price: value, // Keep the current cleaned input as string
+                      };
+                      setOrderDetails(updatedOrderDetails);
                     }}
-                    onBlur={(e) => {
-                      // Ensure the final value has no leading zeros
-                      const inputValue = e.target.value.replace(/^0+/, "");
-                      const price = parseFloat(inputValue);
-                      handlePriceChange(index, isNaN(price) ? 0 : price);
+                    onBlur={() => {
+                      const updatedOrderDetails = [...orderDetails];
+                      let price = orderDetail.price;
+
+                      // Convert to fixed decimal if valid, otherwise keep it as an empty string
+                      if (price && !isNaN(price)) {
+                        price = parseFloat(price).toFixed(2);
+                      } else {
+                        price = ""; // Reset invalid input
+                      }
+
+                      updatedOrderDetails[index] = {
+                        ...updatedOrderDetails[index],
+                        price: price,
+                      };
+                      setOrderDetails(updatedOrderDetails);
+                    }}
+                    style={{
+                      textAlign: "center", // Centered text
                     }}
                     placeholder="Price"
                   />
@@ -346,17 +383,49 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                 <td>
                   <Input
                     type="text"
-                    value={`${orderDetail.discountValue || ""}%`}
+                    value={orderDetail.discountValue || ""}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
-                      const strippedValue = value.replace(/^0+/, ""); // Remove leading zeros
-                      const percent = parseFloat(strippedValue) || 0;
+                      let value = e.target.value;
+
+                      // Remove non-numeric characters except `.`
+                      value = value.replace(/[^0-9.]/g, "");
+
+                      // Prevent multiple leading zeros
+                      if (value.startsWith("0") && !value.startsWith("0.")) {
+                        value = value.replace(/^0+/, "");
+                      }
+
+                      // Ensure only one `.` is allowed
+                      if (value.split(".").length > 2) {
+                        value = value.substring(0, value.lastIndexOf("."));
+                      }
+
                       const updatedOrderDetails = [...orderDetails];
                       updatedOrderDetails[index] = {
                         ...updatedOrderDetails[index],
-                        discountValue: percent,
+                        discountValue: value, // Keep the current cleaned input as string
                       };
                       setOrderDetails(updatedOrderDetails);
+                    }}
+                    onBlur={() => {
+                      const updatedOrderDetails = [...orderDetails];
+                      let discountValue = orderDetail.discountValue;
+
+                      // Convert to fixed decimal if valid, otherwise keep it as an empty string
+                      if (discountValue && !isNaN(discountValue)) {
+                        discountValue = parseFloat(discountValue).toFixed(2);
+                      } else {
+                        discountValue = ""; // Reset invalid input
+                      }
+
+                      updatedOrderDetails[index] = {
+                        ...updatedOrderDetails[index],
+                        discountValue: discountValue,
+                      };
+                      setOrderDetails(updatedOrderDetails);
+                    }}
+                    style={{
+                      textAlign: "center", // Centered text
                     }}
                     placeholder="Discount (%)"
                   />
@@ -373,7 +442,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           </tbody>
         </Table>
 
-        <Button onClick={handleAddProduct}>Add Product</Button>
+        <Button onClick={handleAddProductWithValidation}>Add Product</Button>
 
         <TotalSection>
           <TotalRow>
