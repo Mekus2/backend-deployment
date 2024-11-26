@@ -2,12 +2,23 @@ from rest_framework import serializers
 from .models import Inventory
 
 
-class AddProductInventory(serializers.ModelSerializer):
+class ProductDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inventory
         fields = [
             "PRODUCT_ID",
-            "INBOUND_DEL_ID",
+            "PRODUCT_NAME",
+            "QUANTITY_ON_HAND",
             "EXPIRY_DATE",
-            "QUANTITY",
+        ]
+
+
+class AddProductInventorySerializer(serializers.ModelSerializer):
+    details = ProductDetailsSerializer(many=True)
+
+    class Meta:
+        model = Inventory
+        fields = [
+            "INBOUND_DEL_ID",
+            "details",
         ]
