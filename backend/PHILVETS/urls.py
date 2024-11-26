@@ -32,8 +32,8 @@ urlpatterns = [
     path("items/", include("Admin.Product.urls")),
     path("supplier/", include("Admin.Supplier.urls")),
     path("api/delivery/", include("Admin.Delivery.urls")),
-    path("inventory,", include("Admin.Inventory.urls")),
-    path('logs/', include("Admin.Logs.urls")),
+    path("inventory/", include("Admin.Inventory.urls")),
+    path("logs/", include("Admin.Logs.urls")),
 ]
 
 # Serve media files during development
