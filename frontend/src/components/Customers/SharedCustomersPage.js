@@ -108,14 +108,24 @@ const SharedCustomersPage = () => {
     }
     setSortConfig({ key, direction });
   };
-
+  
   const sortedCustomers = [...filteredCustomers].sort((a, b) => {
     if (!a[sortConfig.key] || !b[sortConfig.key]) return 0;
+    
+    // Sorting by date if the key is 'createdDate'
+    if (sortConfig.key === 'createdDate') {
+      const dateA = new Date(a.createdDate);
+      const dateB = new Date(b.createdDate);
+      return (dateA - dateB) * (sortConfig.direction === "asc" ? 1 : -1);
+    }
+  
+    // Default string comparison for other fields
     return (
       (a[sortConfig.key] || "").localeCompare(b[sortConfig.key] || "") *
       (sortConfig.direction === "asc" ? 1 : -1)
     );
   });
+  
 
   const rows = sortedCustomers.map((customer) => [
     customer.name,

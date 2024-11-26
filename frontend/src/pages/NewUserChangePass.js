@@ -6,9 +6,9 @@ import loginbg from "../assets/loginbg.png";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { resetPassword } from "../api/ForgotPasswordApi"; // Assuming this API is used for resetting the password
+import axios from "axios";
 
-const NewUserChangePass = () => {
+const NewUserChangePass = ({ userId }) => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,29 +22,49 @@ const NewUserChangePass = () => {
   };
 
   const handleChangePassword = async () => {
+    const userId = localStorage.getItem("user_id");
+    // Regex for validating a strong password
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  
     if (!newPassword || !confirmPassword) {
       setError("Both fields are required.");
       return;
     }
-
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters long.");
+  
+    if (!passwordRegex.test(newPassword)) {
+      setError(
+        "Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character."
+      );
       return;
     }
-
+  
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match. Please re-enter your passwords.");
       return;
     }
-
+  
     try {
-      // Reset the password via API
-      await resetPassword(newPassword);
+      // Make the API call to change the password
+      const token = localStorage.getItem("auth_token");  // Get JWT token from local storage
+
+      const response = await axios.put(
+        `http://127.0.0.1:8000/account/users/changepass/${userId}/`,
+        {
+          new_password: newPassword,  // New password to update
+          confirm_password: confirmPassword,  // Confirm password to check match
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,  // Pass the JWT token for authentication
+          },
+        }
+      );
+
       setPasswordChanged(true);
       notifySuccess("Your password has been successfully changed!");
       setTimeout(() => {
-        navigate("/login");
-      }, 2000); // Redirect after success
+        navigate("/login");  // Redirect to login page after successful change
+      }, 2000);
     } catch (error) {
       setError("An error occurred while changing your password.");
     }
@@ -69,7 +89,7 @@ const NewUserChangePass = () => {
         </LogoContainer>
         <Title>Change Your Password</Title>
         <InstructionText>
-             Please set a new password. Choose a strong password and keep it in a safe place.
+          Please set a new password. Choose a strong password and keep it in a safe place.
         </InstructionText>
         {error && <ErrorText>{error}</ErrorText>}
         {passwordChanged ? (

@@ -25,6 +25,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
   const [clientName, setClientName] = useState("");
   const [clientCity, setClientCity] = useState("");
   const [clientProvince, setClientProvince] = useState("");
+  const [clientNumber, setClientNumber] = useState("");
   const [clientId, setClientId] = useState("");
   const [deliveryOption, setDeliveryOption] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
@@ -215,6 +216,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
     setClientName(client.name);
     setClientCity(client.address);
     setClientProvince(client.province);
+    setClientNumber(client.number);
     setClientId(client.id);
     setClientSearch("");
     setFilteredClients([]);
@@ -278,6 +280,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       SALES_ORDER_CLIENT_NAME: clientName,
       SALES_ORDER_CLIENT_PROVINCE: clientProvince,
       SALES_ORDER_CLIENT_CITY: clientCity,
+      SALES_ORDER_CLIENT_NUMBER: clientNumber, // Add client number
       SALES_ORDER_DLVRY_OPTION: deliveryOption,
       SALES_ORDER_PYMNT_OPTION: paymentTerms,
       SALES_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
@@ -317,61 +320,61 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
     const userId = localStorage.getItem("user_id");
 
     if (!userId) {
-        console.error("User ID is missing from localStorage");
-        return;
+      console.error("User ID is missing from localStorage");
+      return;
     }
 
     try {
-        // Fetch user details from the backend using the userId
-        const userResponse = await fetch(`http://127.0.0.1:8000/account/logs/${userId}/`);
-        if (!userResponse.ok) {
-            const errorData = await userResponse.json();
-            console.error("Failed to fetch user details:", errorData);
-            return;
-        }
-        const userData = await userResponse.json();
-        const username = userData.username; // Assuming the API response includes a `username` field
+      // Fetch user details from the backend using the userId
+      const userResponse = await fetch(
+        `http://127.0.0.1:8000/account/logs/${userId}/`
+      );
+      if (!userResponse.ok) {
+        const errorData = await userResponse.json();
+        console.error("Failed to fetch user details:", errorData);
+        return;
+      }
+      const userData = await userResponse.json();
+      const username = userData.username; // Assuming the API response includes a `username` field
 
-        // Log the createdOrder data for debugging purposes
-        console.log("Created Order:", createdOrder);
+      // Log the createdOrder data for debugging purposes
+      console.log("Created Order:", createdOrder);
 
-        // Get the Sales ID from the created order
-        const IDD = createdOrder.SALES_ORDER_ID;
+      // Get the Sales ID from the created order
+      const IDD = createdOrder.SALES_ORDER_ID;
 
+      // Validate the essential fields before proceeding
+      if (!clientName || !deliveryOption || !paymentTerms) {
+        console.error("Missing clientName, deliveryOption, or paymentTerms");
+        return;
+      }
 
-        // Validate the essential fields before proceeding
-        if (!clientName || !deliveryOption || !paymentTerms) {
-            console.error("Missing clientName, deliveryOption, or paymentTerms");
-            return;
-        }
+      // Prepare the log payload
+      const logPayload = {
+        LLOG_TYPE: "User logs",
+        LOG_DESCRIPTION: `${username} placed a new Customer order (ID: ${IDD}) for ${clientName}. `,
+        USER_ID: userId,
+      };
 
-        // Prepare the log payload
-        const logPayload = {
-            LLOG_TYPE: "User logs",
-            LOG_DESCRIPTION: `${username} placed a new Customer order (ID: ${IDD}) for ${clientName}. `,
-            USER_ID: userId,
-        };
+      // Send the log payload to the server to create a log entry
+      const logResponse = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        body: JSON.stringify(logPayload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-        // Send the log payload to the server to create a log entry
-        const logResponse = await fetch("http://127.0.0.1:8000/logs/logs/", {
-            method: "POST",
-            body: JSON.stringify(logPayload),
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (logResponse.ok) {
-            console.log("Order log successfully created:", logPayload);
-        } else {
-            const logErrorData = await logResponse.json();
-            console.error("Failed to create log:", logErrorData);
-        }
+      if (logResponse.ok) {
+        console.log("Order log successfully created:", logPayload);
+      } else {
+        const logErrorData = await logResponse.json();
+        console.error("Failed to create log:", logErrorData);
+      }
     } catch (error) {
-        console.error("Error logging order creation:", error);
+      console.error("Error logging order creation:", error);
     }
-};
-
+  };
 
   const handleRemoveProduct = (index) => {
     setOrderDetails((prevOrderDetails) => {
@@ -393,6 +396,8 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
     setClientCity,
     clientProvince,
     setClientProvince,
+    clientNumber,
+    setClientNumber,
     clientId,
     setClientId,
     deliveryOption,

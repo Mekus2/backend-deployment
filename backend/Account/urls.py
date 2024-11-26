@@ -4,7 +4,7 @@ from .views import (
     RegisterView, UserListView, UpdateUserView, CheckAuthenticationView, 
     UserProfileImageView, ChangePasswordView, TotalStaffCount, TotalActiveUserCount, UserListExcludeSuperAdminView,
     DeactivateUserView, ReactivateUserView,DeactivatedUserListView,ActivatedUserListView, UserDetailView,
-    UserLogs
+    UserLogs, ChangePassword
 )
 
 urlpatterns = [
@@ -17,6 +17,9 @@ urlpatterns = [
     path('users/<int:user_id>/change-password/', ChangePasswordView.as_view(), name='change-password'),  # New URL for changing password
     path('check-auth/', CheckAuthenticationView.as_view(), name='check-auth'),
     path('users/<int:user_id>/image/', UserProfileImageView.as_view(), name='user-profile-image'),
+
+    #path for changing password for new user:
+    path('users/changepass/<int:user_id>/', ChangePassword.as_view(), name='user-update'),  # For updating user by ID
 
 #returns all data except accType = superadmin
     path('lists/',UserListExcludeSuperAdminView.as_view(), name='Total Staff'),

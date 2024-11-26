@@ -13,7 +13,8 @@ const pageTitles = {
   "/superadmin/request-order": "Request Order",
   "/superadmin/customer-order": "Customer Order",
   "/superadmin/purchase-order": "Supplier Order",
-  "/superadmin/delivery": "Delivery",
+  "/superadmin/customer-delivery": "Customer Delivery",
+  "/superadmin/supplier-delivery": "Supplier Delivery",
   "/superadmin/products": "Products",
   "/superadmin/categories": "Category",
   "/superadmin/inventory": "Inventory",
@@ -21,7 +22,7 @@ const pageTitles = {
   "/superadmin/customers": "Customer",
   "/superadmin/users": "User",
   "/superadmin/sales": "Sales",
-  "/superadmin/returns": "Return",
+  "/superadmin/returns": "Issue",
   "/superadmin/logs": "Logs",
   "/superadmin/reports": "Reports",
   "/superadmin/profile": "SuperAdmin Profile",
@@ -34,7 +35,8 @@ const pageTitles = {
   "/admin/request-order": "Request Order",
   "/admin/customer-order": "Customer Order",
   "/admin/purchase-order": "Supplier Order",
-  "/admin/delivery": "Delivery",
+  "/admin/customer-delivery": "Customer Delivery",
+  "/admin/supplier-delivery": "Supplier Delivery",
   "/admin/products": "Products",
   "/admin/categories": "Category",
   "/admin/inventory": "Inventory",
@@ -42,7 +44,7 @@ const pageTitles = {
   "/admin/customers": "Customer",
   "/admin/users": "Staff",
   "/admin/sales": "Sales",
-  "/admin/returns": "Return",
+  "/admin/returns": "Issue",
   "/admin/logs": "Logs",
   "/admin/reports": "Reports",
   "/admin/profile": "Profile",
@@ -54,13 +56,13 @@ const pageTitles = {
   "/staff/profile": "Staff Profile",
   "/staff/request-order": "Request Order",
   "/staff/customer-order": "Customer Order",
-  "/staff/delivery": "Delivery",
+  "/staff/customer-delivery": "Customer Delivery",
   "/staff/products": "Products",
   "/staff/categories": "Category",
   "/staff/inventory": "Inventory",
   "/staff/customers": "Customers",
   "/staff/reports": "Reports",
-  "/staff/returns": "Returns",
+  "/staff/returns": "Issues",
   "/staff/notifications": "Notifications",
 };
 
@@ -69,7 +71,7 @@ const Header = ({ toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const pageTitle = pageTitles[location.pathname] || "Supplier Delivery";
+  const pageTitle = pageTitles[location.pathname] || "Main Page";
 
   const handleMouseEnter = () => {
     setIsDropdownOpen(true);

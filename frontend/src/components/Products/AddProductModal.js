@@ -14,7 +14,7 @@ const AddProductModal = ({ onClose, onSave }) => {
   const [price, setPrice] = useState("");
   const [supplier, setSupplier] = useState("");
   const [size, setSize] = useState("");
-  const [measurement, setMeasurement] = useState("");
+  const [measurement] = useState("");
   const [image, setImage] = useState(null);
   const [errors, setErrors] = useState({});
   const [purchasePrice, setPurchasePrice] = useState(""); // Add this line
@@ -395,13 +395,6 @@ const Input = styled.input`
 `;
 
 const TextArea = styled.textarea`
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-`;
-
-const Select = styled.select`
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;
