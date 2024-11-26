@@ -11,7 +11,6 @@ import CardTotalProducts from "../../components/CardsData/CardTotalProducts";
 import CardTotalCustomerOrder from "../../components/CardsData/CardTotalCustomerOrder";
 import CardTotalCustomers from "../../components/CardsData/CardTotalCustomers";
 import CardTotalDelivery from "../../components/CardsData/CardTotalDelivery";
-import CardTotalRequestOrder from "../../components/CardsData/CardTotalRequestOrder";
 import CardTotalReturns from "../../components/CardsData/CardTotalReturns";
 import CardTotalLogs from "../../components/CardsData/CardTotalLogs"; // Add logs card
 import CardTotalSuppliers from "../../components/CardsData/CardTotalSuppliers"; // Add suppliers card
@@ -34,7 +33,6 @@ const AdminDashboard = () => {
     CardTotalCustomerOrder: <CardTotalCustomerOrder />,
     CardTotalCustomers: <CardTotalCustomers />,
     CardTotalDelivery: <CardTotalDelivery />,
-    CardTotalRequestOrder: <CardTotalRequestOrder />,
     CardTotalReturns: <CardTotalReturns />,
     CardTotalLogs: <CardTotalLogs />, // Add logs card
     CardTotalSuppliers: <CardTotalSuppliers />, // Add suppliers card
@@ -56,7 +54,6 @@ const AdminDashboard = () => {
     "CardTotalCustomerOrder",
     "CardTotalCustomers",
     "CardTotalDelivery",
-    "CardTotalRequestOrder",
     "CardTotalReturns",
     "CardTotalLogs", // Add logs to the order
     "CardTotalSuppliers", // Add suppliers to the order
@@ -78,7 +75,6 @@ const AdminDashboard = () => {
     CardTotalCustomerOrder: () => navigate("/admin/customer-order"),
     CardTotalCustomers: () => navigate("/admin/customers"),
     CardTotalDelivery: () => navigate("/admin/delivery"),
-    CardTotalRequestOrder: () => navigate("/admin/request-order"),
     CardTotalReturns: () => navigate("/admin/returns"),
     CardTotalLogs: () => navigate("/admin/logs"), // Update as necessary
     CardTotalSuppliers: () => navigate("/admin/suppliers"), // Update as necessary

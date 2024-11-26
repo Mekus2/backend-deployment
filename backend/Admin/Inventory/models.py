@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from django.db import models
 
 from Admin.Product.models import Product
@@ -11,6 +11,7 @@ class Inventory(models.Model):
     PRODUCT_ID = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="inventory_entries"
     )
+    PRODUCT_NAME = models.CharField(max_length=120, null=True)
     INBOUND_DEL_ID = models.ForeignKey(
         InboundDelivery,
         on_delete=models.CASCADE,
@@ -18,8 +19,9 @@ class Inventory(models.Model):
     )
     BATCH_ID = models.CharField(max_length=50, unique=True)
     EXPIRY_DATE = models.DateField(null=True, blank=True)
-    QUANTITY = models.PositiveIntegerField()  # Quantity available in stock
+    QUANTITY_ON_HAND = models.PositiveIntegerField()  # Quantity available in stock
     LAST_UPDATED = models.DateTimeField(auto_now=True)
+    DATE_CREATED = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
         if not self.INVENTORY_ID:

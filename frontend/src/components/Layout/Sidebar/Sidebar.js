@@ -3,7 +3,11 @@ import styled from "styled-components";
 import { useLocation, NavLink, useNavigate } from "react-router-dom"; // Import useNavigate
 import { TbChevronDown } from "react-icons/tb";
 import philvetsLogo from "../../../assets/philvets.png";
-import { adminSidebarItems, staffSidebarItems, superadminSidebarItems } from "./sidebarItems"; // Imported superadmin items
+import {
+  adminSidebarItems,
+  staffSidebarItems,
+  superadminSidebarItems,
+} from "./sidebarItems"; // Imported superadmin items
 import { TbLogout2 } from "react-icons/tb";
 
 // Centralized theme object for colors (move this if it's defined elsewhere)
@@ -92,7 +96,11 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
               <SidebarLink
                 as={item.dropdown ? "div" : NavLink} // Use div for parent dropdown items
                 to={item.dropdown ? "#" : item.link}
-                className={!item.dropdown && location.pathname === item.link ? "active" : ""}
+                className={
+                  !item.dropdown && location.pathname === item.link
+                    ? "active"
+                    : ""
+                }
                 onClick={() => {
                   if (item.dropdown) {
                     handleDropdownToggle(index); // Toggle dropdown
@@ -119,7 +127,9 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
                         `dropdown-item ${isActive ? "active" : ""}`
                       }
                     >
-                      {subItem.icon && <subItem.icon size={15} className="icon" />}
+                      {subItem.icon && (
+                        <subItem.icon size={15} className="icon" />
+                      )}
                       <span className="dropdown-label">{subItem.label}</span>
                     </NavLink>
                   ))}
@@ -207,6 +217,7 @@ const SidebarLink = styled(NavLink)`
   text-decoration: none;
   transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
 
+  /* Ensure the background and text color of active dropdown parent item */
   ${({ active }) =>
     active &&
     `
@@ -245,26 +256,57 @@ const SidebarLink = styled(NavLink)`
   }
 
   .label {
-    margin-left: 10px;
-    font-size: 16px;
-    color: inherit;
+    margin-left: 8px;
+    font-size: 15px;
+    transition: color 0.1s ease-in-out;
   }
 `;
 
 const ChevronIconContainer = styled.div`
   margin-left: auto;
   transform: ${({ isOpen }) => (isOpen ? "rotate(180deg)" : "rotate(0deg)")};
-  transition: transform 0.2s ease-in-out;
-
-  .arrow-icon {
-    color: inherit;
-  }
+  transition: transform 0.3s ease-in-out;
 `;
 
 const DropdownContainer = styled.div`
-  margin-left: 20px;
-  padding-left: 10px;
-  border-left: 2px solid #f1f1f1;
+  padding: 2px; /* Indent dropdown items */
+  border-radius: 4px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  margin-left: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    margin: 4px;
+    border-radius: 4px;
+    color: ${theme.text}; /* Keep text color black for dropdown items */
+    text-decoration: none;
+    transition: background-color 0.1s ease-in-out;
+
+    &.active {
+      background-color: ${theme.primary}; /* Change background when active */
+      color: ${theme.background}; /* Keep text white */
+    }
+
+    &:hover {
+      background-color: ${theme.backgroundHover};
+      color: ${theme.background};
+    }
+
+    .icon {
+      margin-right: 8px;
+      width: 15px;
+      height: 15px;
+    }
+
+    .dropdown-label {
+      font-size: 14px;
+    }
+  }
 `;
 
 export default Sidebar;
