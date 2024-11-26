@@ -36,6 +36,8 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     setClientCity,
     clientProvince,
     setClientProvince,
+    clientNumber,
+    setClientNumber,
     deliveryOption,
     setDeliveryOption,
     paymentTerms,
@@ -73,6 +75,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     if (!clientProvince) newErrors.clientProvince = true;
     if (!deliveryOption) newErrors.deliveryOption = true;
     if (!paymentTerms) newErrors.paymentTerms = true;
+    if (!clientNumber) newErrors.clientNumber = true;
 
     orderDetails.forEach((detail, index) => {
       if (!detail.productName) {
@@ -202,6 +205,21 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           )}
         </div>
       </Field>
+      <Field>
+        <Label>
+          Customer Number{" "}
+          {errors.clientNumber && <span style={{ color: "red" }}>*</span>}
+        </Label>
+        <Input
+          value={clientNumber}
+          onChange={(e) => {
+            setClientNumber(e.target.value);
+            clearError("clientNumber");
+          }}
+          placeholder="Customer Number"
+          disabled={!editable}
+        />
+      </Field>
 
       <Field>
         <Label>
@@ -249,8 +267,9 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           <thead>
             <tr>
               <th>Product Name</th>
-              <th>Quantity</th>
-              <th>Price</th>
+              <th>Qty</th>
+              <th>Purchase Price</th> {/* New column for Purchase Price */}
+              <th>Sell Price</th>
               <th>Discount (%)</th>
               <th>Total</th>
               <th></th>
@@ -329,6 +348,25 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                     placeholder="Quantity"
                   />
                 </td>
+
+                {/* Purchase Price Input */}
+                <td>
+                  <Input
+                    type="number"
+                    style={{ textAlign: "center" }}
+                    value={orderDetail.purchasePrice || ""}
+                    onChange={(e) => {
+                      const updatedOrderDetails = [...orderDetails];
+                      updatedOrderDetails[index] = {
+                        ...updatedOrderDetails[index],
+                        purchasePrice: parseFloat(e.target.value) || 0, // Ensure number input
+                      };
+                      setOrderDetails(updatedOrderDetails);
+                    }}
+                    placeholder="Purchase Price"
+                  />
+                </td>
+
                 <td>
                   <Input
                     type="text"
@@ -373,61 +411,24 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                       };
                       setOrderDetails(updatedOrderDetails);
                     }}
-                    style={{
-                      textAlign: "center", // Centered text
-                    }}
-                    placeholder="Price"
+                    style={{ textAlign: "center" }}
+                    placeholder="Sell Price"
                   />
                 </td>
-
                 <td>
                   <Input
-                    type="text"
-                    value={orderDetail.discountValue || ""}
+                    type="number"
+                    style={{ textAlign: "center" }}
+                    value={orderDetail.discount || ""}
                     onChange={(e) => {
-                      let value = e.target.value;
-
-                      // Remove non-numeric characters except `.`
-                      value = value.replace(/[^0-9.]/g, "");
-
-                      // Prevent multiple leading zeros
-                      if (value.startsWith("0") && !value.startsWith("0.")) {
-                        value = value.replace(/^0+/, "");
-                      }
-
-                      // Ensure only one `.` is allowed
-                      if (value.split(".").length > 2) {
-                        value = value.substring(0, value.lastIndexOf("."));
-                      }
-
                       const updatedOrderDetails = [...orderDetails];
                       updatedOrderDetails[index] = {
                         ...updatedOrderDetails[index],
-                        discountValue: value, // Keep the current cleaned input as string
+                        discount: parseFloat(e.target.value) || 0, // Ensure number input
                       };
                       setOrderDetails(updatedOrderDetails);
                     }}
-                    onBlur={() => {
-                      const updatedOrderDetails = [...orderDetails];
-                      let discountValue = orderDetail.discountValue;
-
-                      // Convert to fixed decimal if valid, otherwise keep it as an empty string
-                      if (discountValue && !isNaN(discountValue)) {
-                        discountValue = parseFloat(discountValue).toFixed(2);
-                      } else {
-                        discountValue = ""; // Reset invalid input
-                      }
-
-                      updatedOrderDetails[index] = {
-                        ...updatedOrderDetails[index],
-                        discountValue: discountValue,
-                      };
-                      setOrderDetails(updatedOrderDetails);
-                    }}
-                    style={{
-                      textAlign: "center", // Centered text
-                    }}
-                    placeholder="Discount (%)"
+                    placeholder="Discount"
                   />
                 </td>
 
@@ -441,33 +442,73 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             ))}
           </tbody>
         </Table>
-
-        <Button onClick={handleAddProductWithValidation}>Add Product</Button>
-
+        <div style={{ textAlign: "right", marginTop: "10px" }}>
+          <Button onClick={handleAddProductWithValidation}>Add Product</Button>
+        </div>
         <TotalSection>
-          <TotalRow>
-            <TotalLabel>Total Quantity</TotalLabel>
+          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+            <TotalLabel>Total Qty: </TotalLabel>
             <TotalValue>{totalQuantity}</TotalValue>
           </TotalRow>
-          <TotalRow>
-            <TotalLabel>Total Discount</TotalLabel>
-            <TotalValue style={{ color: "#ff5757" }}>
+          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+            <TotalLabel>Total Discount: </TotalLabel>
+            <TotalValue>
               ₱
               {orderDetails
                 .reduce((acc, detail) => {
-                  const discount =
-                    ((detail.price * (detail.discountValue || 0)) / 100) *
-                    detail.quantity;
-                  return acc + discount;
+                  // Calculate the discount based on the line's price, discount, and quantity
+                  const discountValue =
+                    (((parseFloat(detail.price) || 0) *
+                      (parseFloat(detail.discount) || 0)) /
+                      100) *
+                    (parseInt(detail.quantity, 10) || 0);
+                  return acc + discountValue;
                 }, 0)
                 .toFixed(2)}
             </TotalValue>
           </TotalRow>
 
-          <TotalRow>
-            <TotalLabel>Total Value</TotalLabel>
-            <TotalValue style={{ color: "#1DBA0B" }}>
+          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+            <TotalLabel>Total Revenue: </TotalLabel>
+            <TotalValue style={{ color: "#f08400" }}>
               ₱{totalValue.toFixed(2)}
+            </TotalValue>
+          </TotalRow>
+          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+            <TotalLabel>Total Cost: </TotalLabel>
+            <TotalValue style={{ color: "#ff5757" }}>
+              ₱
+              {orderDetails
+                .reduce((acc, detail) => {
+                  // Calculate the total cost as Purchase Price * Quantity
+                  const totalCost =
+                    (parseFloat(detail.purchasePrice) || 0) *
+                    (parseInt(detail.quantity, 10) || 0);
+                  return acc + totalCost;
+                }, 0)
+                .toFixed(2)}
+            </TotalValue>
+          </TotalRow>
+          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+            <TotalLabel>Gross Profit: </TotalLabel>
+            <TotalValue style={{ color: "#1DBA0B" }}>
+              ₱
+              {(
+                orderDetails.reduce((acc, detail) => {
+                  // Calculate Total Revenue for this line (Sell Price * Quantity)
+                  const totalRevenue =
+                    (parseFloat(detail.price) || 0) *
+                    (parseInt(detail.quantity, 10) || 0);
+                  return acc + totalRevenue;
+                }, 0) -
+                orderDetails.reduce((acc, detail) => {
+                  // Calculate the total cost as Purchase Price * Quantity
+                  const totalCost =
+                    (parseFloat(detail.purchasePrice) || 0) *
+                    (parseInt(detail.quantity, 10) || 0);
+                  return acc + totalCost;
+                }, 0)
+              ).toFixed(2)}
             </TotalValue>
           </TotalRow>
         </TotalSection>

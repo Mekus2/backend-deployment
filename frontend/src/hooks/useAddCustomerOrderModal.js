@@ -25,6 +25,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
   const [clientName, setClientName] = useState("");
   const [clientCity, setClientCity] = useState("");
   const [clientProvince, setClientProvince] = useState("");
+  const [clientNumber, setClientNumber] = useState("");
   const [clientId, setClientId] = useState("");
   const [deliveryOption, setDeliveryOption] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
@@ -215,6 +216,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
     setClientName(client.name);
     setClientCity(client.address);
     setClientProvince(client.province);
+    setClientNumber(client.number);
     setClientId(client.id);
     setClientSearch("");
     setFilteredClients([]);
@@ -270,7 +272,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
   };
   const handleSave = async () => {
     console.log("Present Order Details:", orderDetails);
-
+  
     const newOrder = {
       SALES_ORDER_STATUS: "Pending",
       SALES_ORDER_CREATEDBY_USER: userId, // Replace with actual user ID if dynamic
@@ -278,6 +280,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       SALES_ORDER_CLIENT_NAME: clientName,
       SALES_ORDER_CLIENT_PROVINCE: clientProvince,
       SALES_ORDER_CLIENT_CITY: clientCity,
+      SALES_ORDER_CLIENT_NUMBER: clientNumber, // Add client number
       SALES_ORDER_DLVRY_OPTION: deliveryOption,
       SALES_ORDER_PYMNT_OPTION: paymentTerms,
       SALES_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
@@ -301,12 +304,12 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       console.log(newOrder);
       const createdOrder = await addNewCustomerOrder(newOrder);
       console.log("Order saved:", createdOrder);
-
+  
       alert("Order has been saved successfully!"); // Display confirmation alert
-
+  
       onSave(); // Notify parent component or UI
       onClose(); // Close modal or UI element
-
+  
       window.location.reload(); // Refresh the page after closing
     } catch (error) {
       console.error("Error saving order:", error);
@@ -333,6 +336,8 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
     setClientCity,
     clientProvince,
     setClientProvince,
+    clientNumber,
+    setClientNumber,
     clientId,
     setClientId,
     deliveryOption,

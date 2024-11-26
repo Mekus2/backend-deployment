@@ -22,21 +22,26 @@ const NewUserChangePass = () => {
   };
 
   const handleChangePassword = async () => {
+    // Regex for validating a strong password
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  
     if (!newPassword || !confirmPassword) {
       setError("Both fields are required.");
       return;
     }
-
-    if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters long.");
+  
+    if (!passwordRegex.test(newPassword)) {
+      setError(
+        "Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character."
+      );
       return;
     }
-
+  
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match. Please re-enter your passwords.");
       return;
     }
-
+  
     try {
       // Reset the password via API
       await resetPassword(newPassword);
@@ -49,6 +54,7 @@ const NewUserChangePass = () => {
       setError("An error occurred while changing your password.");
     }
   };
+  
 
   return (
     <BackgroundContainer>
