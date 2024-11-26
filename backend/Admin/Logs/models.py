@@ -4,7 +4,7 @@ from Account.models import User
 
 class Logs(models.Model):
     LLOG_TYPE = models.CharField(max_length=255, blank=False, null=False)
-    LOG_DESCRIPTION = models.CharField(max_length=255, blank=False, null=False)
+    LOG_DESCRIPTION = models.TextField(blank=False, null=False)
     LOG_DATETIME = models.DateTimeField(default=timezone.now)
     USER_ID = models.ForeignKey(
         User,
