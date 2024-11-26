@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
-import { notify } from "../Layout/CustomToast"; // Import the toast notification utility
 
 const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -16,7 +15,7 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
 
     // Validate required fields
     if (!editedClient.name) newErrors.name = "Customer name is required";
-    if (!editedClient.address) newErrors.address = "Address is required"; // Changed from 'city' to 'address'
+    if (!editedClient.address) newErrors.address = "Address is required";
     if (!editedClient.province) newErrors.province = "Province is required";
 
     // Validate phone number
@@ -27,44 +26,43 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0; // Return true if no errors
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleEdit = () => setIsEditing(true);
 
   const handleSave = async () => {
     if (validateFields()) {
-      const confirmSave = window.confirm("Are you sure you want to save the changes?");
+      const confirmSave = window.confirm(
+        "Are you sure you want to save the changes?"
+      );
       if (confirmSave) {
         try {
-          // Create a new object with only the changed fields
           const updatedClient = { ...editedClient };
-  
-          // Remove the errors field (if any) from the object before sending to backend
-          delete updatedClient.errors;
-  
-          // Send the PUT request with only the updated fields
-          const response = await fetch(`http://127.0.0.1:8000/customer/clients/${client.id}/`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatedClient), // Send the edited data (partial fields)
-          });
-  
+          const response = await fetch(
+            `http://127.0.0.1:8000/customer/clients/${client.id}/`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(updatedClient),
+            }
+          );
+
           if (!response.ok) {
-            // Handle error if the request fails
             const errorData = await response.json();
-            alert(`Error: ${errorData.message || 'Failed to update customer details'}`);
+            alert(
+              `Error: ${errorData.message || "Failed to update customer details"}`
+            );
           } else {
-            // Handle success
-            notify.success("Customer details updated successfully!"); // Trigger success toast
+            alert("Customer details updated successfully!");
+            await logCustomerCreation(client, updatedClient);
             setIsEditing(false);
-            onClose(); // Close the modal after saving
+            onClose();
           }
         } catch (error) {
-          // Handle network or other errors
-          notify.error(`Error: ${error.message}`); // Trigger error toast
+          alert(`Error: ${error.message}`);
         }
       }
     }
@@ -76,8 +74,8 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
     );
     if (confirmCancel) {
       setIsEditing(false);
-      setEditedClient(client); // Reset to original client data on cancel
-      setErrors({}); // Clear errors on cancel
+      setEditedClient(client);
+      setErrors({});
     }
   };
 
@@ -86,31 +84,78 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
       "Are you sure you want to remove this customer?"
     );
     if (confirmRemoval) {
-      try {
-        onRemove(client.id); // Make sure `client.id` exists
-        notify.success("Customer removed successfully!"); // Trigger success toast
-        onClose();
-      } catch (error) {
-        console.error("Error removing customer:", error);
-        notify.error("Failed to remove customer."); // Trigger error toast
-      }
+      onRemove(client.id);
+      onClose();
     }
   };
 
   const handlePhoneNumberChange = (e) => {
     const value = e.target.value;
-
-    // Ensure the first digit is always "0" and limit input to 11 characters
-    if (value.length <= 11) {
-      // Allow only digits and start with "0"
-      if (/^[0-9]*$/.test(value)) {
-        setEditedClient({
-          ...editedClient,
-          phoneNumber: value.length === 0 ? "0" : value, // Ensure leading zero
-        });
-      }
+    if (/^[0-9]*$/.test(value) && value.length <= 11) {
+      setEditedClient({
+        ...editedClient,
+        phoneNumber: value,
+      });
     }
   };
+
+  const logCustomerCreation = async (oldClient, updatedClient) => {
+    // Fetch the user_id from localStorage
+    const userId = localStorage.getItem("user_id");
+
+    // Prepare the fields for logging changes
+    const changes = [];
+    const fieldsToCheck = [
+        { field: "name", label: "Customer Name" },
+        { field: "address", label: "Address" },
+        { field: "province", label: "Province" },
+        { field: "phoneNumber", label: "Phone Number" },
+    ];
+
+    // Check for changes and format them for logging
+    fieldsToCheck.forEach(({ field, label }) => {
+        if (oldClient[field] !== updatedClient[field]) {
+            changes.push(
+                `${label} changed from "${oldClient[field] || "N/A"}" to "${
+                    updatedClient[field] || "N/A"
+                }"`
+            );
+        }
+    });
+
+    // If there are changes, prepare the log payload
+    if (changes.length > 0) {
+        const logPayload = {
+            LLOG_TYPE: "User logs",
+            LOG_DESCRIPTION: `Updated Customer details:\n${changes.join("\n")}`,
+            USER_ID: userId,
+        };
+
+        try {
+            // Send the log data to the backend
+            const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(logPayload),
+            });
+
+            // Handle the response
+            if (response.ok) {
+                console.log("Customer updated details:", logPayload);
+            } else {
+                const errorData = await response.json();
+                console.error("Failed to create log:", errorData);
+            }
+        } catch (error) {
+            console.error("Error logging customer updates:", error);
+        }
+    } else {
+        console.log("No changes detected. Logging skipped.");
+    }
+};
+
 
   return (
     <Modal
@@ -124,44 +169,35 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
               <strong>Customer Name:</strong>
               <Input
                 type="text"
-                value={editedClient.name || ""} // Adjusted to match API response
+                value={editedClient.name || ""}
                 onChange={(e) =>
-                  setEditedClient({
-                    ...editedClient,
-                    name: e.target.value,
-                  })
+                  setEditedClient({ ...editedClient, name: e.target.value })
                 }
                 border
               />
               {errors.name && <Error>{errors.name}</Error>}
             </DetailItem>
             <DetailItem>
-              <strong>Location</strong>
+              <strong>Location:</strong>
               <LocationContainer>
                 <AddressInput
                   type="text"
-                  value={editedClient.address || ""} // Updated to 'address'
+                  value={editedClient.address || ""}
                   onChange={(e) =>
-                    setEditedClient({
-                      ...editedClient,
-                      address: e.target.value, // Updated to 'address'
-                    })
+                    setEditedClient({ ...editedClient, address: e.target.value })
                   }
                   border
-                  placeholder="Address" // Placeholder for the Address input
+                  placeholder="Address"
                 />
-                {errors.address && <Error>{errors.address}</Error>} {/* Updated validation */}                
+                {errors.address && <Error>{errors.address}</Error>}
                 <ProvinceInput
                   type="text"
                   value={editedClient.province || ""}
                   onChange={(e) =>
-                    setEditedClient({
-                      ...editedClient,
-                      province: e.target.value,
-                    })
+                    setEditedClient({ ...editedClient, province: e.target.value })
                   }
                   border
-                  placeholder="Province" // Placeholder for the Province input
+                  placeholder="Province"
                 />
                 {errors.province && <Error>{errors.province}</Error>}
               </LocationContainer>
@@ -170,7 +206,7 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
               <strong>Phone Number:</strong>
               <Input
                 type="tel"
-                value={editedClient.phoneNumber || "0"} // Default to "0"
+                value={editedClient.phoneNumber || ""}
                 onChange={handlePhoneNumberChange}
                 border
               />
@@ -191,18 +227,17 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
           <Section>
             <Detail>
               <DetailLabel>Client Name:</DetailLabel>{" "}
-              {client.name || "N/A"} {/* Adjust field name based on API response */}
+              {client.name || "N/A"}
             </Detail>
             <Detail>
               <DetailLabel>Location:</DetailLabel>{" "}
-              {`${client.address || "N/A"}, ${client.province || "N/A"}`} {/* Updated to address */}
+              {`${client.address || "N/A"}, ${client.province || "N/A"}`}
             </Detail>
             <Detail>
               <DetailLabel>Phone:</DetailLabel>{" "}
               {client.phoneNumber || "N/A"}
             </Detail>
           </Section>
-
           <ButtonGroup>
             <Button variant="red" onClick={handleRemove}>
               Remove

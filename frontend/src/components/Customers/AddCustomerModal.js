@@ -7,7 +7,7 @@ import { notify } from "../Layout/CustomToast"; // Import the toast notification
 
 const AddCustomerModal = ({ onClose, onAdd }) => {
   const [clientName, setClientName] = useState("");
-  const [clientAddress, setClientAddress] = useState(""); // Updated variable name to match input
+  const [clientAddress, setClientAddress] = useState("");
   const [clientProvince, setClientProvince] = useState("");
   const [clientPhoneNum, setClientPhoneNum] = useState("0");
   const [errors, setErrors] = useState({});
@@ -22,7 +22,7 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
 
     // Validate all fields are filled
     if (!clientName) newErrors.clientName = "Customer name is required";
-    if (!clientAddress) newErrors.clientAddress = "Address is required"; // Corrected validation message
+    if (!clientAddress) newErrors.clientAddress = "Address is required";
     if (!clientProvince) newErrors.clientProvince = "Province is required";
 
     // Validate phone number
@@ -33,7 +33,6 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
     }
 
     if (Object.keys(newErrors).length === 0) {
-      // No errors, send data to the API
       const newClient = {
         name: clientName,
         address: clientAddress,
@@ -42,27 +41,58 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
       };
 
       try {
-        const addedCustomer = await addCustomer(newClient); // Call API function to add customer
-        notify.success("Customer added successfully!"); // Trigger success toast notification
-        onAdd(addedCustomer); // Pass the added customer data to the parent
-        console.log('data:', addCustomer);
-        console.log('customer data:', newClient);
-        onClose(); // Close the modal
+        const addedCustomer = await addCustomer(newClient);
+        notify.success("Customer added successfully!");
+        onAdd(addedCustomer);
+        logCustomerCreation(addedCustomer);
+
+        onClose();
       } catch (error) {
         console.error("Error adding customer:", error);
-        notify.error("An error occurred while adding the customer."); // Trigger error toast notification
+        notify.error("An error occurred while adding the customer.");
       }
     } else {
       setErrors(newErrors);
     }
   };
 
+  const logCustomerCreation = async (addedCustomer) => {
+    const userId = localStorage.getItem("user_id");
+
+    const logPayload = {
+      LLOG_TYPE: "User logs",
+      LOG_DESCRIPTION: `Added new customer: 
+      Name: ${addedCustomer.name}, 
+      Address: ${addedCustomer.address}, 
+      Province: ${addedCustomer.province}, 
+      Phone Number: ${addedCustomer.phoneNumber}`,
+      USER_ID: userId,
+    };
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        body: JSON.stringify(logPayload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        console.log("Customer log successfully created:", logPayload);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to create log:", errorData);
+      }
+    } catch (error) {
+      console.error("Error logging customer creation:", error);
+    }
+  };
+
   const handlePhoneNumberChange = (e) => {
     const value = e.target.value;
 
-    // Ensure the first digit is always "0"
     if (value === "" || (value.length > 0 && value[0] === "0")) {
-      // Only allow digits and limit input to 11 characters
       if (/^\d*$/.test(value) && value.length <= 11) {
         setClientPhoneNum(value.length === 0 ? "0" : value);
       }
@@ -89,7 +119,7 @@ const AddCustomerModal = ({ onClose, onAdd }) => {
             value={clientAddress}
             onChange={(e) => setClientAddress(e.target.value)}
           />
-          {errors.clientAddress && <Error>{errors.clientAddress}</Error>} {/* Updated error */}
+          {errors.clientAddress && <Error>{errors.clientAddress}</Error>}
           <ProvinceInput
             type="text"
             placeholder="Province"

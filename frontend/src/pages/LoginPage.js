@@ -26,6 +26,7 @@ const LoginPage = () => {
     try {
       const credentials = { username, password };
       const data = await loginUser(credentials); 
+      await logLoginEvent();
 
       if (password === "Password@123") {
         navigate('/change-password'); 
@@ -46,6 +47,59 @@ const LoginPage = () => {
     e.preventDefault(); // Prevent form submission when clicking the toggle button
     setShowPassword(!showPassword);
   };
+
+  const logLoginEvent = async () => {
+    const userId = localStorage.getItem("user_id");
+  
+    if (!userId) {
+      console.error("User ID is not available in localStorage.");
+      return;
+    }
+  
+    try {
+      // Fetch user details by user ID
+      const userResponse = await fetch(`http://127.0.0.1:8000/account/logs/${userId}/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!userResponse.ok) {
+        console.error("Failed to fetch user details.");
+        return;
+      }
+  
+      const userData = await userResponse.json();
+      const { first_name, last_name } = userData;
+  
+      // Construct the log payload
+      const logPayload = {
+        LLOG_TYPE: "User logs",
+        LOG_DESCRIPTION: `User '${first_name} ${last_name}' logged in successfully.`,
+        USER_ID: userId,
+      };
+  
+      // Log the event
+      const logResponse = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(logPayload),
+      });
+  
+      if (logResponse.ok) {
+        console.log("Login event logged successfully.");
+      } else {
+        const errorData = await logResponse.json();
+        console.error("Failed to log login event:", errorData);
+      }
+    } catch (error) {
+      console.error("Error logging login event:", error);
+    }
+  };
+  
 
   return (
     <BackgroundContainer>
