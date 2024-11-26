@@ -14,6 +14,7 @@ import {
   TotalValue,
   ButtonGroup,
 } from "../OrderStyles";
+
 const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
   const abortControllerRef = useRef(null);
   const [loading, setLoading] = useState(true);
@@ -63,6 +64,8 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
     };
   }, [order, userRole]);
 
+
+  
   // Early return if order is not provided
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;

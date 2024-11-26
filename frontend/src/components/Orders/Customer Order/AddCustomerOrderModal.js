@@ -127,6 +127,21 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     handleAddClient();
     notify.success("You can now add a new customer!"); // Add Client toast notification
   };
+  const handleClientNumberChange = (value) => {
+    // Remove non-numeric characters
+    let sanitizedValue = value.replace(/\D/g, "");
+
+    // Ensure it starts with '0' and is no longer than 11 digits
+    if (sanitizedValue.length > 0 && !sanitizedValue.startsWith("0")) {
+      sanitizedValue = "0" + sanitizedValue;
+    }
+    if (sanitizedValue.length > 11) {
+      sanitizedValue = sanitizedValue.slice(0, 11);
+    }
+
+    setClientNumber(sanitizedValue);
+    clearError("clientNumber");
+  };
 
   return (
     <Modal title="Add Customer Order" onClose={onClose}>
@@ -212,10 +227,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
         </Label>
         <Input
           value={clientNumber}
-          onChange={(e) => {
-            setClientNumber(e.target.value);
-            clearError("clientNumber");
-          }}
+          onChange={(e) => handleClientNumberChange(e.target.value)}
           placeholder="Customer Number"
           disabled={!editable}
         />

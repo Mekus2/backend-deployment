@@ -8,7 +8,7 @@ import CustomerIssueModal from "./CustomerIssueModal"; // Import the Issue Modal
 import IssueDetails from "./IssueDetails";
 import { notify } from "../../Layout/CustomToast";
 import { jsPDF } from "jspdf";
-import { logoBase64 } from "../../../data/imageData"; 
+import { logoBase64 } from "../../../data/imageData";
 const getProgressForStatus = (status) => {
   switch (status) {
     case "Pending":
@@ -134,39 +134,39 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
 
   const generateInvoice = () => {
     const doc = new jsPDF();
-  
+
     // Use UTF-8 encoding to ensure characters like peso sign render correctly
     doc.setFont("helvetica", "normal", "utf-8");
-  
+
     // Add the company logo at the upper left corner with aspect ratio locked
     const logoWidth = 12; // Width for the logo
     const logoHeight = logoWidth; // Height set to maintain 1:1 aspect ratio
     const logoX = 12; // Margin Left
     const logoY = 5; // Margin Top
     doc.addImage(logoBase64, "PNG", logoX, logoY, logoWidth, logoHeight); // Adds the logo at upper left
-  
+
     // Center the company name closer to the top
     const pageWidth = doc.internal.pageSize.width;
-  
+
     // Set plain styling for the company name and center it
     doc.setFontSize(16); // Slightly smaller font size for better alignment
     doc.setFont("helvetica", "bold");
     doc.text("PHILVETS", pageWidth / 2, logoY + logoHeight + 8, {
       align: "center",
     });
-  
+
     // Company number (move closer to the company name)
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text("123-456-789", pageWidth / 2, logoY + logoHeight + 14, {
       align: "center",
     });
-  
+
     // Title of the invoice (bold and larger, left-aligned)
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("Invoice", 20, 30); // Move to the left
-  
+
     // Customer and delivery details
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
@@ -176,7 +176,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     doc.text(`Delivery Status: ${status}`, 20, 55);
     doc.text(`Shipped Date: ${delivery.OUTBOUND_DEL_SHIPPED_DATE}`, 20, 60);
     doc.text(`Received Date: ${receivedDate}`, 20, 65);
-  
+
     // Table for order details
     doc.autoTable({
       startY: 70,
@@ -185,7 +185,10 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
         item.OUTBOUND_DETAILS_PROD_NAME,
         item.OUTBOUND_DETAILS_PROD_QTY,
         Number(item.OUTBOUND_DETAILS_LINE_PRICE).toFixed(2), // Removed the peso sign
-        calculateItemTotal(item.OUTBOUND_DETAILS_PROD_QTY, item.OUTBOUND_DETAILS_LINE_PRICE).toFixed(2), // Removed the peso sign
+        calculateItemTotal(
+          item.OUTBOUND_DETAILS_PROD_QTY,
+          item.OUTBOUND_DETAILS_LINE_PRICE
+        ).toFixed(2), // Removed the peso sign
       ]),
       styles: {
         cellPadding: 3,
@@ -204,7 +207,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
         lineColor: [169, 169, 169], // Gray color for the lines
       },
     });
-  
+
     // Total summary
     const total = totalAmount.toFixed(2);
     doc.text(
@@ -213,11 +216,11 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       doc.autoTable.previous.finalY + 10
     );
     doc.text(`Total Amount: ${total}`, 20, doc.autoTable.previous.finalY + 15); // Removed peso sign here as well
-  
+
     // Save the PDF
     doc.save("Invoice.pdf");
   };
-  
+
   return (
     <>
       <Modal
@@ -262,13 +265,17 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                 </FormGroup>
               </Column>
             </DetailsContainer>
-
             <ProductTable>
               <thead>
                 <tr>
                   <TableHeader>Product Name</TableHeader>
-                  <TableHeader>Quantity Shipped</TableHeader>
-                  <TableHeader>Price</TableHeader>
+                  <TableHeader>Qty</TableHeader>
+                  <TableHeader>Purchase Price</TableHeader>{" "}
+                  {/* New Column for Purchase Price */}
+                  <TableHeader>Sell Price</TableHeader>{" "}
+                  {/* New Column for Sell Price */}
+                  <TableHeader>Discount</TableHeader>{" "}
+                  {/* New Column for Discount */}
                   <TableHeader>Total</TableHeader>
                 </tr>
               </thead>
@@ -277,17 +284,41 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                   <TableRow key={index}>
                     <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
                     <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
+
+                    {/* Purchase Price (Assumed to be a different field, use the correct field for Purchase Price) */}
                     <TableCell>
                       ₱
-                      {(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(
-                        2
-                      )}
+                      {(
+                        Number(item.OUTBOUND_DETAILS_PURCHASE_PRICE) || 0
+                      ).toFixed(2)}{" "}
+                      {/* Update with correct purchase price field */}
                     </TableCell>
+
+                    {/* Sell Price */}
                     <TableCell>
                       ₱
-                      {calculateItemTotal(
-                        item.OUTBOUND_DETAILS_PROD_QTY,
-                        item.OUTBOUND_DETAILS_LINE_PRICE
+                      {(Number(item.OUTBOUND_DETAILS_SELL_PRICE) || 0).toFixed(
+                        2
+                      )}{" "}
+                      {/* Renamed to SELL_PRICE */}
+                    </TableCell>
+
+                    {/* Discount (Assumed to be a percentage value) */}
+                    <TableCell>
+                      {item.OUTBOUND_DETAILS_DISCOUNT
+                        ? `${item.OUTBOUND_DETAILS_DISCOUNT}%`
+                        : "No Discount"}
+                    </TableCell>
+
+                    {/* Total (Calculation considering Qty, Sell Price, and Discount) */}
+                    <TableCell>
+                      ₱
+                      {(
+                        calculateItemTotal(
+                          item.OUTBOUND_DETAILS_PROD_QTY,
+                          item.OUTBOUND_DETAILS_SELL_PRICE
+                        ) *
+                        (1 - (item.OUTBOUND_DETAILS_DISCOUNT || 0) / 100)
                       ).toFixed(2)}
                     </TableCell>
                   </TableRow>
@@ -296,12 +327,98 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
             </ProductTable>
 
             <TotalSummary>
+              {/* Total Quantity */}
               <SummaryItem>
-                <strong>Total Quantity:</strong> {totalQuantity}
+                <strong>Total Quantity:</strong>{" "}
+                {orderDetails.reduce(
+                  (acc, detail) =>
+                    acc +
+                    (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0),
+                  0
+                )}
               </SummaryItem>
+
+              {/* Total Discount */}
               <SummaryItem>
-                <strong>Total Amount:</strong>{" "}
-                <HighlightedTotal>₱{totalAmount.toFixed(2)}</HighlightedTotal>
+                <strong>Total Discount:</strong>{" "}
+                <HighlightedTotal>
+                  ₱
+                  {orderDetails
+                    .reduce((acc, detail) => {
+                      const discountValue =
+                        (((parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
+                          0) *
+                          (parseFloat(detail.OUTBOUND_DETAILS_PROD_DISCOUNT) ||
+                            0)) /
+                          100) *
+                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
+                          0);
+                      return acc + discountValue;
+                    }, 0)
+                    .toFixed(2)}
+                </HighlightedTotal>
+              </SummaryItem>
+
+              {/* Total Revenue */}
+              <SummaryItem>
+                <strong>Total Revenue:</strong>{" "}
+                <HighlightedTotal style={{ color: "#f08400" }}>
+                  ₱
+                  {orderDetails
+                    .reduce((acc, detail) => {
+                      const totalRevenue =
+                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
+                          0) *
+                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
+                          0);
+                      return acc + totalRevenue;
+                    }, 0)
+                    .toFixed(2)}
+                </HighlightedTotal>
+              </SummaryItem>
+
+              {/* Total Cost */}
+              <SummaryItem>
+                <strong>Total Cost:</strong>{" "}
+                <HighlightedTotal style={{ color: "#ff5757" }}>
+                  ₱
+                  {orderDetails
+                    .reduce((acc, detail) => {
+                      const totalCost =
+                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SALES_PRICE) ||
+                          0) *
+                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
+                          0);
+                      return acc + totalCost;
+                    }, 0)
+                    .toFixed(2)}
+                </HighlightedTotal>
+              </SummaryItem>
+
+              {/* Gross Profit */}
+              <SummaryItem>
+                <strong>Gross Profit:</strong>{" "}
+                <HighlightedTotal style={{ color: "#1DBA0B" }}>
+                  ₱
+                  {(
+                    orderDetails.reduce((acc, detail) => {
+                      const totalRevenue =
+                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
+                          0) *
+                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
+                          0);
+                      return acc + totalRevenue;
+                    }, 0) -
+                    orderDetails.reduce((acc, detail) => {
+                      const totalCost =
+                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
+                          0) *
+                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
+                          0);
+                      return acc + totalCost;
+                    }, 0)
+                  ).toFixed(2)}
+                </HighlightedTotal>
               </SummaryItem>
             </TotalSummary>
 
