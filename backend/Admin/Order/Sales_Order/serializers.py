@@ -124,9 +124,6 @@ class SalesOrderSerializer(serializers.ModelSerializer):
                 instance.SALES_ORDER_DLVRY_OPTION = validated_data.get(
                     "SALES_ORDER_DLVRY_OPTION", instance.SALES_ORDER_DLVRY_OPTION
                 )
-                instance.SALES_ORDER_PYMNT_OPTION = validated_data.get(
-                    "SALES_ORDER_PYMNT_OPTION", instance.SALES_ORDER_PYMNT_OPTION
-                )
                 instance.SALES_ORDER_TOTAL_QTY = validated_data.get(
                     "SALES_ORDER_TOTAL_QTY", instance.SALES_ORDER_TOTAL_QTY
                 )

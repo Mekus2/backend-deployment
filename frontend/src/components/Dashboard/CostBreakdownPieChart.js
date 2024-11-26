@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import styled from "styled-components";
 
 const pieData = [
-  { name: "Profit", value: 107000 },
+  { name: "Gross Profit", value: 107000 },
   { name: "Expense", value: 50000 },
   { name: "Revenue", value: 620000 },
 ];
@@ -27,7 +27,10 @@ const CostBreakdownPieChart = () => {
             dataKey="value"
           >
             {pieData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+              />
             ))}
           </Pie>
           <Tooltip />
@@ -35,7 +38,7 @@ const CostBreakdownPieChart = () => {
       </ChartContainer>
       <LegendContainer>
         <LegendContent>
-          <LegendItem color={COLORS[0]}>Profit</LegendItem>
+          <LegendItem color={COLORS[0]}>Gross Profit</LegendItem>
           <LegendItem color={COLORS[1]}>Expense</LegendItem>
           <LegendItem color={COLORS[2]}>Revenue</LegendItem>
         </LegendContent>
@@ -100,4 +103,3 @@ const LegendItem = styled.div`
 `;
 
 export default CostBreakdownPieChart;
-

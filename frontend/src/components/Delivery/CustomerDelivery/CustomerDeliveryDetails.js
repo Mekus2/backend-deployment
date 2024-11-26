@@ -7,7 +7,8 @@ import { fetchCustomerDelDetails } from "../../../api/CustomerDeliveryApi";
 import CustomerIssueModal from "./CustomerIssueModal"; // Import the Issue Modal
 import IssueDetails from "./IssueDetails";
 import { notify } from "../../Layout/CustomToast";
-
+import { jsPDF } from "jspdf";
+import { logoBase64 } from "../../../data/imageData"; 
 const getProgressForStatus = (status) => {
   switch (status) {
     case "Pending":
@@ -29,9 +30,11 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState([]);
   const [status, setStatus] = useState("");
-  const [receivedDate, setReceivedDate] = useState(delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received");
+  const [receivedDate, setReceivedDate] = useState(
+    delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received"
+  );
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false);  // State for IssueDetails modal
+  const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false); // State for IssueDetails modal
   const [issueReported, setIssueReported] = useState(false); // Track if issue has been reported
 
   const progress = getProgressForStatus(status);
@@ -51,7 +54,10 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       setLoading(true);
       setError(null);
       try {
-        const details = await fetchCustomerDelDetails(delivery.OUTBOUND_DEL_ID, controller.signal);
+        const details = await fetchCustomerDelDetails(
+          delivery.OUTBOUND_DEL_ID,
+          controller.signal
+        );
         setOrderDetails(details);
         setStatus(delivery.OUTBOUND_DEL_STATUS);
       } catch (error) {
@@ -74,10 +80,22 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     };
   }, [delivery]);
 
-  const calculateTotalQuantity = () => orderDetails.reduce((total, item) => total + item.OUTBOUND_DETAILS_PROD_QTY, 0);
+  const calculateTotalQuantity = () =>
+    orderDetails.reduce(
+      (total, item) => total + item.OUTBOUND_DETAILS_PROD_QTY,
+      0
+    );
   const calculateItemTotal = (qty, price) => qty * price;
   const totalQuantity = calculateTotalQuantity();
-  const totalAmount = orderDetails.reduce((total, item) => total + calculateItemTotal(item.OUTBOUND_DETAILS_PROD_QTY, item.OUTBOUND_DETAILS_LINE_PRICE), 0);
+  const totalAmount = orderDetails.reduce(
+    (total, item) =>
+      total +
+      calculateItemTotal(
+        item.OUTBOUND_DETAILS_PROD_QTY,
+        item.OUTBOUND_DETAILS_LINE_PRICE
+      ),
+    0
+  );
 
   const handleStatusChange = () => {
     let newStatus;
@@ -98,22 +116,108 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       setReceivedDate("Not Received");
       notify.error("Delivery status reset to Pending.");
     }
-  
+
     setStatus(newStatus);
   };
 
-  const handleIssueModalOpen = () => setIsIssueModalOpen(true);  // This remains for opening the initial "What's the issue?" modal
-  const handleIssueModalClose = () => setIsIssueModalOpen(false);  // This closes the initial modal
+  const handleIssueModalOpen = () => setIsIssueModalOpen(true); // This remains for opening the initial "What's the issue?" modal
+  const handleIssueModalClose = () => setIsIssueModalOpen(false); // This closes the initial modal
 
   const handleIssueDetailsOpen = () => setIsIssueDetailsOpen(true); // Open IssueDetails modal
   const handleIssueDetailsClose = () => setIsIssueDetailsOpen(false); // Close IssueDetails modal
-  
+
   const handleIssueModalSubmit = (updatedOrderDetails, remarks) => {
     console.log("Issue reported:", updatedOrderDetails, remarks);
     setIssueReported(true); // Mark issue as reported after submission
     setIsIssueModalOpen(false); // Close the modal
   };
 
+  const generateInvoice = () => {
+    const doc = new jsPDF();
+  
+    // Use UTF-8 encoding to ensure characters like peso sign render correctly
+    doc.setFont("helvetica", "normal", "utf-8");
+  
+    // Add the company logo at the upper left corner with aspect ratio locked
+    const logoWidth = 12; // Width for the logo
+    const logoHeight = logoWidth; // Height set to maintain 1:1 aspect ratio
+    const logoX = 12; // Margin Left
+    const logoY = 5; // Margin Top
+    doc.addImage(logoBase64, "PNG", logoX, logoY, logoWidth, logoHeight); // Adds the logo at upper left
+  
+    // Center the company name closer to the top
+    const pageWidth = doc.internal.pageSize.width;
+  
+    // Set plain styling for the company name and center it
+    doc.setFontSize(16); // Slightly smaller font size for better alignment
+    doc.setFont("helvetica", "bold");
+    doc.text("PHILVETS", pageWidth / 2, logoY + logoHeight + 8, {
+      align: "center",
+    });
+  
+    // Company number (move closer to the company name)
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("123-456-789", pageWidth / 2, logoY + logoHeight + 14, {
+      align: "center",
+    });
+  
+    // Title of the invoice (bold and larger, left-aligned)
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("Invoice", 20, 30); // Move to the left
+  
+    // Customer and delivery details
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Customer: ${delivery.CUSTOMER_NAME}`, 20, 40);
+    doc.text(`City: ${delivery.OUTBOUND_DEL_CITY}`, 20, 45);
+    doc.text(`Province: ${delivery.OUTBOUND_DEL_PROVINCE}`, 20, 50);
+    doc.text(`Delivery Status: ${status}`, 20, 55);
+    doc.text(`Shipped Date: ${delivery.OUTBOUND_DEL_SHIPPED_DATE}`, 20, 60);
+    doc.text(`Received Date: ${receivedDate}`, 20, 65);
+  
+    // Table for order details
+    doc.autoTable({
+      startY: 70,
+      head: [["Product Name", "Quantity Shipped", "Price", "Total"]],
+      body: orderDetails.map((item) => [
+        item.OUTBOUND_DETAILS_PROD_NAME,
+        item.OUTBOUND_DETAILS_PROD_QTY,
+        Number(item.OUTBOUND_DETAILS_LINE_PRICE).toFixed(2), // Removed the peso sign
+        calculateItemTotal(item.OUTBOUND_DETAILS_PROD_QTY, item.OUTBOUND_DETAILS_LINE_PRICE).toFixed(2), // Removed the peso sign
+      ]),
+      styles: {
+        cellPadding: 3,
+        fontSize: 10,
+        halign: "center", // Center all data in the cells
+        valign: "middle",
+        lineWidth: 0.5, // Line width for cell borders
+        lineColor: [169, 169, 169], // Gray color for the lines
+      },
+      headStyles: {
+        fillColor: [0, 196, 255],
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        halign: "center", // Center header text
+        lineWidth: 0.5, // Line width for header cell borders
+        lineColor: [169, 169, 169], // Gray color for the lines
+      },
+    });
+  
+    // Total summary
+    const total = totalAmount.toFixed(2);
+    doc.text(
+      `Total Quantity: ${totalQuantity}`,
+      20,
+      doc.autoTable.previous.finalY + 10
+    );
+    doc.text(`Total Amount: ${total}`, 20, doc.autoTable.previous.finalY + 15); // Removed peso sign here as well
+  
+    // Save the PDF
+    doc.save("Invoice.pdf");
+  };
+  
   return (
     <>
       <Modal
@@ -174,10 +278,17 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                     <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
                     <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
                     <TableCell>
-                      ₱{(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(2)}
+                      ₱
+                      {(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(
+                        2
+                      )}
                     </TableCell>
                     <TableCell>
-                      ₱{calculateItemTotal(item.OUTBOUND_DETAILS_PROD_QTY, item.OUTBOUND_DETAILS_LINE_PRICE).toFixed(2)}
+                      ₱
+                      {calculateItemTotal(
+                        item.OUTBOUND_DETAILS_PROD_QTY,
+                        item.OUTBOUND_DETAILS_LINE_PRICE
+                      ).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -203,10 +314,17 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
 
             <ModalFooter>
               {status === "Delivered with Issues" && !issueReported && (
-                <IssueButton onClick={handleIssueModalOpen}>What's the issue?</IssueButton>
+                <IssueButton onClick={handleIssueModalOpen}>
+                  What's the issue?
+                </IssueButton>
               )}
               {status === "Delivered with Issues" && issueReported && (
-                <IssueButton onClick={handleIssueDetailsOpen}>Issue details</IssueButton>
+                <IssueButton onClick={handleIssueDetailsOpen}>
+                  Issue details
+                </IssueButton>
+              )}
+              {status === "Delivered" && (
+                <InvoiceButton onClick={generateInvoice}>Invoice</InvoiceButton>
               )}
               <StatusButton onClick={handleStatusChange}>
                 {status === "Pending"
@@ -230,14 +348,27 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
         />
       )}
 
-      {isIssueDetailsOpen && (
-        <IssueDetails onClose={handleIssueDetailsClose} />
-      )}
+      {isIssueDetailsOpen && <IssueDetails onClose={handleIssueDetailsClose} />}
     </>
   );
 };
 
 // Styled components
+const InvoiceButton = styled.button`
+  background-color: ${colors.primary}; /* Green color */
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  border-radius: 5px;
+  margin-right: 10px;
+
+  &:hover {
+    background-color: ${colors.primaryHover};
+  }
+`;
+
 const ErrorContainer = styled.div`
   text-align: center;
   padding: 20px;

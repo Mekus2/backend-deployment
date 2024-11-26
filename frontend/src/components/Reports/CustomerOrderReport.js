@@ -1,6 +1,6 @@
 import React, { useState } from "react";
+import { SALES_ORDR } from "../../data/CusOrderData"; // Importing the static data
 import ReportBody from "./ReportBody";
-import { SALES_ORDER } from "../../data/CustomerOrderData"; // Correctly importing the named export
 import generatePDF from "./GeneratePdf";
 import generateExcel from "./GenerateExcel";
 import PreviewModal from "./PreviewModal";
@@ -25,49 +25,51 @@ const CustomerOrderReport = () => {
   const matchesSearchTerm = (order) => {
     const searchStr = searchTerm.toLowerCase();
     return (
-      order.SALES_ORDER_ID.toString().toLowerCase().includes(searchStr) ||
-      order.CLIENT_ID.toString().toLowerCase().includes(searchStr) ||
-      order.SALES_ORDER_PYMNT_STAT.toLowerCase().includes(searchStr) ||
-      order.SALES_ORDER_DLVRY_DATE.toLowerCase().includes(searchStr) ||
-      order.SALES_ORDER_TOT_QTY.toString().toLowerCase().includes(searchStr) ||
-      order.SALES_ORDER_PROD_TOTAL.toString().toLowerCase().includes(searchStr)
+      order.CUSTOMER_NAME.toLowerCase().includes(searchStr) ||
+      order.CUSTOMER_LOCATION.toLowerCase().includes(searchStr) ||
+      order.SALES_ORDER_DATE.toLowerCase().includes(searchStr) ||
+      order.SALES_ORDER_COST.toFixed(2).includes(searchStr) ||
+      order.SALES_ORDER_REVENUE.toFixed(2).includes(searchStr) ||
+      (order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST)
+        .toFixed(2)
+        .includes(searchStr) // Gross Profit search
     );
   };
 
   // Filter and sort orders based on search term and date range
-  const filteredOrders = SALES_ORDER
-    .filter((order) => {
-      const matchesDateRange =
-        (!startDate || new Date(order.SALES_ORDER_DLVRY_DATE) >= new Date(startDate)) &&
-        (!endDate || new Date(order.SALES_ORDER_DLVRY_DATE) <= new Date(endDate));
-      return matchesSearchTerm(order) && matchesDateRange;
-    })
-    .sort((a, b) => new Date(b.SALES_ORDER_DLVRY_DATE) - new Date(a.SALES_ORDER_DLVRY_DATE)); // Sort by delivery date descending
+  const filteredOrders = SALES_ORDR.filter((order) => {
+    const matchesDateRange =
+      (!startDate || new Date(order.SALES_ORDER_DATE) >= new Date(startDate)) &&
+      (!endDate || new Date(order.SALES_ORDER_DATE) <= new Date(endDate));
+    return matchesSearchTerm(order) && matchesDateRange;
+  }).sort(
+    (a, b) => new Date(b.SALES_ORDER_DATE) - new Date(a.SALES_ORDER_DATE)
+  ); // Sort by order date descending
 
   const totalOrders = filteredOrders.length;
-  const totalOrderValue = filteredOrders.reduce(
-    (acc, order) => acc + (order.SALES_ORDER_PROD_TOTAL || 0),
+  const totalGrossProfit = filteredOrders.reduce(
+    (acc, order) => acc + (order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST), // Calculate Gross Profit
     0
   );
 
-  // Map the filtered orders to display only the necessary fields
+  // Map the filtered orders to display the necessary fields, excluding Quantity
   const tableData = filteredOrders.map((order) => [
-    order.SALES_ORDER_ID,
-    order.CLIENT_ID,
-    order.SALES_ORDER_PYMNT_STAT,
-    order.SALES_ORDER_DLVRY_DATE,
-    order.SALES_ORDER_TOT_QTY,
-    formatCurrency(order.SALES_ORDER_PROD_TOTAL), // Format order amount with commas
+    order.CUSTOMER_NAME,
+    order.CUSTOMER_LOCATION,
+    order.SALES_ORDER_DATE,
+    formatCurrency(order.SALES_ORDER_REVENUE), // Swap Revenue and Cost
+    formatCurrency(order.SALES_ORDER_COST), // Swap Revenue and Cost
+    formatCurrency(order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST), // Gross Profit Calculation
   ]);
 
-  // Updated header to match the requested fields
+  // Updated header to match the requested fields, excluding Quantity
   const header = [
-    "Order ID",
-    "Client ID",
-    "Payment Status",
-    "Delivery Date",
-    "Quantity",
-    "Order Amount",
+    "Customer",
+    "Location",
+    "Date",
+    "Revenue", // Revenue now shown in Cost column
+    "Cost", // Cost now shown in Revenue column
+    "Gross Profit", // Gross Profit calculated as Revenue - Cost
   ];
 
   const handlePreviewPDF = () => {
@@ -75,7 +77,7 @@ const CustomerOrderReport = () => {
       header,
       tableData,
       totalOrders,
-      totalOrderValue
+      totalGrossProfit // Update to reflect Gross Profit total
     );
     setPdfContent(pdfData);
     setExcelData(null);
@@ -87,7 +89,7 @@ const CustomerOrderReport = () => {
       header,
       rows: tableData,
       totalOrders, // Pass total orders
-      totalAmount: totalOrderValue, // Pass total amount
+      totalAmount: totalGrossProfit, // Pass total Gross Profit
     });
     setPdfContent("");
     setIsModalOpen(true);
@@ -107,7 +109,7 @@ const CustomerOrderReport = () => {
         header,
         tableData,
         totalOrders,
-        totalOrderValue
+        totalGrossProfit // Update to reflect Gross Profit total
       ); // Ensure this returns the Blob
       const url = URL.createObjectURL(excelBlobData);
       const a = document.createElement("a");
@@ -134,7 +136,7 @@ const CustomerOrderReport = () => {
         headers={header}
         rows={tableData}
         totalOrders={totalOrders}
-        totalOrderValue={totalOrderValue}
+        totalOrderValue={totalGrossProfit} // Use Gross Profit instead of Order Value
         onDownloadPDF={handlePreviewPDF}
         onPreviewExcel={handlePreviewExcel}
       />

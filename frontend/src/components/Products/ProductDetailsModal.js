@@ -115,17 +115,14 @@ const ProductDetailsModal = ({ productId, onClose }) => {
           </DetailItem>
           <DetailItem>
             <Label>Tags:</Label>
-            <TagsInput
-              value={editFields.tags}
-              onChange={handleTagsChange}
-            />
+            <TagsInput value={editFields.tags} onChange={handleTagsChange} />
           </DetailItem>
           <DetailItem>
-            <Label>Size:</Label>
+            <Label>Units:</Label>
             <Input
-              value={editFields.PROD_DETAILS_SIZE || ""}
+              value={editFields.PROD_DETAILS_UNITS || ""}
               onChange={(e) =>
-                handleInputChange("PROD_DETAILS_SIZE", e.target.value)
+                handleInputChange("PROD_DETAILS_UNITS", e.target.value)
               }
             />
           </DetailItem>
@@ -200,7 +197,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             {product.PROD_TAGS && product.PROD_TAGS.join(", ")}
           </Detail>
           <Detail>
-            <DetailLabel>Size:</DetailLabel> {productDetail.PROD_DETAILS_SIZE}
+            <DetailLabel>Units:</DetailLabel> {productDetail.PROD_DETAILS_UNITS}
           </Detail>
           <Detail>
             <DetailLabel>Brand:</DetailLabel>{" "}

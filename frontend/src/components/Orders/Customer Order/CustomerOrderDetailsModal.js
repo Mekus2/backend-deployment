@@ -7,6 +7,7 @@ import Button from "../../Layout/Button"; // Ensure you import the Button compon
 // Import api functions
 import { fetchOrderDetailsById } from "../../../api/fetchCustomerOrders";
 import { addNewCustomerDelivery } from "../../../api/CustomerDeliveryApi"; // Assume there's an API to handle customer deliveries
+import { getProductByName } from "../../../api/fetchProducts";
 
 const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const abortControllerRef = useRef(null);
@@ -16,6 +17,10 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const [isEditMode, setIsEditMode] = useState(false); // State to toggle edit mode
   const [suggestions, setSuggestions] = useState([]);
   const userId = localStorage.getItem("user_id");
+
+  // Temp Changes
+  const [inputStates, setInputStates] = useState({});
+  const [activeRowIndex, setActiveRowIndex] = useState(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -95,6 +100,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
       updatedDetails[index]
     );
     setOrderDetails(updatedDetails);
+    console.info("Update order details:", updatedDetails);
   };
 
   const totalDiscount = orderDetails.reduce(
@@ -166,24 +172,55 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     };
 
     setOrderDetails([...orderDetails, newProduct]);
+    console.log("Updated Order Details", orderDetails);
   };
-  const handleProductSearch = async (query) => {
-    try {
-      // Replace this mock fetch with an API call to get product suggestions
-      const response = await fetch('/api/products?search=' + query);
-      const data = await response.json();
-  
-      if (response.ok && Array.isArray(data)) {
-        setSuggestions(data); // Update suggestions with API results
-      } else {
-        setSuggestions([]); // Reset if no results found
+  const handleProductSearch = (() => {
+    let debounceTimeout;
+    return async (query) => {
+      if (!query.trim()) {
+        setSuggestions([]); // Clear suggestions for empty query
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching product suggestions:", error);
-      setSuggestions([]); // Clear suggestions on error
-    }
-  };
-  
+
+      clearTimeout(debounceTimeout); // Clear previous debounce
+
+      debounceTimeout = setTimeout(async () => {
+        try {
+          if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            console.log("Aborted previous fetch request");
+          }
+
+          const newAbortController = new AbortController();
+          abortControllerRef.current = newAbortController;
+
+          console.log("New fetch request");
+          const fetchedProducts = await getProductByName(
+            query,
+            newAbortController.signal
+          );
+          // Map products to the required structure
+          const suggestedItems = fetchedProducts.map((product) => ({
+            id: product.id,
+            PROD_NAME: product.PROD_NAME,
+            PROD_DETAILS_PRICE: product.PROD_DETAILS.PROD_DETAILS_PRICE,
+            PROD_DETAILS_SUPPLIER: product.PROD_DETAILS.PROD_DETAILS_SUPPLIER,
+          }));
+
+          setSuggestions(suggestedItems); // Assuming fetchedProducts is an array
+          console.info("Fetched products:", fetchedProducts);
+        } catch (error) {
+          if (error.name === "AbortError") {
+            console.warn("Fetch request was aborted");
+          } else {
+            console.error("Error fetching product suggestions:", error);
+            setSuggestions([]);
+          }
+        }
+      }, 300); // Adjust debounce delay as needed
+    };
+  })();
+
   return (
     <Modal
       title="Customer Order Details"
@@ -308,41 +345,57 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
               {orderDetails.length > 0 ? (
                 orderDetails.map((detail, index) => (
                   <TableRow key={index}>
-<TableCell>
-  {isEditMode ? (
-    <div style={{ position: "relative" }}>
-      <input
-        type="text"
-        value={detail.SALES_ORDER_PROD_NAME || ""}
-        placeholder="Search to add Product"
-        onChange={(e) => {
-          const value = e.target.value;
-          handleLineUpdate(index, "SALES_ORDER_PROD_NAME", value);
-          handleProductSearch(value); // Trigger search on input change
-        }}
-      />
-      {suggestions.length > 0 && (
-        <SuggestionsContainer>
-          {suggestions.map((product, i) => (
-            <SuggestionItem
-              key={i}
-              onClick={() => {
-                handleLineUpdate(index, "SALES_ORDER_PROD_NAME", product);
-                setSuggestions([]); // Clear suggestions on selection
-              }}
-            >
-              {product}
-            </SuggestionItem>
-          ))}
-        </SuggestionsContainer>
-      )}
-    </div>
-  ) : (
-    detail.SALES_ORDER_PROD_NAME || "Unknown Product"
-  )}
-</TableCell>
+                    <TableCell>
+                      {isEditMode ? (
+                        <div style={{ position: "relative" }}>
+                          <input
+                            type="text"
+                            value={detail.SALES_ORDER_PROD_NAME || ""}
+                            placeholder="Search to add Product"
+                            onFocus={() => setActiveRowIndex(index)} // Track active row
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              handleLineUpdate(
+                                index,
+                                "SALES_ORDER_PROD_NAME",
+                                value
+                              );
+                              handleProductSearch(value); // Trigger product search
+                            }}
+                          />
+                          {activeRowIndex === index &&
+                            suggestions.length > 0 && ( // Show suggestions for the active row
+                              <SuggestionsContainer>
+                                {suggestions.map((product, i) => (
+                                  <SuggestionItem
+                                    key={i}
+                                    onClick={() => {
+                                      handleLineUpdate(
+                                        index,
+                                        "SALES_ORDER_PROD_NAME",
+                                        product.PROD_NAME
+                                      );
+                                      handleLineUpdate(
+                                        index,
+                                        "SALES_ORDER_PRICE",
+                                        product.PROD_DETAILS_PRICE
+                                      ); // Update price
+                                      setSuggestions([]); // Clear suggestions
+                                      setActiveRowIndex(null); // Reset active row
+                                    }}
+                                  >
+                                    {product.PROD_NAME}
+                                  </SuggestionItem>
+                                ))}
+                              </SuggestionsContainer>
+                            )}
+                        </div>
+                      ) : (
+                        detail.SALES_ORDER_PROD_NAME || "Unknown Product"
+                      )}
+                    </TableCell>
 
-
+                    {/* check if isEditMode is True */}
                     <TableCell>
                       {isEditMode ? (
                         <input
@@ -556,7 +609,6 @@ const TableCell = styled.td`
   }
 `;
 
-
 const TotalSummary = styled.div`
   display: flex;
   flex-direction: column;
@@ -588,4 +640,3 @@ const ButtonGroup = styled.div`
 `;
 
 export default CustomerOrderDetailsModal;
-
