@@ -280,7 +280,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       SALES_ORDER_CLIENT_NAME: clientName,
       SALES_ORDER_CLIENT_PROVINCE: clientProvince,
       SALES_ORDER_CLIENT_CITY: clientCity,
-      SALES_ORDER_CLIENT_NUMBER: clientNumber, // Add client number
+      SALES_ORDER_CLIENT_PHONE_NUM: clientNumber, // Add client number
       SALES_ORDER_DLVRY_OPTION: deliveryOption,
       SALES_ORDER_PYMNT_OPTION: paymentTerms,
       SALES_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
@@ -304,7 +304,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       console.log(newOrder);
       const createdOrder = await addNewCustomerOrder(newOrder);
       console.log("Order saved:", createdOrder);
-      console.log('IDDD:', createdOrder.SALES_ORDER_ID);
+      console.log("IDDD:", createdOrder.SALES_ORDER_ID);
       alert("Order has been saved successfully!"); // Display confirmation alert
       logAddCustomerOrder(createdOrder);
       onSave(); // Notify parent component or UI
