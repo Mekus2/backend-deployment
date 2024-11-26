@@ -16,7 +16,9 @@ const CustomerIssueModal = ({ orderDetails, onClose, onSubmit }) => {
       newOrderDetails[index].updatedQuantity = value;
       setUpdatedOrderDetails(newOrderDetails);
     } else {
-      alert("Quantity must not exceed the shipped quantity and cannot be negative.");
+      alert(
+        "Quantity must not exceed the shipped quantity and cannot be negative."
+      );
     }
   };
 
@@ -26,7 +28,11 @@ const CustomerIssueModal = ({ orderDetails, onClose, onSubmit }) => {
       return;
     }
 
-    const validQuantities = updatedOrderDetails.every(item => item.updatedQuantity <= item.OUTBOUND_DETAILS_PROD_QTY && item.updatedQuantity >= 0);
+    const validQuantities = updatedOrderDetails.every(
+      (item) =>
+        item.updatedQuantity <= item.OUTBOUND_DETAILS_PROD_QTY &&
+        item.updatedQuantity >= 0
+    );
     if (!validQuantities) {
       alert("Some quantities are invalid. Please check and try again.");
       return;
@@ -36,7 +42,11 @@ const CustomerIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   };
 
   return (
-    <Modal data-cy="customer-issue-modal" title="Report an Issue" onClose={onClose}>
+    <Modal
+      data-cy="customer-issue-modal"
+      title="Report an Issue"
+      onClose={onClose}
+    >
       {/* Remarks Section */}
       <RemarksLabel>Description of the Issue:</RemarksLabel>
       <RemarksTextArea
@@ -66,16 +76,20 @@ const CustomerIssueModal = ({ orderDetails, onClose, onSubmit }) => {
                 <QuantityInput
                   type="number"
                   value={item.updatedQuantity || 0}
-                  onChange={(e) => handleQuantityChange(index, parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleQuantityChange(index, parseInt(e.target.value))
+                  }
                   min="0"
                   max={item.OUTBOUND_DETAILS_PROD_QTY}
                 />
               </TableCell>
               <TableCell>
-                ₱{(Number(item.OUTBOUND_DETAILS_LINE_PRICE) || 0).toFixed(2)}
+                ₱{(Number(item.OUTBOUND_DETAILS_SELL_PRICE) || 0).toFixed(2)}
               </TableCell>
               <TableCell>
-                ₱{(item.updatedQuantity || 0) * Number(item.OUTBOUND_DETAILS_LINE_PRICE).toFixed(2)}
+                ₱
+                {(item.updatedQuantity || 0) *
+                  Number(item.OUTBOUND_DETAILS_SELL_PRICE).toFixed(2)}
               </TableCell>
             </TableRow>
           ))}

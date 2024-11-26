@@ -77,7 +77,7 @@ class OutboundDeliveryDetails(models.Model):
     OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
     OUTBOUND_DETAILS_PROD_NAME = models.CharField(max_length=100, null=False)
     OUTBOUND_DETAILS_PROD_QTY = models.PositiveIntegerField(null=False, default="0")
-    OUTBOUND_DETAILS_LINE_PRICE = models.DecimalField(
+    OUTBOUND_DETAILS_SELL_PRICE = models.DecimalField(
         null=False, max_digits=10, decimal_places=2, default=0
     )
 

@@ -15,7 +15,7 @@ class OutboundDeliveryDetailsSerializer(serializers.ModelSerializer):
             "OUTBOUND_DEL_ID",
             "OUTBOUND_DETAILS_PROD_NAME",
             "OUTBOUND_DETAILS_PROD_QTY",
-            "OUTBOUND_DETAILS_LINE_PRICE",
+            "OUTBOUND_DETAILS_SELL_PRICE",
         ]
         extra_kwargs = {"OUTBOUND_DEL_ID": {"required": False}}
 
@@ -67,7 +67,7 @@ class CreateOutboundDeliveryDetailsSerializer(serializers.ModelSerializer):
             "OUTBOUND_DEL_ID",
             "OUTBOUND_DETAILS_PROD_NAME",
             "OUTBOUND_DETAILS_PROD_QTY",
-            "OUTBOUND_DETAILS_LINE_PRICE",
+            "OUTBOUND_DETAILS_SELL_PRICE",
         ]
 
         extra_kwargs = {"OUTBOUND_DEL_ID": {"required": False}}
