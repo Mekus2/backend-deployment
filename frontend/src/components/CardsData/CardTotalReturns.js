@@ -13,7 +13,7 @@ const CardTotalReturns = () => {
   return (
     <CardContainer>
       <Card
-        label="Returns"
+        label="Orders w/ Issues"
         value={totalReturns} // Display the total number of returns
         icon={<FaUndoAlt />} // Add the icon here
       />

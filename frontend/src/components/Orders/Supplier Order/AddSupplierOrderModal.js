@@ -104,15 +104,22 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
   };
 
   const handlePhoneNumberChange = (setterFunction, value) => {
+    // Remove all non-numeric characters
     let sanitizedValue = value.replace(/[^0-9]/g, "");
-    if (sanitizedValue.length > 11) {
-      sanitizedValue = sanitizedValue.slice(0, 11);
-    }
+  
+    // Ensure the value starts with '0' if not empty and limit it to 11 digits
     if (sanitizedValue && sanitizedValue[0] !== "0") {
       sanitizedValue = "0" + sanitizedValue.slice(0, 10);
     }
+  
+    if (sanitizedValue.length > 11) {
+      sanitizedValue = sanitizedValue.slice(0, 11); // Truncate to 11 digits
+    }
+  
+    // Update the state with the sanitized value
     setterFunction(sanitizedValue);
   };
+  
 
   const totalQuantity = calculateTotalQuantity(orderDetails);
 
@@ -216,90 +223,92 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
       </Field>
 
       <OrderDetailsSection>
-        <h3>Order Details</h3>
-        <Table>
-          <thead>
-            <tr>
-              <th>Product Name</th>
-              <th>Quantity</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {orderDetails.map((orderDetail, index) => (
-              <tr key={index}>
-                <td>
-                  <Input
-                    style={{
-                      display: "inline-block",
-                      width: "calc(100% - 20px)",
-                    }}
-                    value={inputStates[index] || ""}
-                    onChange={(e) => {
-                      setInputStates((prevStates) => ({
-                        ...prevStates,
-                        [index]: e.target.value,
-                      }));
-                      handleProductInputChange(index, e.target.value);
-                      clearError(`productName${index}`);
-                    }}
-                    placeholder="Product Name"
-                  />
-                  {errors[`productName${index}`] && (
-                    <span style={{ color: "red", marginLeft: "5px" }}>*</span>
-                  )}
-                  {productSearch && index === currentEditingIndex && (
-                    <SuggestionsContainer>
-                      {filteredProducts.length > 0 && (
-                        <SuggestionsList>
-                          {filteredProducts.map((product) => (
-                            <SuggestionItem
-                              key={product.id}
-                              onClick={() => {
-                                setInputStates((prevStates) => ({
-                                  ...prevStates,
-                                  [index]: product.PROD_NAME,
-                                }));
-                                handleProductSelect(index, product);
-                              }}
-                            >
-                              {product.PROD_NAME}
-                            </SuggestionItem>
-                          ))}
-                        </SuggestionsList>
-                      )}
-                    </SuggestionsContainer>
-                  )}
-                </td>
-                <td>
-                  <QuantityInput
-                    type="number"
-                    value={orderDetail.quantity}
-                    onChange={(e) =>
-                      handleQuantityChange(index, parseInt(e.target.value, 10))
-                    }
-                  />
-                </td>
-                <td>
-                  <DeleteButton onClick={() => handleRemoveProduct(index)}>
-                    <IoCloseCircle className="icon" />
-                  </DeleteButton>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-        <Button onClick={handleAddProduct} style={{ marginTop: "10px" }}>
-          Add Product
-        </Button>
+  <h3>Order Details</h3>
+  <Table>
+    <thead>
+      <tr>
+        <th>Product Name</th>
+        <th>Quantity</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {orderDetails.map((orderDetail, index) => (
+        <tr key={index}>
+          <td>
+            <Input
+              style={{
+                display: "inline-block",
+                width: "calc(100% - 20px)",
+              }}
+              value={inputStates[index] || ""}
+              onChange={(e) => {
+                setInputStates((prevStates) => ({
+                  ...prevStates,
+                  [index]: e.target.value,
+                }));
+                handleProductInputChange(index, e.target.value);
+                clearError(`productName${index}`);
+              }}
+              placeholder="Product Name"
+            />
+            {errors[`productName${index}`] && (
+              <span style={{ color: "red", marginLeft: "5px" }}>*</span>
+            )}
+            {productSearch && index === currentEditingIndex && (
+              <SuggestionsContainer>
+                {filteredProducts.length > 0 && (
+                  <SuggestionsList>
+                    {filteredProducts.map((product) => (
+                      <SuggestionItem
+                        key={product.id}
+                        onClick={() => {
+                          setInputStates((prevStates) => ({
+                            ...prevStates,
+                            [index]: product.PROD_NAME,
+                          }));
+                          handleProductSelect(index, product);
+                        }}
+                      >
+                        {product.PROD_NAME}
+                      </SuggestionItem>
+                    ))}
+                  </SuggestionsList>
+                )}
+              </SuggestionsContainer>
+            )}
+          </td>
+          <td>
+            <QuantityInput
+              type="number"
+              value={orderDetail.quantity}
+              onChange={(e) =>
+                handleQuantityChange(index, parseInt(e.target.value, 10))
+              }
+            />
+          </td>
+          <td>
+            <DeleteButton onClick={() => handleRemoveProduct(index)}>
+              <IoCloseCircle className="icon" />
+            </DeleteButton>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </Table>
+  <div style={{ textAlign: "right", marginTop: "10px" }}>
+    <Button onClick={handleAddProduct}>Add Product</Button>
+  </div>
 
-        <TotalSection>
-          <TotalRow>
-            <TotalLabel>Total Quantity</TotalLabel>
-            <TotalValue>{totalQuantity}</TotalValue>
-          </TotalRow>
-        </TotalSection>
-      </OrderDetailsSection>
+  <TotalSection>
+  <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+    <TotalLabel>Total Quantity: </TotalLabel>
+    <TotalValue>{totalQuantity}</TotalValue>
+  </TotalRow>
+</TotalSection>
+
+</OrderDetailsSection>
+
 
       <ButtonGroup>
         <Button variant="red" onClick={onClose}>

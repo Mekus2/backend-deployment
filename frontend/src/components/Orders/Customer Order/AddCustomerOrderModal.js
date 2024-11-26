@@ -122,21 +122,21 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
   };
   const handleAddClientWithNotification = () => {
     handleAddClient();
-    notify.success("You can now add a new client!"); // Add Client toast notification
+    notify.success("You can now add a new customer!"); // Add Client toast notification
   };
 
   return (
     <Modal title="Add Customer Order" onClose={onClose}>
       <Field>
-        <Label>Client Search</Label>
+        <Label>Customer Search</Label>
         <SupplierSearchContainer>
           <Input
             value={clientSearch}
             onChange={(e) => handleClientInputChange(e.target.value)}
-            placeholder="Search Client"
+            placeholder="Search Customer"
           />
           <PIconButton onClick={handleAddClientWithNotification}>
-            <FaPlus className="icon" /> Client
+            <FaPlus className="icon" /> Customer
           </PIconButton>
         </SupplierSearchContainer>
         {clientSearch && filteredClients.length > 0 && (
@@ -157,7 +157,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
 
       <Field>
         <Label>
-          Client Name{" "}
+          Customer Name{" "}
           {errors.clientName && <span style={{ color: "red" }}>*</span>}
         </Label>
         <Input
@@ -166,7 +166,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             setClientName(e.target.value);
             clearError("clientName");
           }}
-          placeholder="Client Name"
+          placeholder="Customer Name"
           disabled={!editable}
         />
       </Field>
