@@ -8,7 +8,12 @@ from rest_framework import status, permissions
 from .models import PurchaseOrder, PurchaseOrderDetails
 from ...Product.models import Product
 
-from .serializers import PurchaseOrderSerializer, PurchaseOrderDetailsSerializer
+from .serializers import (
+    PurchaseOrderSerializer,
+    PurchaseOrderDetailsSerializer,
+    PurchaseOrderDetailsUpdateSerializer,
+    PurchaseOrderUpdateSerializer,
+)
 from ...Supplier.utils import (
     check_supplier_exists,
     add_supplier,
@@ -188,3 +193,109 @@ class PurchaseOrderDetailView(APIView):
             )
         serializer = PurchaseOrderDetailsSerializer(details, many=True)
         return Response(serializer.data)
+
+
+class UpdatePurchaseOrderView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def put(self, request, pk):
+        try:
+            # Fetch the instance of PurchaseOrder
+            try:
+                purchase_order = PurchaseOrder.objects.get(pk=pk)
+            except PurchaseOrder.DoesNotExist:
+                return Response(
+                    {"detail": f"PurchaseOrder with ID {pk} does not exist."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Deserialize and validate data using the serializer
+            serializer = PurchaseOrderUpdateSerializer(
+                purchase_order, data=request.data, partial=True
+            )
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            validated_data = serializer.validated_data
+
+            # Handle the update process
+            with transaction.atomic():
+                # Update the main PurchaseOrder instance
+                for field, value in validated_data.items():
+                    if field != "purchase_order_details":
+                        setattr(purchase_order, field, value)
+                purchase_order.save()
+
+                # Update nested details if provided
+                if "purchase_order_details" in validated_data:
+                    details_data = validated_data["purchase_order_details"]
+
+                    # Use the PurchaseOrderDetailsUpdateSerializer
+                    existing_details = {
+                        detail.PURCHASE_ORDER_DET_ID: detail
+                        for detail in purchase_order.purchase_order.all()
+                    }
+                    updates = []
+                    creations = []
+
+                    for detail_data in details_data:
+                        detail_id = detail_data.get("PURCHASE_ORDER_DET_ID")
+
+                        if detail_id:
+                            if detail_id in existing_details:
+                                # Update existing detail
+                                detail_instance = existing_details.pop(detail_id)
+                                detail_serializer = (
+                                    PurchaseOrderDetailsUpdateSerializer(
+                                        detail_instance, data=detail_data, partial=True
+                                    )
+                                )
+                                if detail_serializer.is_valid():
+                                    updates.append(detail_serializer.save())
+                                else:
+                                    return Response(
+                                        detail_serializer.errors,
+                                        status=status.HTTP_400_BAD_REQUEST,
+                                    )
+                            else:
+                                # Create new detail if ID not found
+                                creations.append(
+                                    PurchaseOrderDetails(
+                                        PURCHASE_ORDER_ID=purchase_order, **detail_data
+                                    )
+                                )
+                        else:
+                            # Create new detail if no ID provided
+                            creations.append(
+                                PurchaseOrderDetails(
+                                    PURCHASE_ORDER_ID=purchase_order, **detail_data
+                                )
+                            )
+
+                    # Bulk update and create
+                    if updates:
+                        PurchaseOrderDetails.objects.bulk_update(
+                            updates,
+                            [
+                                "PURCHASE_ORDER_DET_PROD_ID",
+                                "PURCHASE_ORDER_DET_PROD_NAME",
+                                "PURCHASE_ORDER_DET_PROD_LINE_QTY",
+                            ],
+                        )
+                    if creations:
+                        PurchaseOrderDetails.objects.bulk_create(creations)
+
+                    # Delete details not included in the update
+                    for detail in existing_details.values():
+                        detail.delete()
+
+            return Response(
+                {"detail": "PurchaseOrder and its details updated successfully."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {"detail": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
