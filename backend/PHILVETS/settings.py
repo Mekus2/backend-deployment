@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "Admin.Return",
     "Admin.Logs",
     "Admin.Report",
+    "Admin.Issue",
 ]
 
 REST_FRAMEWORK = {
@@ -82,7 +83,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 AUTH_USER_MODEL = "Account.User"
 
-TIME_ZONE = 'Asia/Manila'
+TIME_ZONE = "Asia/Manila"
 USE_TZ = True  # Enable timezone support
 
 from datetime import timedelta  # noqa:E402

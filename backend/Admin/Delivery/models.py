@@ -146,10 +146,10 @@ class InboundDeliveryDetails(models.Model):
     )
     INBOUND_DEL_DETAIL_ORDERED_QTY = models.PositiveIntegerField(null=False, default=0)
     INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT = models.PositiveIntegerField(
-        null=False, default=0
+        null=True, default=0
     )
     INBOUND_DEL_DETAIL_LINE_QTY_DEFECT = models.PositiveIntegerField(
-        null=False, default=0
+        null=True, default=0
     )
     INBOUND_DEL_DETAIL_PROD_EXP_DATE = models.DateField(null=True, blank=True)
 

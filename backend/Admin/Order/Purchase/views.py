@@ -1,5 +1,9 @@
 from django.shortcuts import render
 from django.db import transaction
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404
+import logging
+from django.http import Http404
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,6 +11,8 @@ from rest_framework import status, permissions
 
 from .models import PurchaseOrder, PurchaseOrderDetails
 from ...Product.models import Product
+from Admin.Delivery.models import InboundDelivery, InboundDeliveryDetails
+from Admin.Supplier.models import Supplier
 
 from .serializers import (
     PurchaseOrderSerializer,
@@ -20,6 +26,9 @@ from ...Supplier.utils import (
     get_existing_supplier_id,
 )
 from ...Product.utils import get_existing_product_, check_product_exists, add_product
+
+# Configure logging for error tracking
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
@@ -299,3 +308,204 @@ class UpdatePurchaseOrderView(APIView):
                 {"detail": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class TransferToInboundDelivery(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, purchase_order_id):
+        try:
+            with transaction.atomic():  # Start the atomic transaction
+                # Fetch the PurchaseOrder
+                purchase_order = PurchaseOrder.objects.get(
+                    PURCHASE_ORDER_ID=purchase_order_id
+                )
+
+                # Check if the status is being updated to 'Accepted'
+                if request.data.get("PURCHASE_ORDER_STATUS") == "Accepted":
+                    # Update the purchase order status
+                    purchase_order.PURCHASE_ORDER_STATUS = "Accepted"
+                    purchase_order.save()
+
+                    accepted_by_user = request.data.get("USERNAME")
+
+                    # Create InboundDelivery from the PurchaseOrder
+                    inbound_delivery = InboundDelivery.objects.create(
+                        PURCHASE_ORDER_ID=purchase_order,
+                        INBOUND_DEL_SUPP_ID=purchase_order.PURCHASE_ORDER_SUPPLIER_ID,
+                        INBOUND_DEL_SUPP_NAME=purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME,
+                        INBOUND_DEL_TOTAL_ORDERED_QTY=purchase_order.PURCHASE_ORDER_TOTAL_QTY,
+                        INBOUND_DEL_STATUS="Pending",
+                        INBOUND_DEL_TOTAL_PRICE=0,  # Default value, can be updated later
+                        INBOUND_DEL_ORDER_APPRVDBY_USER=accepted_by_user,
+                    )
+
+                    # Transfer PurchaseOrderDetails to InboundDeliveryDetails
+                    purchase_order_details = PurchaseOrderDetails.objects.filter(
+                        PURCHASE_ORDER_ID=purchase_order
+                    )
+                    for detail in purchase_order_details:
+                        InboundDeliveryDetails.objects.create(
+                            INBOUND_DEL_ID=inbound_delivery,
+                            INBOUND_DEL_DETAIL_PROD_ID_id=detail.PURCHASE_ORDER_DET_PROD_ID,
+                            INBOUND_DEL_DETAIL_PROD_NAME=detail.PURCHASE_ORDER_DET_PROD_NAME,
+                            INBOUND_DEL_DETAIL_ORDERED_QTY=detail.PURCHASE_ORDER_DET_PROD_LINE_QTY,
+                        )
+
+                    return Response(
+                        {
+                            "message": "Purchase Order accepted and transferred to Inbound Delivery successfully."
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+
+                else:
+                    return Response(
+                        {
+                            "error": "Invalid status update. Only 'Accepted' status can trigger the transfer."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+        except PurchaseOrder.DoesNotExist:
+            return Response(
+                {"error": f"Purchase Order with ID {purchase_order_id} not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class PurchaseOrderUpdateAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def patch(self, request, purchase_order_id):
+        try:
+            with transaction.atomic():
+                # Fetch the PurchaseOrder
+                purchase_order = get_object_or_404(
+                    PurchaseOrder, PURCHASE_ORDER_ID=purchase_order_id
+                )
+
+                # Update PurchaseOrder fields from the request data
+                if supplier_id := request.data.get("PURCHASE_ORDER_SUPPLIER_ID"):
+                    supplier = get_object_or_404(Supplier, id=supplier_id)
+                    purchase_order.PURCHASE_ORDER_SUPPLIER_ID = supplier
+
+                purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME = request.data.get(
+                    "PURCHASE_ORDER_SUPPLIER_CMPNY_NAME",
+                    purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME,
+                )
+                purchase_order.save()
+
+                # Update or create InboundDelivery
+                inbound_delivery, created = InboundDelivery.objects.get_or_create(
+                    PURCHASE_ORDER_ID=purchase_order,
+                    defaults={
+                        "INBOUND_DEL_STATUS": "Pending",  # Default status
+                        "INBOUND_DEL_TOTAL_ORDERED_QTY": 0,  # Will be updated later
+                        "INBOUND_DEL_SUPP_ID": purchase_order.PURCHASE_ORDER_SUPPLIER_ID,
+                        "INBOUND_DEL_SUPP_NAME": purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME,
+                    },
+                )
+
+                if not created:
+                    inbound_delivery.INBOUND_DEL_SUPP_ID = (
+                        purchase_order.PURCHASE_ORDER_SUPPLIER_ID
+                    )
+                    inbound_delivery.INBOUND_DEL_SUPP_NAME = (
+                        purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME
+                    )
+                    inbound_delivery.save()
+
+                # Update PurchaseOrderDetails and InboundDeliveryDetails
+                updated_details = request.data.get("details", [])
+                existing_details_ids = set()
+
+                for detail_data in updated_details:
+                    prod_id = detail_data.get("PURCHASE_ORDER_DET_PROD_ID")
+                    prod_name = detail_data.get("PURCHASE_ORDER_DET_PROD_NAME")
+                    prod_line_qty = detail_data.get("PURCHASE_ORDER_DET_PROD_LINE_QTY")
+
+                    product = Product.objects.get(id=prod_id)
+
+                    # Update or create PurchaseOrderDetail
+                    purchase_order_detail, _ = (
+                        PurchaseOrderDetails.objects.update_or_create(
+                            PURCHASE_ORDER_ID=purchase_order,
+                            PURCHASE_ORDER_DET_PROD_ID=prod_id,
+                            defaults={
+                                "PURCHASE_ORDER_DET_PROD_NAME": prod_name,
+                                "PURCHASE_ORDER_DET_PROD_LINE_QTY": prod_line_qty,
+                            },
+                        )
+                    )
+                    existing_details_ids.add(
+                        purchase_order_detail.PURCHASE_ORDER_DET_ID
+                    )
+
+                    # Update or create InboundDeliveryDetail
+                    InboundDeliveryDetails.objects.update_or_create(
+                        INBOUND_DEL_ID=inbound_delivery,
+                        INBOUND_DEL_DETAIL_PROD_ID=product,
+                        defaults={
+                            "INBOUND_DEL_DETAIL_PROD_NAME": prod_name,
+                            "INBOUND_DEL_DETAIL_ORDERED_QTY": prod_line_qty,
+                        },
+                    )
+
+                # Remove outdated details
+                PurchaseOrderDetails.objects.filter(
+                    PURCHASE_ORDER_ID=purchase_order
+                ).exclude(PURCHASE_ORDER_DET_ID__in=existing_details_ids).delete()
+
+                InboundDeliveryDetails.objects.filter(
+                    INBOUND_DEL_ID=inbound_delivery
+                ).exclude(
+                    INBOUND_DEL_DETAIL_PROD_ID__in=[
+                        d["PURCHASE_ORDER_DET_PROD_ID"] for d in updated_details
+                    ]
+                ).delete()
+
+                # Recalculate the total quantity
+                total_qty = PurchaseOrderDetails.objects.filter(
+                    PURCHASE_ORDER_ID=purchase_order
+                ).aggregate(total_qty=Sum("PURCHASE_ORDER_DET_PROD_LINE_QTY"))[
+                    "total_qty"
+                ]
+
+                # Update the total quantity in the PurchaseOrder and InboundDelivery
+                purchase_order.PURCHASE_ORDER_TOTAL_QTY = total_qty
+                purchase_order.save()
+
+                inbound_delivery.INBOUND_DEL_TOTAL_ORDERED_QTY = total_qty
+                inbound_delivery.save()
+
+                return Response(
+                    {
+                        "message": "Purchase Order and related Inbound Delivery updated successfully."
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+        except Http404 as e:
+            logger.error(f"Resource not found: {str(e)}")
+            raise
+
+        except Exception as e:
+            logger.error(f"An unexpected error occurred: {str(e)}")
+            raise
+
+        # except PurchaseOrder.DoesNotExist:
+        #     return Response(
+        #         {"error": f"Purchase Order with ID {purchase_order_id} not found."},
+        #         status=status.HTTP_404_NOT_FOUND,
+        #     )
+        # except Exception as e:
+        #     return Response(
+        #         {"error": f"An error occurred: {str(e)}"},
+        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     )
