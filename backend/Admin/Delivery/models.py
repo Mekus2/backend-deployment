@@ -50,18 +50,15 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_PROVINCE = models.CharField(max_length=30, null=True, blank=False)
     OUTBOUND_DEL_CREATED = models.DateTimeField(auto_now_add=True)
     OUTBOUND_DEL_DATEUPDATED = models.DateTimeField(auto_now=True)
-    OUTBOUND_DEL_ACCPTD_BY_USER = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name="customer_deliveries_accepted",
+    OUTBOUND_DEL_ACCPTD_BY_USER = models.CharField(
+        max_length=60, null=False, default="Admin"
     )
-    OUTBOUND_DEL_CREATEDBY_USER_ID = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        null=True,
-        related_name="customer_deliveries_created",
-    )
+    # OUTBOUND_DEL_CREATEDBY_USER_ID = models.ForeignKey(
+    #     settings.AUTH_USER_MODEL,
+    #     on_delete=models.CASCADE,
+    #     null=True,
+    #     related_name="customer_deliveries_created",
+    # )
 
     def __str__(self):
         return f"Customer Delivery #{self.OUTBOUND_DEL_ID} for {self.OUTBOUND_DEL_CUSTOMER_NAME}"
