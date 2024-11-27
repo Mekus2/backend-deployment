@@ -3,6 +3,7 @@ from django.db import models
 # Create your models here.
 from django.conf import settings
 from Admin.Customer.models import Clients
+from Admin.Product.models import Product
 
 
 class SalesOrder(models.Model):
@@ -67,7 +68,9 @@ class SalesOrderDetails(models.Model):
     SALES_ORDER_ID = models.ForeignKey(
         SalesOrder, on_delete=models.CASCADE, null=False, related_name="sales_order"
     )
-    SALES_ORDER_PROD_ID = models.IntegerField(null=False)
+    SALES_ORDER_PROD_ID = models.ForeignKey(
+        Product, null=False, on_delete=models.CASCADE
+    )
     SALES_ORDER_PROD_NAME = models.CharField(max_length=50, null=False)
     SALES_ORDER_LINE_PRICE = models.DecimalField(
         max_digits=10, null=False, decimal_places=2, default=0

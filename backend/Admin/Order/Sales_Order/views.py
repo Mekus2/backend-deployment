@@ -11,6 +11,8 @@ from ...Customer.utils import (
     add_customer,
     get_existing_customer_id,
 )
+from Admin.Delivery.models import OutboundDelivery, OutboundDeliveryDetails
+from Account.models import User
 
 
 # Permission imports
@@ -171,3 +173,74 @@ class SalesOrderDetailsAPIView(APIView):
             {"message": "Sales Order details deleted successfully."},
             status=status.HTTP_204_NO_CONTENT,
         )
+
+
+class TransferToOutboundDelivery(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, sales_order_id):
+        try:
+            with transaction.atomic():  # Start the atomic transaction
+                # Fetch the SalesOrder
+                sales_order = SalesOrder.objects.get(SALES_ORDER_ID=sales_order_id)
+
+                # Check if the status is being updated to 'Accepted'
+                if request.data.get("SALES_ORDER_STATUS") == "Accepted":
+                    # Update the sales order status to 'Accepted'
+                    sales_order.SALES_ORDER_STATUS = "Accepted"
+                    sales_order.save()
+
+                    accepted_by_user = request.data.get("USERNAME")
+
+                    # Create OutboundDelivery from the SalesOrder
+                    outbound_delivery = OutboundDelivery.objects.create(
+                        SALES_ORDER_ID=sales_order,
+                        CLIENT_ID=sales_order.CLIENT_ID,
+                        OUTBOUND_DEL_CUSTOMER_NAME=sales_order.SALES_ORDER_CLIENT_NAME,
+                        OUTBOUND_DEL_TOTAL_PRICE=sales_order.SALES_ORDER_TOTAL_PRICE,
+                        OUTBOUNND_DEL_DISCOUNT=sales_order.SALES_ORDER_TOTAL_DISCOUNT,
+                        OUTBOUND_DEL_STATUS="Pending",  # Default status, can be updated later
+                        OUTBOUND_DEL_DLVRD_QTY=sales_order.SALES_ORDER_TOTAL_QTY,
+                        OUTBOUND_DEL_DLVRY_OPTION=sales_order.SALES_ORDER_DLVRY_OPTION,
+                        OUTBOUND_DEL_CITY=sales_order.SALES_ORDER_CLIENT_CITY,
+                        OUTBOUND_DEL_PROVINCE=sales_order.SALES_ORDER_CLIENT_PROVINCE,
+                        OUTBOUND_DEL_ACCPTD_BY_USER=accepted_by_user,
+                    )
+
+                    # Transfer SalesOrderDetails to OutboundDeliveryDetails
+                    sales_order_details = SalesOrderDetails.objects.filter(
+                        SALES_ORDER_ID=sales_order
+                    )
+                    for detail in sales_order_details:
+                        OutboundDeliveryDetails.objects.create(
+                            OUTBOUND_DEL_ID=outbound_delivery,
+                            OUTBOUND_DETAILS_PROD_NAME=detail.SALES_ORDER_PROD_NAME,
+                            OUTBOUND_DETAILS_PROD_QTY=detail.SALES_ORDER_LINE_QTY,
+                            OUTBOUND_DETAILS_SELL_PRICE=detail.SALES_ORDER_LINE_PRICE,
+                        )
+
+                    return Response(
+                        {
+                            "message": "Sales Order accepted and transferred to Outbound Delivery successfully."
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+
+                else:
+                    return Response(
+                        {
+                            "error": "Invalid status update. Only 'Accepted' status can trigger the transfer."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+        except SalesOrder.DoesNotExist:
+            return Response(
+                {"error": f"Sales Order with ID {sales_order_id} not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
