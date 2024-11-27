@@ -1,5 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.db import transaction
+from django.db.models import Sum
+from django.http import Http404
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,8 +14,7 @@ from ...Customer.utils import (
     get_existing_customer_id,
 )
 from Admin.Delivery.models import OutboundDelivery, OutboundDeliveryDetails
-from Account.models import User
-
+from Admin.Product.models import Product
 
 # Permission imports
 from Admin.authentication import CookieJWTAuthentication
@@ -242,5 +243,136 @@ class TransferToOutboundDelivery(APIView):
         except Exception as e:
             return Response(
                 {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class SalesOrderUpdateAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def patch(self, request, sales_order_id):
+        try:
+            with transaction.atomic():
+                # Fetch the SalesOrder
+                sales_order = get_object_or_404(
+                    SalesOrder, SALES_ORDER_ID=sales_order_id
+                )
+
+                # Update SalesOrder fields from the request data
+                sales_order.CLIENT_ID = request.data.get(
+                    "CLIENT_ID", sales_order.CLIENT_ID
+                )  # Update Client ID if changed
+                sales_order.SALES_ORDER_CLIENT_NAME = request.data.get(
+                    "CLIENT_NAME", sales_order.CLIENT_NAME
+                )  # Update Client Name
+                sales_order.SALES_ORDER_CLIENT_PROVINCE = request.data.get(
+                    "CLIENT_PROVINCE", sales_order.SALES_ORDER_CLIENT_PROVINCE
+                )  # Update Client Province
+                sales_order.SALES_ORDER_CLIENT_CITY = request.data.get(
+                    "CLIENT_CITY", sales_order.SALES_ORDER_CLIENT_CITY
+                )  # Update Client City
+                sales_order.SALES_ORDER_DLVRY_OPTION = request.data.get(
+                    "DELIVERY_OPTION", sales_order.SALES_ORDER_DLVRY_OPTION
+                )
+                sales_order.SALES_ORDER_PYMNT_OPTION = request.data.get(
+                    "PAYMENT_OPTION", sales_order.SALES_ORDER_PYMNT_OPTION
+                )
+                sales_order.save()
+
+                # Check if there is an existing OutboundDelivery for the SalesOrder
+                outbound_delivery = OutboundDelivery.objects.filter(
+                    SALES_ORDER_ID=sales_order
+                ).first()
+
+                # Update SalesOrderDetails and optionally OutboundDeliveryDetails
+                updated_details = request.data.get("details", [])
+                existing_details_ids = set()
+
+                for detail_data in updated_details:
+                    product_id = detail_data.get("SALES_ORDER_DET_PROD_ID")
+                    product_name = detail_data.get("SALES_ORDER_DET_PROD_NAME")
+                    quantity = detail_data.get("SALES_ORDER_DET_PROD_LINE_QTY")
+                    price = detail_data.get("SALES_ORDER_DET_PROD_PRICE")
+
+                    product = get_object_or_404(Product, id=product_id)
+
+                    # Update or create SalesOrderDetails
+                    sales_order_detail, _ = SalesOrderDetails.objects.update_or_create(
+                        SALES_ORDER_ID=sales_order,
+                        SALES_ORDER_DET_PROD_ID=product_id,
+                        defaults={
+                            "SALES_ORDER_DET_PROD_NAME": product_name,
+                            "SALES_ORDER_DET_PROD_LINE_QTY": quantity,
+                            "SALES_ORDER_DET_PROD_PRICE": price,
+                        },
+                    )
+                    existing_details_ids.add(sales_order_detail.SALES_ORDER_DET_ID)
+
+                    # If an OutboundDelivery exists, update or create OutboundDeliveryDetails
+                    if outbound_delivery:
+                        OutboundDeliveryDetails.objects.update_or_create(
+                            OUTBOUND_DEL_ID=outbound_delivery,
+                            OUTBOUND_DEL_DETAIL_PROD_ID=product,
+                            defaults={
+                                "OUTBOUND_DEL_DETAIL_PROD_NAME": product_name,
+                                "OUTBOUND_DEL_DETAIL_QTY": quantity,
+                            },
+                        )
+
+                # Remove outdated details
+                SalesOrderDetails.objects.filter(SALES_ORDER_ID=sales_order).exclude(
+                    SALES_ORDER_DET_ID__in=existing_details_ids
+                ).delete()
+
+                if outbound_delivery:
+                    OutboundDeliveryDetails.objects.filter(
+                        OUTBOUND_DEL_ID=outbound_delivery
+                    ).exclude(
+                        OUTBOUND_DEL_DETAIL_PROD_ID__in=[
+                            detail["SALES_ORDER_DET_PROD_ID"]
+                            for detail in updated_details
+                        ]
+                    ).delete()
+
+                # Recalculate the total quantity and total price
+                total_qty = SalesOrderDetails.objects.filter(
+                    SALES_ORDER_ID=sales_order
+                ).aggregate(total_qty=Sum("SALES_ORDER_DET_PROD_LINE_QTY"))["total_qty"]
+                total_price = SalesOrderDetails.objects.filter(
+                    SALES_ORDER_ID=sales_order
+                ).aggregate(total_price=Sum("SALES_ORDER_DET_PROD_PRICE"))[
+                    "total_price"
+                ]
+
+                # Update the total quantity and price in SalesOrder
+                sales_order.SALES_ORDER_TOTAL_QTY = total_qty or 0
+                sales_order.SALES_ORDER_TOTAL_PRICE = total_price or 0
+                sales_order.save()
+
+                # Update the total quantity in the OutboundDelivery if it exists
+                if outbound_delivery:
+                    outbound_delivery.OUTBOUND_DEL_TOTAL_QTY = total_qty or 0
+                    outbound_delivery.save()
+
+                return Response(
+                    {
+                        "message": (
+                            "Sales Order and related Outbound Delivery updated successfully."
+                            if outbound_delivery
+                            else "Sales Order updated successfully."
+                        ),
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+        except Http404 as e:
+            return Response(
+                {"error": f"Resource not found: {str(e)}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
