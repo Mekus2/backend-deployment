@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Modal from "../../Layout/Modal";
 import Button from "../../Layout/Button";
 import { IoCloseCircle } from "react-icons/io5";
@@ -20,62 +20,66 @@ import {
   SupplierSearchContainer,
   PIconButton,
   ButtonGroup,
+  Select,
 } from "../OrderStyles";
 import { FaPlus } from "react-icons/fa";
-import useAddSupplierOrderModal from "../../../hooks/useAddSupplierOrderModal";
-import { calculateTotalQuantity } from "../../../utils/CalculationUtils";
-import { notify } from "../../Layout/CustomToast"; // Import the toast notification utility
+import useAddCustomerOrderModal from "../../../hooks/useAddCustomerOrderModal";
+import { calculateLineTotal } from "../../../utils/CalculationUtils";
+import { notify } from "../../Layout/CustomToast";
+import "../../../styles.css";
 
-const EditCusOrderModal = ({ onClose, onSave, orderData }) => {
+const EditCustomerOrderModal = ({ customerOrderDetails, onClose, onSave }) => {
   const {
-    contactPersonName,
-    setContactPersonName,
-    contactPersonNumber,
-    setContactPersonNumber,
-    supplierCompanyName,
-    setSupplierCompanyName,
-    supplierCompanyNum,
-    setSupplierCompanyNum,
-    editable,
-    supplierSearch,
-    filteredSuppliers,
+    clientName,
+    setClientName,
+    clientCity,
+    setClientCity,
+    clientProvince,
+    setClientProvince,
+    clientNumber,
+    setClientNumber,
+    deliveryOption,
+    setDeliveryOption,
+    paymentTerms,
+    setPaymentTerms,
     orderDetails,
-    productSearch,
-    filteredProducts,
-    currentEditingIndex,
-    handleAddProduct,
+    setOrderDetails,
     handleProductInputChange,
-    handleProductSelect,
-    handleSupplierInputChange,
-    handleSupplierSelect,
     handleQuantityChange,
-    handleRemoveProduct,
-    handleAddSupplier,
+    handlePriceChange,
     handleSave,
-  } = useAddSupplierOrderModal(onSave, onClose);
+    handleRemoveProduct,
+    handleAddProduct,
+  } = useAddCustomerOrderModal(onSave, onClose);
 
   const [errors, setErrors] = useState({});
-  const [inputStates, setInputStates] = useState({});
+
+  // Populate modal fields with customer order details
+  useEffect(() => {
+    console.log("Customer Order Details: ", customerOrderDetails); // Debugging
+    if (customerOrderDetails) {
+      setClientName(customerOrderDetails.clientName || "");
+      setClientCity(customerOrderDetails.clientCity || "");
+      setClientProvince(customerOrderDetails.clientProvince || "");
+      setClientNumber(customerOrderDetails.clientNumber || "");
+      setDeliveryOption(customerOrderDetails.deliveryOption || "");
+      setPaymentTerms(customerOrderDetails.paymentTerms || "");
+      setOrderDetails(customerOrderDetails.orderDetails || []);
+    }
+  }, [customerOrderDetails]);
+  
 
   const validateFields = () => {
     const newErrors = {};
-
-    if (!supplierCompanyName) newErrors.supplierCompanyName = true;
-    if (!supplierCompanyNum) newErrors.supplierCompanyNum = true;
-    if (!contactPersonName) newErrors.contactPersonName = true;
-    if (!contactPersonNumber) newErrors.contactPersonNumber = true;
-
-    if (!/^(0\d{10})?$/.test(contactPersonNumber)) {
-      newErrors.contactPersonNumber = true;
-    }
-    if (!/^(0\d{10})?$/.test(supplierCompanyNum)) {
-      newErrors.supplierCompanyNum = true;
-    }
+    if (!clientName) newErrors.clientName = true;
+    if (!clientCity) newErrors.clientCity = true;
+    if (!clientProvince) newErrors.clientProvince = true;
+    if (!clientNumber) newErrors.clientNumber = true;
+    if (!deliveryOption) newErrors.deliveryOption = true;
+    if (!paymentTerms) newErrors.paymentTerms = true;
 
     orderDetails.forEach((detail, index) => {
-      if (!detail.productName) {
-        newErrors[`productName${index}`] = true;
-      }
+      if (!detail.productName) newErrors[`productName${index}`] = true;
     });
 
     setErrors(newErrors);
@@ -85,143 +89,113 @@ const EditCusOrderModal = ({ onClose, onSave, orderData }) => {
   const handleSaveWithValidation = async () => {
     if (validateFields()) {
       try {
-        await handleSave(); // Wait for handleSave to complete
-        notify.success("Order successfully updated!"); // Success toast notification
+        await handleSave();
+        notify.success("Order successfully updated!");
       } catch (error) {
-        // Display error toast if the save fails
         notify.error("Order not saved. Please try again.");
       }
     } else {
-      notify.error("Please fill in all required fields."); // Error toast for empty fields
+      notify.error("Please fill in all required fields.");
     }
-  };
-
-  const clearError = (field) => {
-    setErrors((prevErrors) => ({
-      ...prevErrors,
-      [field]: undefined,
-    }));
-  };
-
-  const handlePhoneNumberChange = (setterFunction, value) => {
-    let sanitizedValue = value.replace(/[^0-9]/g, "");
-    if (sanitizedValue.length > 11) {
-      sanitizedValue = sanitizedValue.slice(0, 11);
-    }
-    if (sanitizedValue && sanitizedValue[0] !== "0") {
-      sanitizedValue = "0" + sanitizedValue.slice(0, 10);
-    }
-    setterFunction(sanitizedValue);
-  };
-
-  const totalQuantity = calculateTotalQuantity(orderDetails);
-
-  const handleAddSupplierWithNotification = () => {
-    handleAddSupplier(); // Calls the function that adds the supplier
-    notify.success("You can now add a new supplier!"); // Trigger the toast notification
   };
 
   return (
-    <Modal title="Edit Supplier Order" onClose={onClose}>
+    <Modal title="Edit Customer Order" onClose={onClose}>
       <Field>
-        <Label>Supplier Search</Label>
-        <SupplierSearchContainer>
+        <Label>Customer Name</Label>
+        <Input
+          value={clientName}
+          onChange={(e) => {
+            setClientName(e.target.value);
+            setErrors((prev) => ({ ...prev, clientName: undefined }));
+          }}
+          placeholder="Customer Name"
+        />
+        {errors.clientName && <span style={{ color: "red" }}>*</span>}
+      </Field>
+
+      <Field>
+        <Label>Location</Label>
+        <div style={{ display: "flex", gap: "10px" }}>
           <Input
-            value={supplierSearch}
-            onChange={(e) => handleSupplierInputChange(e.target.value)}
-            placeholder="Search Supplier"
+            value={clientProvince}
+            onChange={(e) => {
+              setClientProvince(e.target.value);
+              setErrors((prev) => ({ ...prev, clientProvince: undefined }));
+            }}
+            placeholder="Province"
           />
-          <PIconButton onClick={handleAddSupplierWithNotification}>
-            <FaPlus className="icon" /> Supplier
-          </PIconButton>
-        </SupplierSearchContainer>
-        {supplierSearch && filteredSuppliers.length > 0 && (
-          <SuggestionsContainer>
-            <SuggestionsList>
-              {filteredSuppliers.map((supplier) => (
-                <SuggestionItem
-                  key={supplier.Supp_Company_Name}
-                  onClick={() => handleSupplierSelect(supplier)}
-                >
-                  {supplier.Supp_Company_Name}
-                </SuggestionItem>
-              ))}
-            </SuggestionsList>
-          </SuggestionsContainer>
-        )}
+          <Input
+            value={clientCity}
+            onChange={(e) => {
+              setClientCity(e.target.value);
+              setErrors((prev) => ({ ...prev, clientCity: undefined }));
+            }}
+            placeholder="City"
+          />
+        </div>
       </Field>
 
       <Field>
-        <Label>
-          Supplier Name{" "}
-          {errors.supplierCompanyName && <span style={{ color: "red" }}>*</span>}
-        </Label>
+        <Label>Customer Number</Label>
         <Input
-          value={supplierCompanyName}
+          value={clientNumber}
           onChange={(e) => {
-            setSupplierCompanyName(e.target.value);
-            clearError("supplierCompanyName");
+            setClientNumber(e.target.value.replace(/\D/g, ""));
+            setErrors((prev) => ({ ...prev, clientNumber: undefined }));
           }}
-          placeholder="Supplier Name"
-          disabled={!editable}
+          placeholder="Customer Number"
         />
+        {errors.clientNumber && <span style={{ color: "red" }}>*</span>}
       </Field>
 
       <Field>
-        <Label>
-          Supplier Contact Number{" "}
-          {errors.supplierCompanyNum && <span style={{ color: "red" }}>*</span>}
-        </Label>
-        <Input
-          value={supplierCompanyNum}
+        <Label>Delivery Option</Label>
+        <Select
+          value={deliveryOption}
           onChange={(e) => {
-            handlePhoneNumberChange(setSupplierCompanyNum, e.target.value);
-            clearError("supplierCompanyNum");
+            setDeliveryOption(e.target.value);
+            setErrors((prev) => ({ ...prev, deliveryOption: undefined }));
           }}
-          placeholder="Supplier Contact Number"
-          disabled={!editable}
-        />
+        >
+          <option value="">Select Delivery Option</option>
+          <option value="pickup">Pickup</option>
+          <option value="lbc">LBC</option>
+          <option value="jnt">J&T Express</option>
+          <option value="grab">Grab Express</option>
+          <option value="courier">Courier Service</option>
+        </Select>
+        {errors.deliveryOption && <span style={{ color: "red" }}>*</span>}
       </Field>
 
       <Field>
-        <Label>
-          Contact Person{" "}
-          {errors.contactPersonName && <span style={{ color: "red" }}>*</span>}
-        </Label>
-        <Input
-          value={contactPersonName}
+        <Label>Payment Terms</Label>
+        <Select
+          value={paymentTerms}
           onChange={(e) => {
-            setContactPersonName(e.target.value);
-            clearError("contactPersonName");
+            setPaymentTerms(e.target.value);
+            setErrors((prev) => ({ ...prev, paymentTerms: undefined }));
           }}
-          placeholder="Contact Person Name"
-          disabled={!editable}
-        />
+        >
+          <option value="">Select Payment Terms</option>
+          <option value="cod">Cash on Delivery (COD)</option>
+          <option value="gcash">GCash</option>
+          <option value="installment">Installment</option>
+        </Select>
+        {errors.paymentTerms && <span style={{ color: "red" }}>*</span>}
       </Field>
 
-      <Field>
-        <Label>
-          Contact Number{" "}
-          {errors.contactPersonNumber && <span style={{ color: "red" }}>*</span>}
-        </Label>
-        <Input
-          value={contactPersonNumber}
-          onChange={(e) => {
-            handlePhoneNumberChange(setContactPersonNumber, e.target.value);
-            clearError("contactPersonNumber");
-          }}
-          placeholder="Contact Person Number"
-          disabled={!editable}
-        />
-      </Field>
-
+      {/* Order Details Section */}
       <OrderDetailsSection>
         <h3>Order Details</h3>
         <Table>
           <thead>
             <tr>
               <th>Product Name</th>
-              <th>Quantity</th>
+              <th>Qty</th>
+              <th>Sell Price</th>
+              <th>Discount (%)</th>
+              <th>Total</th>
               <th></th>
             </tr>
           </thead>
@@ -230,75 +204,49 @@ const EditCusOrderModal = ({ onClose, onSave, orderData }) => {
               <tr key={index}>
                 <td>
                   <Input
-                    style={{
-                      display: "inline-block",
-                      width: "calc(100% - 20px)",
-                    }}
-                    value={inputStates[index] || ""}
-                    onChange={(e) => {
-                      setInputStates((prevStates) => ({
-                        ...prevStates,
-                        [index]: e.target.value,
-                      }));
-                      handleProductInputChange(index, e.target.value);
-                      clearError(`productName${index}`);
-                    }}
-                    placeholder="Product Name"
+                    value={orderDetail.productName || ""}
+                    onChange={(e) => handleProductInputChange(index, e.target.value)}
                   />
-                  {errors[`productName${index}`] && (
-                    <span style={{ color: "red", marginLeft: "5px" }}>*</span>
-                  )}
-                  {productSearch && index === currentEditingIndex && (
-                    <SuggestionsContainer>
-                      {filteredProducts.length > 0 && (
-                        <SuggestionsList>
-                          {filteredProducts.map((product) => (
-                            <SuggestionItem
-                              key={product.id}
-                              onClick={() => {
-                                setInputStates((prevStates) => ({
-                                  ...prevStates,
-                                  [index]: product.PROD_NAME,
-                                }));
-                                handleProductSelect(index, product);
-                              }}
-                            >
-                              {product.PROD_NAME}
-                            </SuggestionItem>
-                          ))}
-                        </SuggestionsList>
-                      )}
-                    </SuggestionsContainer>
-                  )}
                 </td>
                 <td>
                   <QuantityInput
                     type="number"
-                    value={orderDetail.quantity}
+                    value={orderDetail.quantity || ""}
                     onChange={(e) =>
-                      handleQuantityChange(index, parseInt(e.target.value, 10))
+                      handleQuantityChange(index, parseInt(e.target.value, 10) || 0)
                     }
                   />
                 </td>
                 <td>
+                  <Input
+                    type="number"
+                    value={orderDetail.price || ""}
+                    onChange={(e) => handlePriceChange(index, e.target.value)}
+                  />
+                </td>
+                <td>
+                  <Input
+                    type="number"
+                    value={orderDetail.discount || ""}
+                    onChange={(e) => {
+                      const updatedOrderDetails = [...orderDetails];
+                      updatedOrderDetails[index].discount =
+                        parseFloat(e.target.value) || 0;
+                      setOrderDetails(updatedOrderDetails);
+                    }}
+                  />
+                </td>
+                <td>₱{calculateLineTotal(orderDetail).toFixed(2)}</td>
+                <td>
                   <DeleteButton onClick={() => handleRemoveProduct(index)}>
-                    <IoCloseCircle className="icon" />
+                    <IoCloseCircle />
                   </DeleteButton>
                 </td>
               </tr>
             ))}
           </tbody>
         </Table>
-        <Button onClick={handleAddProduct} style={{ marginTop: "10px" }}>
-          Add Product
-        </Button>
-
-        <TotalSection>
-          <TotalRow>
-            <TotalLabel>Total Quantity</TotalLabel>
-            <TotalValue>{totalQuantity}</TotalValue>
-          </TotalRow>
-        </TotalSection>
+        <Button onClick={handleAddProduct}>Add Product</Button>
       </OrderDetailsSection>
 
       <ButtonGroup>
@@ -306,11 +254,11 @@ const EditCusOrderModal = ({ onClose, onSave, orderData }) => {
           Cancel
         </Button>
         <Button variant="primary" onClick={handleSaveWithValidation}>
-          Save Order
+          Update Order
         </Button>
       </ButtonGroup>
     </Modal>
   );
 };
 
-export default EditCusOrderModal;
+export default EditCustomerOrderModal;
