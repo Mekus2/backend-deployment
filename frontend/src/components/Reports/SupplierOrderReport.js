@@ -74,7 +74,7 @@ const SupplierOrderReport = () => {
   });
 
   // Updated header to match the requested fields
-  const header = ["Customer", "Order Date", "Cost", "Revenue", "Gross Profit"];
+  const header = ["Supplier", "Order Date", "Cost", "Revenue", "Gross Profit"];
 
   const handlePreviewPDF = () => {
     const pdfData = generatePDF(
