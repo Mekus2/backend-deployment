@@ -7,62 +7,54 @@ import { colors } from "../../colors";
 
 // Updated pageTitles with superadmin and other role titles
 const pageTitles = {
-  // SuperAdmin routes
-  "/superadmin/dashboard": "Dashboard",
-  "/superadmin/orders": "Order",
-  "/superadmin/request-order": "Request Order",
-  "/superadmin/customer-order": "Customer Order",
-  "/superadmin/purchase-order": "Supplier Order",
-  "/superadmin/customer-delivery": "Customer Delivery",
-  "/superadmin/supplier-delivery": "Supplier Delivery",
-  "/superadmin/products": "Products",
-  "/superadmin/categories": "Category",
-  "/superadmin/inventory": "Inventory",
-  "/superadmin/suppliers": "Supplier",
-  "/superadmin/customers": "Customer",
-  "/superadmin/users": "User",
-  "/superadmin/sales": "Sales",
-  "/superadmin/returns": "Issue",
-  "/superadmin/logs": "Logs",
-  "/superadmin/reports": "Reports",
-  "/superadmin/profile": "SuperAdmin Profile",
-  "/superadmin/notifications": "Notifications",
-  "/superadmin/purchase": "Supplier Order",
-
   // Admin routes
   "/admin/dashboard": "Dashboard",
   "/admin/orders": "Order",
-  "/admin/request-order": "Request Order",
   "/admin/customer-order": "Customer Order",
   "/admin/purchase-order": "Supplier Order",
   "/admin/customer-delivery": "Customer Delivery",
-  "/admin/supplier-delivery": "Supplier Delivery",
-  "/admin/products": "Products",
-  "/admin/categories": "Category",
-  "/admin/inventory": "Inventory",
-  "/admin/suppliers": "Supplier",
-  "/admin/customers": "Customer",
-  "/admin/users": "Staff",
-  "/admin/sales": "Sales",
+  "/admin/purchase-delivery": "Supplier Delivery",
   "/admin/returns": "Issue",
+  "/admin/products": "Product",
+  "/admin/inventory": "Inventory",
+  "/admin/price-history": "Price History",
+  "/admin/customers": "Customer",
+  "/admin/suppliers": "Supplier",
+  "/admin/users": "Staff",
   "/admin/logs": "Logs",
   "/admin/reports": "Reports",
   "/admin/profile": "Profile",
   "/admin/notifications": "Notifications",
-  "/admin/purchase": "Supplier Order",
+
+  // SuperAdmin routes
+  "/superadmin/dashboard": "Dashboard",
+  "/superadmin/orders": "Order",
+  "/superadmin/customer-order": "Customer Order",
+  "/superadmin/purchase-order": "Supplier Order",
+  "/superadmin/customer-delivery": "Customer Delivery",
+  "/superadmin/supplier-delivery": "Supplier Delivery",
+  "/superadmin/returns": "Issue",
+  "/superadmin/products": "Product",
+  "/superadmin/inventory": "Inventory",
+  "/superadmin/price-history": "Price History",
+  "/superadmin/customers": "Customer",
+  "/superadmin/suppliers": "Supplier",
+  "/superadmin/users": "User",
+  "/superadmin/sales": "Sales",
+  "/superadmin/logs": "Logs",
+  "/superadmin/reports": "Reports",
+  "/superadmin/profile": "SuperAdmin Profile",
+  "/superadmin/notifications": "Notifications",
 
   // Staff routes
   "/staff/dashboard": "Dashboard",
-  "/staff/profile": "Staff Profile",
-  "/staff/request-order": "Request Order",
   "/staff/customer-order": "Customer Order",
   "/staff/customer-delivery": "Customer Delivery",
-  "/staff/products": "Products",
-  "/staff/categories": "Category",
+  "/staff/returns": "Issue",
+  "/staff/products": "Product",
   "/staff/inventory": "Inventory",
   "/staff/customers": "Customers",
-  "/staff/reports": "Reports",
-  "/staff/returns": "Issues",
+  "/staff/profile": "Staff Profile",
   "/staff/notifications": "Notifications",
 };
 
@@ -107,10 +99,10 @@ const Header = ({ toggleSidebar }) => {
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_id");
     localStorage.removeItem("user_first_name");
-    localStorage.removeItem("user_type"); // Clear any other stored user info
+    localStorage.removeItem("user_type"); 
 
-    console.log("User signed out. Tokens cleared."); // Logs the sign-out action
-    navigate("/login"); // Redirect to the login page
+    console.log("User signed out. Tokens cleared.");
+    navigate("/login");
   };
 
   return (
@@ -265,3 +257,4 @@ const BellIcon = styled(FaRegBell)`
 `;
 
 export default Header;
+

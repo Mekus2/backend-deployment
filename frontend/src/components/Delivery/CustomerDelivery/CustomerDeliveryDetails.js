@@ -92,7 +92,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       total +
       calculateItemTotal(
         item.OUTBOUND_DETAILS_PROD_QTY,
-        item.OUTBOUND_DETAILS_LINE_PRICE
+        item.OUTBOUND_DETAILS_SELL_PRICE
       ),
     0
   );
@@ -184,10 +184,10 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       body: orderDetails.map((item) => [
         item.OUTBOUND_DETAILS_PROD_NAME,
         item.OUTBOUND_DETAILS_PROD_QTY,
-        Number(item.OUTBOUND_DETAILS_LINE_PRICE).toFixed(2), // Removed the peso sign
+        Number(item.OUTBOUND_DETAILS_SELL_PRICE).toFixed(2), // Removed the peso sign
         calculateItemTotal(
           item.OUTBOUND_DETAILS_PROD_QTY,
-          item.OUTBOUND_DETAILS_LINE_PRICE
+          item.OUTBOUND_DETAILS_SELL_PRICE
         ).toFixed(2), // Removed the peso sign
       ]),
       styles: {
