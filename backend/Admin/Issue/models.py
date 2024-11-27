@@ -1,8 +1,8 @@
 from django.db import models
 
 # Model imports
-from Order.Purchase.models import PurchaseOrder
-from Order.Sales_Order.models import SalesOrder
+from Admin.Order.Purchase.models import PurchaseOrder
+from Admin.Order.Sales_Order.models import SalesOrder
 from Admin.Customer.models import Clients
 from Admin.Supplier.models import Supplier
 
@@ -29,7 +29,7 @@ class DeliveryIssue(models.Model):
     ISSUE_TYPE = models.CharField(
         max_length=15,
         choices=[
-            ("Damaged, Damaged"),
+            ("Damaged", "Damaged"),
             ("Missing", "Missing Item"),
             ("Wrong Item", "Wrong Item"),
         ],
