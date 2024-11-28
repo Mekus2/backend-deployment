@@ -5,6 +5,7 @@ from .views import (
     SalesOrderRetrieveUpdateAPIView,
     GetPendingTotalView,
     TransferToOutboundDelivery,
+    SalesOrderUpdateAPIView,
 )
 
 urlpatterns = [
@@ -24,5 +25,10 @@ urlpatterns = [
         "<int:sales_order_id>/accept/",
         TransferToOutboundDelivery.as_view(),
         name="accept-sales-order",
+    ),
+    path(
+        "<int:sales_order_id>/update/",
+        SalesOrderUpdateAPIView.as_view(),
+        name="update-sales-order",
     ),
 ]
