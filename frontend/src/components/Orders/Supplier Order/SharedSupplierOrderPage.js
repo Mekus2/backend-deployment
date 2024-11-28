@@ -117,6 +117,11 @@ const SharedSupplierOrderPage = () => {
 
   return (
     <>
+      <AnalyticsContainer>
+        <div onClick={() => navigate("/admin/orders/purchase-order")}>
+          <CardTotalSupplierOrder />
+        </div>
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter purchase orders..."
@@ -127,11 +132,6 @@ const SharedSupplierOrderPage = () => {
           <FaPlus className="icon" /> Supplier Order
         </StyledButton>
       </Controls>
-      <AnalyticsContainer>
-        <div onClick={() => navigate("/admin/orders/purchase-order")}>
-          <CardTotalSupplierOrder />
-        </div>
-      </AnalyticsContainer>
       <Table
         headers={headers.map((header, index) => (
           <TableHeader
@@ -219,7 +219,7 @@ const Status = styled.span`
   background-color: ${(props) =>
     props.status === "Accepted"
       ? "#1DBA0B"
-      : props.status === props.status === "In Progress"
+      : (props.status === props.status) === "In Progress"
       ? "#f08400"
       : "#ff5757"};
   color: white;

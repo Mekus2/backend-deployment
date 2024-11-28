@@ -88,7 +88,7 @@ const SharedCustomerDeliveryPage = () => {
   // Filter Deliveries based on the search term
   const filteredDeliveries = (orders || []).filter((delivery) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    
+
     // Check if any value in the delivery object contains the search term
     return Object.values(delivery).some((value) => {
       // Ensure the value is not undefined, null, or empty before trying to search
@@ -171,6 +171,9 @@ const SharedCustomerDeliveryPage = () => {
 
   return (
     <>
+      <SummarySection>
+        <CardTotalCustomerDelivery />
+      </SummarySection>
       <Controls>
         <SearchBar
           data-cy="search-bar"
@@ -179,9 +182,6 @@ const SharedCustomerDeliveryPage = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </Controls>
-      <SummarySection>
-        <CardTotalCustomerDelivery />
-      </SummarySection>
       <Table
         headers={headers.map((header) => (
           <TableHeader

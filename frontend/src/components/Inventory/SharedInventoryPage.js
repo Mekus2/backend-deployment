@@ -25,6 +25,7 @@ const SharedInventoryPage = () => {
     fetchInventory();
   }, []);
 
+
   const filteredInventory = inventoryData.filter((item) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return (
@@ -37,6 +38,7 @@ const SharedInventoryPage = () => {
   });
 
   // Sort the filtered inventory by expiry date (ascending)
+
   const sortedInventory = [...filteredInventory].sort((a, b) =>
     new Date(a.EXPIRY_DATE) - new Date(b.EXPIRY_DATE)
   );
@@ -73,6 +75,10 @@ const SharedInventoryPage = () => {
 
   return (
     <>
+      <AnalyticsContainer>
+        <CardTotalProducts />
+        <CardLowStocks />
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter inventory..."
@@ -80,10 +86,6 @@ const SharedInventoryPage = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </Controls>
-      <AnalyticsContainer>
-        <CardTotalProducts />
-        <CardLowStocks />
-      </AnalyticsContainer>
       <Table headers={headers} rows={rows} />
       {showDetailModal && selectedItem && (
         <InventoryDetailsModal item={selectedItem} onClose={closeModal} />
