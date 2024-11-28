@@ -301,7 +301,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
   </div>
 
   <TotalSection>
-  <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+  <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
     <TotalLabel>Total Quantity: </TotalLabel>
     <TotalValue>{totalQuantity}</TotalValue>
   </TotalRow>
