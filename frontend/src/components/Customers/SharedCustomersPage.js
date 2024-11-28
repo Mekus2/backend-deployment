@@ -62,13 +62,15 @@ const SharedCustomersPage = () => {
   };
 
   useEffect(() => {
-    console.log('Selected Customer:', selectedCustomer);
+    console.log("Selected Customer:", selectedCustomer);
   }, [selectedCustomer]);
 
   const openDetailsModal = async (customer) => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/customer/clients/${customer.id}/`);
-      console.log('API Response:', response.data);
+      const response = await axios.get(
+        `http://127.0.0.1:8000/customer/clients/${customer.id}/`
+      );
+      console.log("API Response:", response.data);
       setSelectedCustomer(response.data);
       setShowDetailsModal(true);
     } catch (error) {
@@ -93,13 +95,7 @@ const SharedCustomersPage = () => {
     setFilteredCustomers(updatedCustomers);
   };
 
-  const headers = [
-    "Customer Name",
-    "Address",
-    "Province",
-    "Phone",
-    "Action",
-  ];
+  const headers = ["Customer Name", "Address", "Province", "Phone", "Action"];
 
   const handleSort = (key) => {
     let direction = "asc";
@@ -108,24 +104,23 @@ const SharedCustomersPage = () => {
     }
     setSortConfig({ key, direction });
   };
-  
+
   const sortedCustomers = [...filteredCustomers].sort((a, b) => {
     if (!a[sortConfig.key] || !b[sortConfig.key]) return 0;
-    
+
     // Sorting by date if the key is 'createdDate'
-    if (sortConfig.key === 'createdDate') {
+    if (sortConfig.key === "createdDate") {
       const dateA = new Date(a.createdDate);
       const dateB = new Date(b.createdDate);
       return (dateA - dateB) * (sortConfig.direction === "asc" ? 1 : -1);
     }
-  
+
     // Default string comparison for other fields
     return (
       (a[sortConfig.key] || "").localeCompare(b[sortConfig.key] || "") *
       (sortConfig.direction === "asc" ? 1 : -1)
     );
   });
-  
 
   const rows = sortedCustomers.map((customer) => [
     customer.name,
@@ -143,6 +138,9 @@ const SharedCustomersPage = () => {
         <Loading />
       ) : (
         <>
+          <SummarySection>
+            <CardTotalCustomers />
+          </SummarySection>
           <Controls>
             <SearchBar
               placeholder="Search / Filter customer..."
@@ -153,9 +151,6 @@ const SharedCustomersPage = () => {
               <FaPlus className="icon" /> Customer
             </StyledButton>
           </Controls>
-          <SummarySection>
-            <CardTotalCustomers />
-          </SummarySection>
           <Table
             headers={headers.map((header, index) => (
               <TableHeader

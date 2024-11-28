@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"; 
+import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { colors } from "../../colors";
 import AddUserModal from "../../components/Users/AddUserModal";
@@ -82,7 +82,7 @@ const SharedUsersPage = () => {
       const response = await axios.get(
         `http://127.0.0.1:8000/account/details/${user.id}/` // Updated URL for fetching user details
       );
-      
+
       // Include the isActive field along with the other user details
       setSelectedUser({ ...response.data, isActive: user.isActive }); // Add isActive field to the selected user
       setIsDetailsModalOpen(true); // Open the details modal
@@ -90,7 +90,6 @@ const SharedUsersPage = () => {
       console.error("Error fetching user data:", error); // Handle any errors that occur
     }
   };
-    
 
   const headers = ["Image", "Name", "Role", "Actions"];
 
@@ -101,21 +100,20 @@ const SharedUsersPage = () => {
       member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
       member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
       member.username.toLowerCase().includes(lowerCaseSearchTerm);
-  
+
     // If the user is admin, show only staff
     if (userType === "admin") {
       return matchesSearchTerm && member.accType.toLowerCase() === "staff";
     }
-  
+
     // If the user is superadmin, show both staff and admin
     if (userType === "superadmin") {
       return matchesSearchTerm;
     }
-  
+
     // Default case (for staff or any other case)
     return matchesSearchTerm && member.accType.toLowerCase() === "staff";
   });
-  
 
   const rows = filteredStaff.map((member) => [
     <ImageContainer key={member.id}>
@@ -138,8 +136,12 @@ const SharedUsersPage = () => {
   ]);
 
   // Count the number of admins and staff if the user is a superadmin
-  const adminCount = staffData.filter((member) => member.accType.toLowerCase() === "admin").length;
-  const staffCount = staffData.filter((member) => member.accType.toLowerCase() === "staff").length;
+  const adminCount = staffData.filter(
+    (member) => member.accType.toLowerCase() === "admin"
+  ).length;
+  const staffCount = staffData.filter(
+    (member) => member.accType.toLowerCase() === "staff"
+  ).length;
 
   if (loading) {
     return <Loading />; // Show loading spinner while fetching data
@@ -147,6 +149,26 @@ const SharedUsersPage = () => {
 
   return (
     <>
+      <AnalyticsContainer>
+        {/* Show Staff card for both admin and superadmin */}
+        {(userType === "admin" || userType === "superadmin") && (
+          <Card
+            label="Staff"
+            value={`${staffCount}`}
+            bgColor={colors.primary}
+            icon={<FaUsers />}
+          />
+        )}
+        {/* Show Admin card only for superadmin */}
+        {userType === "superadmin" && (
+          <Card
+            label="Admin"
+            value={`${adminCount}`}
+            bgColor={colors.primary}
+            icon={<FaUsers />}
+          />
+        )}
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder={`Search / Filter ${
@@ -172,26 +194,7 @@ const SharedUsersPage = () => {
           </Button>
         </ButtonGroup>
       </Controls>
-      <AnalyticsContainer>
-        {/* Show Staff card for both admin and superadmin */}
-        {(userType === "admin" || userType === "superadmin") && (
-          <Card
-            label="Staff"
-            value={`${staffCount}`}
-            bgColor={colors.primary}
-            icon={<FaUsers />}
-          />
-        )}
-        {/* Show Admin card only for superadmin */}
-        {userType === "superadmin" && (
-          <Card
-            label="Admin"
-            value={`${adminCount}`}
-            bgColor={colors.primary}
-            icon={<FaUsers />}
-          />
-        )}
-      </AnalyticsContainer>
+
       <Table headers={headers} rows={rows} />
       {isAddModalOpen && (
         <AddUserModal
@@ -207,7 +210,7 @@ const SharedUsersPage = () => {
         />
       )}
     </>
-  );  
+  );
 };
 
 // Styled Components

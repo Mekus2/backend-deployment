@@ -3,7 +3,7 @@ import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
 
-const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
+const SupplierDetailsModal = ({ supplier, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedSupplier, setEditedSupplier] = useState(supplier || {});
   const [errors, setErrors] = useState({});
@@ -79,16 +79,6 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
       setIsEditing(false);
       setEditedSupplier(supplier);
       setErrors({});
-    }
-  };
-
-  const handleRemove = () => {
-    const confirmRemoval = window.confirm(
-      "Are you sure you want to remove this supplier?"
-    );
-    if (confirmRemoval) {
-      onRemove(supplier.SUPP_ID);
-      onClose();
     }
   };
 
@@ -245,9 +235,6 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
             </Detail>
           </Section>
           <ButtonGroup>
-            <Button variant="red" onClick={handleRemove}>
-              Remove
-            </Button>
             <Button variant="primary" onClick={handleEdit}>
               Edit
             </Button>

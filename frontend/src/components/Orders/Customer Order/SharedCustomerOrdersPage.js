@@ -10,6 +10,7 @@ import { FaPlus } from "react-icons/fa";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import CustomerOrderDetailsModal from "./CustomerOrderDetailsModal";
 import Loading from "../../../components/Layout/Loading"; // Import the Loading component
+import { TotalSection, TotalRow } from "../OrderStyles";
 
 const SharedCustomerOrdersPage = ({ userRole }) => {
   const [customer, setCustomer] = useState([]); // Use customer data instead of orders
@@ -113,6 +114,9 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
 
   return (
     <>
+      <AnalyticsContainer>
+        <CardTotalCustomerOrder />
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter customer..."
@@ -123,9 +127,6 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
           <FaPlus className="icon" /> Customer Order
         </StyledButton>
       </Controls>
-      <AnalyticsContainer>
-        <CardTotalCustomerOrder />
-      </AnalyticsContainer>
       <Table
         headers={headers.map((header, index) => (
           <TableHeader

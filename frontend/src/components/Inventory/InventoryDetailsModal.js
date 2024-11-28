@@ -37,9 +37,6 @@ const InventoryDetailsModal = ({ item, onClose }) => {
           <DetailLabel>Batch Id:</DetailLabel> {item.BATCH_ID}
         </Detail>
         <Detail>
-        <Detail>
-          <DetailLabel>Product Id:</DetailLabel> {item.PRODUCT_ID}
-        </Detail>
       </Detail>
         <Detail>
         <DetailLabel>Expiry Date:</DetailLabel>{" "}
