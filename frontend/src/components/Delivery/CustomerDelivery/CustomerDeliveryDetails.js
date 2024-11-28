@@ -4,8 +4,7 @@ import Modal from "../../Layout/Modal";
 import Loading from "../../Layout/Loading"; // Import the Loading component
 import { colors } from "../../../colors";
 import { fetchCustomerDelDetails } from "../../../api/CustomerDeliveryApi";
-import CustomerIssueModal from "./CustomerIssueModal"; // Import the Issue Modal
-import IssueDetails from "./IssueDetails";
+import CustomerCreateIssueModal from "./CustomerCreateIssueModal"; // Import the Issue Modal
 import { notify } from "../../Layout/CustomToast";
 import { jsPDF } from "jspdf";
 import { logoBase64 } from "../../../data/imageData";
@@ -455,14 +454,14 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       </Modal>
 
       {isIssueModalOpen && (
-        <CustomerIssueModal
+        <CustomerCreateIssueModal
           orderDetails={orderDetails}
           onClose={handleIssueModalClose}
           onSubmit={handleIssueModalSubmit}
         />
       )}
 
-      {isIssueDetailsOpen && <IssueDetails onClose={handleIssueDetailsClose} />}
+      {isIssueDetailsOpen}
     </>
   );
 };
