@@ -31,7 +31,7 @@ roles.forEach((role) => {
 
     it("Should open Return Detail modal when View button is clicked", () => {
       cy.get("button").contains("View").first().click();
-      cy.get("div").contains("Return Details").should("exist");
+      cy.get("div").contains("Issue Details").should("exist");
     });
 
     it("Should display total returns", () => {

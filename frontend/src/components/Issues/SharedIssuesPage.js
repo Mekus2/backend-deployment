@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import ReturnDetailModal from "../../components/Returns/ReturnDetailModal";
-import SearchBar from "../../components/Layout/SearchBar";
-import Table from "../../components/Layout/Table";
-import CardTotalReturns from "../../components/CardsData/CardTotalReturns";
+import IssueDetailModal from "./IssueDetailModal";
+import SearchBar from "../Layout/SearchBar";
+import Table from "../Layout/Table";
+import CardTotalReturns from "../CardsData/CardTotalReturns";
 import returnsData from "../../data/ReturnsData";
-import Button from "../../components/Layout/Button";
+import Button from "../Layout/Button";
 
-const SharedReturnsPage = () => {
+const SharedIssuesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedReturn, setSelectedReturn] = useState(null);
 
@@ -63,7 +63,7 @@ const SharedReturnsPage = () => {
       </AnalyticsContainer>
       <Table headers={headers} rows={rows} />
       {selectedReturn && (
-        <ReturnDetailModal
+        <IssueDetailModal
           returnItem={selectedReturn}
           onClose={closeDetailModal}
           onCancelReturn={handleCancelReturn} // Passing the cancel function here
@@ -105,4 +105,4 @@ const Status = styled.span`
   font-weight: bold;
 `;
 
-export default SharedReturnsPage;
+export default SharedIssuesPage;

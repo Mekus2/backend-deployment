@@ -346,8 +346,9 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                   {orderDetails
                     .reduce((acc, detail) => {
                       const discountValue =
-                        (((parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
-                          0) *
+                        (((parseFloat(
+                          detail.OUTBOUND_DETAILS_PROD_SELL_PRICE
+                        ) || 0) *
                           (parseFloat(detail.OUTBOUND_DETAILS_PROD_DISCOUNT) ||
                             0)) /
                           100) *
@@ -430,28 +431,24 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
             </ProgressSection>
 
             <ModalFooter>
-              {status === "Delivered with Issues" && !issueReported && (
-                <IssueButton onClick={handleIssueModalOpen}>
-                  What's the issue?
-                </IssueButton>
+              {status === "Pending" && (
+                <StatusButton onClick={handleStatusChange}>
+                  Mark as In Transit
+                </StatusButton>
               )}
-              {status === "Delivered with Issues" && issueReported && (
-                <IssueButton onClick={handleIssueDetailsOpen}>
-                  Issue details
-                </IssueButton>
+              {status === "In Transit" && (
+                <>
+                  <IssueButton onClick={handleIssueModalOpen}>
+                    What's the issue?
+                  </IssueButton>
+                  <StatusButton onClick={handleStatusChange}>
+                    Mark as Delivered
+                  </StatusButton>
+                </>
               )}
               {status === "Delivered" && (
                 <InvoiceButton onClick={generateInvoice}>Invoice</InvoiceButton>
               )}
-              <StatusButton onClick={handleStatusChange}>
-                {status === "Pending"
-                  ? "Mark as In Transit"
-                  : status === "In Transit"
-                  ? "Mark as Delivered"
-                  : status === "Delivered"
-                  ? "Mark as Delivered with Issues"
-                  : "Mark as Delivered"}
-              </StatusButton>
             </ModalFooter>
           </>
         )}

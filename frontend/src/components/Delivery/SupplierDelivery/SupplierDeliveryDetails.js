@@ -505,29 +505,29 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         </ProgressBar>
         <ProgressText>{getProgressPercentage()}%</ProgressText>
       </ProgressSection>
-      {/* Status Change Buttons */}
       <ModalFooter>
-        {status === "Delivered with Issues" && !issueReported && (
-          <IssueButton onClick={handleIssueModalOpen}>
-            What's the issue?
-          </IssueButton>
-        )}
-        {status === "Delivered with Issues" && issueReported && (
-          <IssueButton onClick={handleIssueDetailsOpen}>
-            Issue details
-          </IssueButton>
-        )}
-        <StatusButton
-          onClick={() =>
-            handleStatusChange(delivery.INBOUND_DEL_ID, status, expiryDates)
-          }
-        >
-          {status === "Pending" && "Mark as Dispatched"}
-          {status === "Dispatched" && "Mark as Delivered"}
-          {status === "Delivered" && "Mark as Delivered with Issues"}
-          {status === "Delivered with Issues" && "Reset to Pending"}
-        </StatusButton>
-      </ModalFooter>
+  {/* Show the "What's the issue?" button only if the status is "Dispatched" */}
+  {status === "Dispatched" && (
+    <IssueButton onClick={handleIssueModalOpen}>
+      What's the issue?
+    </IssueButton>
+  )}
+
+  {/* General Status Button that adapts to the status */}
+  <StatusButton
+    onClick={() =>
+      handleStatusChange(delivery.INBOUND_DEL_ID, status, expiryDates)
+    }
+  >
+    {status === "Pending" && "Mark as Dispatched"}
+    {status === "Dispatched" && "Mark as Delivered"}
+    {status === "Delivered with Issues" && "Reset to Pending"}
+    {status === "Delivered" && "Invoice"}
+  </StatusButton>
+</ModalFooter>
+
+
+
     </Modal>
   );
 };

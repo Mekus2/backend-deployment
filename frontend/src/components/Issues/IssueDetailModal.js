@@ -8,7 +8,7 @@ const formatCurrency = (amount) => {
   return `₱${amount.toFixed(2)}`;
 };
 
-const ReturnDetailModal = ({ returnItem = {}, onClose, onCancelReturn }) => {
+const IssueDetailModal = ({ returnItem = {}, onClose, onCancelReturn }) => {
   const calculateSubTotal = () => {
     if (!returnItem.products) return 0;
     return returnItem.products.reduce(
@@ -29,7 +29,7 @@ const ReturnDetailModal = ({ returnItem = {}, onClose, onCancelReturn }) => {
 
   return (
     <Modal
-      title="Return Details"
+      title="Issue Details"
       status={returnItem.status}
       completedDate={returnItem.returnDate}
       onClose={onClose}
@@ -169,7 +169,7 @@ const DescriptionBox = styled.div`
 
 const ActionsContainer = styled.div`
   display: flex;
-  justify-content: flex-end;  // Align the button to the right
+  justify-content: flex-end; // Align the button to the right
   margin-top: 20px;
 `;
 
@@ -187,4 +187,4 @@ const CancelButton = styled.button`
   }
 `;
 
-export default ReturnDetailModal;
+export default IssueDetailModal;
