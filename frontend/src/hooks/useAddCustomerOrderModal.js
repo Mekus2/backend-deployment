@@ -53,7 +53,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       try {
         const response = await axios.get(
           "http://127.0.0.1:8000/customer/clients/"
-        );
+      );
         setClientsData(response.data); // Store fetched clients
         console.log("Clients Data:", response.data); // Debug line to check if data is properly set
         setFilteredClients(response.data); // Initialize filteredClients with fetched data
@@ -216,7 +216,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
     setClientName(client.name);
     setClientCity(client.address);
     setClientProvince(client.province);
-    setClientNumber(client.number);
+    setClientNumber(client.phoneNumber);
     setClientId(client.id);
     setClientSearch("");
     setFilteredClients([]);
