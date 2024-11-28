@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import AddProductInventorySerializer
+from .serializers import AddProductInventorySerializer, InventorySerializer
 from .models import Inventory
 from django.db import transaction
 
@@ -92,3 +92,34 @@ class AddProductInventoryView(APIView):
 
         # Return validation errors if serializer is invalid
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class InventoryListView(APIView):
+    permission_classes = [permissions.AllowAny]  # Adjust as necessary
+
+    def get(self, request, pk=None):
+        # If pk is provided, fetch the specific inventory item
+        if pk:
+            try:
+                inventory_item = Inventory.objects.get(pk=pk)
+                serializer = InventorySerializer(inventory_item)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except Inventory.DoesNotExist:
+                return Response(
+                    {"error": "Inventory item not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        # Otherwise, fetch all inventory records
+        inventory_items = Inventory.objects.all()
+        
+        # Check if there are no inventory items
+        if not inventory_items.exists():
+            return Response(
+                {"error": "No inventory records found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Serialize the data using the InventorySerializer
+        serializer = InventorySerializer(inventory_items, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

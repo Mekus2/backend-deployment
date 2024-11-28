@@ -1,72 +1,77 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
 import CardTotalProducts from "../CardsData/CardTotalProducts";
 import CardLowStocks from "../CardsData/CardLowStocks";
 import InventoryDetailsModal from "../Inventory/InventoryDetailsModal";
-import productData from "../../data/ProductData"; // Ensure the path is correct
+import { getInventoryList } from "../../api/InventoryApi"; // Import the API function to get the inventory list
 import Button from "../Layout/Button";
-
+import axios from "axios";
 const SharedInventoryPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState([]);
+  const [inventoryData, setInventoryData] = useState([]); // State to store inventory data
 
-  const filteredInventory = productData.PRODUCT_INVENTORY.filter((item) => {
-    const product = productData.PRODUCT.find((p) => p.PROD_ID === item.PROD_ID);
+  // Fetch inventory data when the component mounts
+  useEffect(() => {
+    const fetchInventory = async () => {
+      const data = await getInventoryList();
+      if (data) {
+        setInventoryData(data); // Store the fetched inventory data
+      }
+    };
+    fetchInventory();
+  }, []);
+
+
+  const filteredInventory = inventoryData.filter((item) => {
     const lowerCaseSearchTerm = searchTerm.toLowerCase();
     return (
-      product.PROD_NAME.toLowerCase().includes(lowerCaseSearchTerm) ||
-      item.PROD_INV_BATCH_NO.toLowerCase().includes(lowerCaseSearchTerm) ||
-      item.PROD_INV_QTY_ON_HAND.toString().includes(lowerCaseSearchTerm) ||
-      product.PROD_IMAGE.toLowerCase().includes(lowerCaseSearchTerm) || // Include image search
-      item.PROD_INV_EXP_DATE.toLowerCase().includes(lowerCaseSearchTerm) // Include expiry date search
+      item.PRODUCT_NAME.toLowerCase().includes(lowerCaseSearchTerm) ||
+      item.BATCH_ID.toLowerCase().includes(lowerCaseSearchTerm) ||
+      item.QUANTITY_ON_HAND.toString().includes(lowerCaseSearchTerm) ||
+      item.PRODUCT_ID.PROD_IMAGE.toLowerCase().includes(lowerCaseSearchTerm) ||
+      item.EXPIRY_DATE.toLowerCase().includes(lowerCaseSearchTerm)
     );
   });
 
   // Sort the filtered inventory by expiry date (ascending)
-  const sortedInventory = [...filteredInventory].sort(
-    (a, b) => new Date(a.PROD_INV_EXP_DATE) - new Date(b.PROD_INV_EXP_DATE)
+
+  const sortedInventory = [...filteredInventory].sort((a, b) =>
+    new Date(a.EXPIRY_DATE) - new Date(b.EXPIRY_DATE)
   );
 
-  const handleDetailClick = (item) => {
-    setSelectedItem(item);
-    setShowDetailModal(true);
+  const handleDetailClick = async (item) => {
+    try {
+      // Fetch the inventory details using the INVENTORY_ID
+      const response = await axios.get(`http://127.0.0.1:8000/inventory/list/${item.INVENTORY_ID}/`);
+      console.log("Fetched Inventory Details:", response.data);
+      setSelectedItem(response.data);
+      setShowDetailModal(true);
+    } catch (error) {
+      console.error("Error fetching inventory details:", error);
+    }
   };
-
+  
   const closeModal = () => {
     setShowDetailModal(false);
     setSelectedItem(null);
   };
 
-  const headers = [
-    "Image",
-    "Name",
-    "Batch No",
-    "Quantity on Hand",
-    "Expiry Date",
-    "Action",
-  ];
+  const headers = [ "Name", "Batch No", "Quantity on Hand", "Expiry Date", "Action"];
 
-  const rows = sortedInventory.map((item) => {
-    const product = productData.PRODUCT.find((p) => p.PROD_ID === item.PROD_ID);
-    return [
-      <ImageContainer>
-        <img
-          src={product.PROD_IMAGE}
-          alt={product.PROD_NAME}
-          width="50"
-          height="50"
-        />
-      </ImageContainer>,
-      product.PROD_NAME,
-      item.PROD_INV_BATCH_NO,
-      item.PROD_INV_QTY_ON_HAND,
-      item.PROD_INV_EXP_DATE, // Added expiry date
+  const rows = sortedInventory.map((item) => (
+    [
+
+      item.PRODUCT_NAME,
+      item.BATCH_ID,
+      item.QUANTITY_ON_HAND,
+      item.EXPIRY_DATE, // Added expiry date
       <Button onClick={() => handleDetailClick(item)}>Details</Button>,
-    ];
-  });
+    ]
+  ));
 
   return (
     <>
