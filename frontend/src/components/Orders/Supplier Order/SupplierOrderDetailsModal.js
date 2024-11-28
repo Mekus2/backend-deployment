@@ -13,6 +13,7 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to control EditSupplierOrderModal visibility
+  const [isEditMode, setIsEditMode] = useState(false); // State to toggle Edit Mode
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -27,20 +28,13 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
         setLoading(true);
         setError(null);
         try {
-          console.log(
-            `Fetching details for Order ID: ${order.PURCHASE_ORDER_ID}`
-          );
           const details = await fetchPurchaseDetailsById(
             order.PURCHASE_ORDER_ID,
             controller.signal
           );
-          console.log("Received Details:", details);
           setOrderDetails(details);
         } catch (err) {
-          if (err.name === "AbortError") {
-            console.log("Fetch aborted"); // Request was canceled
-          } else {
-            console.error("Failed to fetch order details:", err); // Improved debug line for errors
+          if (err.name !== "AbortError") {
             setError("Failed to fetch order details.");
           }
         } finally {
@@ -62,23 +56,21 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
   if (!orderDetails) return null;
   if (!order) return null;
 
-  // Function to format date
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    if (isNaN(date)) return ""; // Return empty string if invalid date
-    return `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
-      .getDate()
-      .toString()
-      .padStart(2, "0")}/${date.getFullYear()}`;
+    return isNaN(date)
+      ? ""
+      : `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
+          .getDate()
+          .toString()
+          .padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  // Calculate total quantity
   const totalQuantity = orderDetails.reduce(
     (total, detail) => total + (detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0),
     0
   );
 
-  // Handlers for the buttons
   const handleAcceptOrder = async () => {
     const newDelivery = {
       PURCHASE_ORDER_ID: order.PURCHASE_ORDER_ID,
@@ -90,21 +82,19 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
       details: orderDetails.map((detail) => ({
         INBOUND_DEL_DETAIL_PROD_ID: detail.PURCHASE_ORDER_DET_PROD_ID,
         INBOUND_DEL_DETAIL_PROD_NAME: detail.PURCHASE_ORDER_DET_PROD_NAME,
-        INBOUND_DEL_DETAIL_ORDERED_QTY: detail.PURCHASE_ORDER_DET_PROD_LINE_QTY,
+        INBOUND_DEL_DETAIL_ORDERED_QTY:
+          detail.PURCHASE_ORDER_DET_PROD_LINE_QTY,
       })),
     };
 
     try {
       const response = await addNewSupplierDelivery(newDelivery);
-      logAcceptOrder(newDelivery);
       if (response) {
-        console.log("New inbound delivery created:", response);
         alert("Inbound delivery accepted successfully!");
       } else {
         alert("Failed to accept the inbound delivery.");
       }
     } catch (error) {
-      console.error("Error accepting the order:", error);
       alert("An error occurred while accepting the order.");
     } finally {
       onClose();
@@ -112,54 +102,18 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
   };
 
   const handleCancelOrder = () => {
-    // Logic to cancel the order
     console.log("Supplier order cancelled");
     onClose(); // Close modal after action
   };
 
-  const logAcceptOrder = async (newOrderDelivery) => {
-    const userId = localStorage.getItem("user_id"); // Ensure "user_id" is correctly stored in localStorage
-    console.log("User ID:", userId);
-    try {
-      // Fetch the user details using the userId
-      const userResponse = await fetch(`http://127.0.0.1:8000/account/logs/${userId}/`);
-      if (!userResponse.ok) {
-        throw new Error("Failed to fetch user details");
-      }
-  
-      const user = await userResponse.json(); // Assuming the response contains the user object
-      const username = user.username;
-      
-      const salesId = newOrderDelivery.PURCHASE_ORDER_ID;
-      // Construct the log payload
-      const logPayload = {
-        LLOG_TYPE: "Transaction logs",
-        LOG_DESCRIPTION: `${username} accepted the Supplier order ID: (${salesId})`,
-        USER_ID: userId,
-      };
-  
-      // Send the log payload
-      const logResponse = await fetch("http://127.0.0.1:8000/logs/logs/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(logPayload),
-      });
-  
-      if (logResponse.ok) {
-        console.log("Order log successfully created:", logPayload);
-      } else {
-        console.error("Failed to create order log:", logResponse);
-      }
-    } catch (error) {
-      console.error("Error logging order acceptance:", error);
-    }
+  const toggleEditMode = () => {
+    setIsEditMode((prev) => !prev); // Toggle the edit mode
   };
 
-  const handleUpdateOrder = () => {
-    // Trigger EditSupplierOrderModal to update order details
-    setIsEditModalOpen(true);
+  const handleInputChange = (index, key, value) => {
+    const updatedDetails = [...orderDetails];
+    updatedDetails[index][key] = value;
+    setOrderDetails(updatedDetails);
   };
 
   return (
@@ -180,7 +134,7 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
           </p>
           <p>
             <strong>Supplier ID:</strong> {order.PURCHASE_ORDER_SUPPLIER_ID}
-          </p>{" "}
+          </p>
           <p>
             <strong>Supplier Name:</strong>{" "}
             {order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME}
@@ -197,11 +151,41 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
               </thead>
               <tbody>
                 {orderDetails.length > 0 ? (
-                  orderDetails.map((detail) => (
+                  orderDetails.map((detail, index) => (
                     <TableRow key={detail.PURCHASE_ORDER_DET_ID}>
-                      <TableCell>{detail.PURCHASE_ORDER_DET_PROD_NAME}</TableCell>
                       <TableCell>
-                        {detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0}
+                        {isEditMode ? (
+                          <input
+                            type="text"
+                            value={detail.PURCHASE_ORDER_DET_PROD_NAME}
+                            onChange={(e) =>
+                              handleInputChange(
+                                index,
+                                "PURCHASE_ORDER_DET_PROD_NAME",
+                                e.target.value
+                              )
+                            }
+                          />
+                        ) : (
+                          detail.PURCHASE_ORDER_DET_PROD_NAME
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isEditMode ? (
+                          <input
+                            type="number"
+                            value={detail.PURCHASE_ORDER_DET_PROD_LINE_QTY}
+                            onChange={(e) =>
+                              handleInputChange(
+                                index,
+                                "PURCHASE_ORDER_DET_PROD_LINE_QTY",
+                                e.target.value
+                              )
+                            }
+                          />
+                        ) : (
+                          detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -224,8 +208,8 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
             <Button variant="red" onClick={handleCancelOrder}>
               Cancel Order
             </Button>
-            <Button variant="green" onClick={handleUpdateOrder}>
-              Update Order
+            <Button variant="green" onClick={toggleEditMode}>
+              {isEditMode ? "Save Changes" : "Edit Mode"}
             </Button>
             <Button variant="primary" onClick={handleAcceptOrder}>
               Accept Order
@@ -233,18 +217,6 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
           </ButtonGroup>
         )}
       </Modal>
-
-      {/* Edit Supplier Order Modal */}
-      {isEditModalOpen && (
-        <EditSupplierOrderModal
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={() => {
-            setIsEditModalOpen(false);
-            // Optionally, trigger some state update or refetch order details after saving
-          }}
-          supplierOrderData={order} // Pass the order data to edit
-        />
-      )}
     </>
   );
 };

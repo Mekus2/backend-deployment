@@ -53,21 +53,7 @@ const EditCustomerOrderModal = ({ customerOrderDetails, onClose, onSave }) => {
   } = useAddCustomerOrderModal(onSave, onClose);
 
   const [errors, setErrors] = useState({});
-
-  // Populate modal fields with customer order details
-  useEffect(() => {
-    console.log("Customer Order Details: ", customerOrderDetails); // Debugging
-    if (customerOrderDetails) {
-      setClientName(customerOrderDetails.clientName || "");
-      setClientCity(customerOrderDetails.clientCity || "");
-      setClientProvince(customerOrderDetails.clientProvince || "");
-      setClientNumber(customerOrderDetails.clientNumber || "");
-      setDeliveryOption(customerOrderDetails.deliveryOption || "");
-      setPaymentTerms(customerOrderDetails.paymentTerms || "");
-      setOrderDetails(customerOrderDetails.orderDetails || []);
-    }
-  }, [customerOrderDetails]);
-  
+  const [inputStates, setInputStates] = useState({});
 
   const validateFields = () => {
     const newErrors = {};

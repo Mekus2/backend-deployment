@@ -458,11 +458,11 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           <Button onClick={handleAddProductWithValidation}>Add Product</Button>
         </div>
         <TotalSection>
-          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+          <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
             <TotalLabel>Total Qty: </TotalLabel>
             <TotalValue>{totalQuantity}</TotalValue>
           </TotalRow>
-          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+          <TotalRow style={{ display: "flex",  alignItems: "left", marginLeft: "780px" }}>
             <TotalLabel>Total Discount: </TotalLabel>
             <TotalValue>
               ₱
@@ -480,13 +480,13 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             </TotalValue>
           </TotalRow>
 
-          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+          <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
             <TotalLabel>Total Revenue: </TotalLabel>
             <TotalValue style={{ color: "#f08400" }}>
               ₱{totalValue.toFixed(2)}
             </TotalValue>
           </TotalRow>
-          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+          <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
             <TotalLabel>Total Cost: </TotalLabel>
             <TotalValue style={{ color: "#ff5757" }}>
               ₱
@@ -501,7 +501,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                 .toFixed(2)}
             </TotalValue>
           </TotalRow>
-          <TotalRow style={{ display: "flex", justifyContent: "flex-end" }}>
+          <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
             <TotalLabel>Gross Profit: </TotalLabel>
             <TotalValue style={{ color: "#1DBA0B" }}>
               ₱

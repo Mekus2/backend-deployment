@@ -32,7 +32,12 @@ const AddUserModal = ({ onClose, onSave }) => {
 
   useEffect(() => {
     if (firstname && lastname && acctype) {
-      setUsername(`${acctype.toLowerCase()}_${firstname.toLowerCase()}${lastname.toLowerCase()}`.replace(/\s/g, ""));
+      setUsername(
+        `${acctype.toLowerCase()}_${firstname.toLowerCase()}${lastname.toLowerCase()}`.replace(
+          /\s/g,
+          ""
+        )
+      );
     } else {
       setUsername(`${acctype.toLowerCase()}_`);
     }
@@ -51,7 +56,8 @@ const AddUserModal = ({ onClose, onSave }) => {
     if (!phoneNumber) {
       newErrors.phoneNumber = "Phone number is required.";
     } else if (!/^0\d{10}$/.test(phoneNumber)) {
-      newErrors.phoneNumber = "Phone number must start with '0' and be 11 digits long.";
+      newErrors.phoneNumber =
+        "Phone number must start with '0' and be 11 digits long.";
     }
     if (!address) newErrors.address = "Address is required.";
     return newErrors;
@@ -80,10 +86,13 @@ const AddUserModal = ({ onClose, onSave }) => {
 
       try {
         // Make the API request to create the user
-        const response = await fetch("http://127.0.0.1:8000/account/register/", {
-          method: "POST",
-          body: formData,
-        });
+        const response = await fetch(
+          "http://127.0.0.1:8000/account/register/",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
 
         const result = await response.json();
 
@@ -132,36 +141,36 @@ const AddUserModal = ({ onClose, onSave }) => {
 
     // Prepare the log payload with the user's first name and last name
     const logPayload = {
-        LLOG_TYPE: "User logs",
-        LOG_DESCRIPTION: `Added new user: ${first_name} ${last_name} successfully`,
-        USER_ID: userId, // Use the user_id from localStorage
+      LLOG_TYPE: "User logs",
+      LOG_DESCRIPTION: `Added new user: ${first_name} ${last_name} successfully`,
+      USER_ID: userId, // Use the user_id from localStorage
     };
 
     try {
-        // Send the log data to the backend
-        const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
-            method: "POST",
-            body: JSON.stringify(logPayload),
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
+      // Send the log data to the backend
+      const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        body: JSON.stringify(logPayload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-        if (response.ok) {
-            console.log("Log successfully created:", logPayload);
-        } else {
-            const errorData = await response.json();
-            console.error("Failed to create log:", errorData);
-        }
+      if (response.ok) {
+        console.log("Log successfully created:", logPayload);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to create log:", errorData);
+      }
     } catch (error) {
-        console.error("Error logging user creation:", error);
+      console.error("Error logging user creation:", error);
     }
-};
-
+  };
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
-  const isSuperadminPage = window.location.pathname.includes("/superadmin/users");
+  const isSuperadminPage =
+    window.location.pathname.includes("/superadmin/users");
   const isAdminPage = window.location.pathname.includes("/admin/users");
 
   return (
@@ -169,38 +178,122 @@ const AddUserModal = ({ onClose, onSave }) => {
       <ModalContent ref={modalRef}>
         <ModalHeader>
           <h2>Add User</h2>
-          <CloseButton onClick={onClose}><IoCloseCircle /></CloseButton>
+          <CloseButton onClick={onClose}>
+            <IoCloseCircle />
+          </CloseButton>
         </ModalHeader>
         <ModalBody>
-          <Field><Label>First Name</Label><Input value={firstname} onChange={(e) => setFirstname(e.target.value)} />{errors.firstname && <ErrorMessage>{errors.firstname}</ErrorMessage>}</Field>
-          <Field><Label>Middle Name</Label><Input value={midinitial} onChange={(e) => setMidinitial(e.target.value)} /></Field>
-          <Field><Label>Last Name</Label><Input value={lastname} onChange={(e) => setLastname(e.target.value)} />{errors.lastname && <ErrorMessage>{errors.lastname}</ErrorMessage>}</Field>
-          <Field><Label>Address</Label><Input value={address} onChange={(e) => setAddress(e.target.value)} />{errors.address && <ErrorMessage>{errors.address}</ErrorMessage>}</Field>
+          <Field>
+            <Label>First Name</Label>
+            <Input
+              value={firstname}
+              onChange={(e) => setFirstname(e.target.value)}
+            />
+            {errors.firstname && (
+              <ErrorMessage>{errors.firstname}</ErrorMessage>
+            )}
+          </Field>
+          <Field>
+            <Label>Middle Initial</Label>
+            <Input
+              value={midinitial}
+              onChange={(e) => {
+                const value = e.target.value.toUpperCase(); // Optional: convert to uppercase
+                // Allow one letter or an empty string (when backspace is pressed)
+                if (value.length <= 1 && /^[A-Za-z]*$/.test(value)) {
+                  setMidinitial(value); // Update state
+                }
+              }}
+            />
+          </Field>
+
+          <Field>
+            <Label>Last Name</Label>
+            <Input
+              value={lastname}
+              onChange={(e) => setLastname(e.target.value)}
+            />
+            {errors.lastname && <ErrorMessage>{errors.lastname}</ErrorMessage>}
+          </Field>
+          <Field>
+            <Label>Address</Label>
+            <Input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
+            {errors.address && <ErrorMessage>{errors.address}</ErrorMessage>}
+          </Field>
           <Field>
             <Label>Phone Number</Label>
             <Input
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
+              onChange={(e) =>
+                setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""))
+              }
               maxLength={11}
             />
-            {errors.phoneNumber && <ErrorMessage>{errors.phoneNumber}</ErrorMessage>}
+            {errors.phoneNumber && (
+              <ErrorMessage>{errors.phoneNumber}</ErrorMessage>
+            )}
           </Field>
-          <Field><Label>Email</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />{errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}</Field>
-          <Field><Label>Username</Label><Input value={username} readOnly /></Field>
+          <Field>
+            <Label>Email</Label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
+          </Field>
+          <Field>
+            <Label>Username</Label>
+            <Input value={username} readOnly />
+          </Field>
           <Field>
             <Label>Password</Label>
             <PasswordWrapper>
-              <Input type={showPassword ? "text" : "password"} value={password} readOnly />
-              <TogglePasswordButton onClick={togglePasswordVisibility}>{showPassword ? <FaEye /> : <FaEyeSlash />}</TogglePasswordButton>
+              <Input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                readOnly
+              />
+              <TogglePasswordButton onClick={togglePasswordVisibility}>
+                {showPassword ? <FaEye /> : <FaEyeSlash />}
+              </TogglePasswordButton>
             </PasswordWrapper>
             {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
           </Field>
-          {isSuperadminPage && <Field><Label>Account Type</Label><Select value={acctype} onChange={(e) => setAcctype(e.target.value)}><option value="staff">Staff</option><option value="admin">Admin</option></Select></Field>}
-          {isAdminPage && <Field><Label>Account Type</Label><Select value={acctype} onChange={(e) => setAcctype(e.target.value)}><option value="staff">Staff</option></Select></Field>}
+          {isSuperadminPage && (
+            <Field>
+              <Label>Account Type</Label>
+              <Select
+                value={acctype}
+                onChange={(e) => setAcctype(e.target.value)}
+              >
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+              </Select>
+            </Field>
+          )}
+          {isAdminPage && (
+            <Field>
+              <Label>Account Type</Label>
+              <Select
+                value={acctype}
+                onChange={(e) => setAcctype(e.target.value)}
+              >
+                <option value="staff">Staff</option>
+              </Select>
+            </Field>
+          )}
         </ModalBody>
         <ModalFooter>
-          <Button variant="red" onClick={onClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleSave}>Add User</Button>
+          <Button variant="red" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
+            Add User
+          </Button>
         </ModalFooter>
       </ModalContent>
     </ModalOverlay>

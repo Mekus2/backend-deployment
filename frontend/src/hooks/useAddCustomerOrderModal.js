@@ -315,6 +315,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       console.error("Error saving order:", error);
     }
   };
+  
   const logAddCustomerOrder = async (createdOrder) => {
     // Retrieve the userId from localStorage
     const userId = localStorage.getItem("user_id");
