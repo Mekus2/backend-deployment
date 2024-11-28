@@ -116,6 +116,9 @@ const SharedSupplierDeliveryPage = () => {
         </SpinnerWrapper>
       ) : (
         <>
+          <SummarySection>
+            <CardTotalSupplierDelivery />
+          </SummarySection>
           <Controls>
             <SearchBar
               data-cy="search-bar"
@@ -124,9 +127,6 @@ const SharedSupplierDeliveryPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </Controls>
-          <SummarySection>
-            <CardTotalSupplierDelivery />
-          </SummarySection>
           <Table
             headers={headers.map((header) => (
               <TableHeader

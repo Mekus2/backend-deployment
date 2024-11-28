@@ -5,6 +5,7 @@ import Modal from "../Layout/Modal";
 import Button from "../Layout/Button";
 import { colors } from "../../colors";
 import { FaTimes } from "react-icons/fa";
+import { notify } from "../Layout/CustomToast";
 
 const ProductDetailsModal = ({ productId, onClose }) => {
   const [product, setProduct] = useState(null);
@@ -69,11 +70,83 @@ const ProductDetailsModal = ({ productId, onClose }) => {
         `http://127.0.0.1:8000/items/productList/${productId}/`,
         updatedProduct
       );
+      notify.success("Product updated successfully!");
+      await logProductCreation(product, updatedProduct);
       setProduct(updatedProduct);
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating product data:", error);
     }
+  };
+
+  const logProductCreation = async (oldProduct, updatedProduct) => {
+    const userId = localStorage.getItem("user_id");
+    const userResponse = await fetch(
+      `http://127.0.0.1:8000/account/logs/${userId}/`
+    );
+    if (!userResponse.ok) {
+      const errorData = await userResponse.json();
+      console.error("Failed to fetch user details:", errorData);
+      return;
+    }
+    const userData = await userResponse.json();
+    const username = userData.username; // Assuming the API response includes a `username` field
+
+    const changes = [];
+    const fieldsToCheck =[
+      { field: "PROD_NAME", label: "Product Name" },
+      { field: "PROD_RO_LEVEL", label: "Reorder Level" },
+      { field: "PROD_RO_QTY", label: "Reorder Quantity" },
+      { field: "PROD_QOH", label: "Quantity on Hand" },
+      { field: "PROD_TAGS", label: "Tags" },
+      { field: "PROD_DETAILS_DESCRIPTION", label: "Description" },
+      { field: "PROD_DETAILS_PRICE", label: "Price" },
+      { field: "PROD_DETAILS_SUPPLIER", label: "Supplier" },
+      { field: "PROD_DETAILS_UNITS", label: "Units" },
+    ];
+      // Check for changes and format them for logging
+      fieldsToCheck.forEach(({ field, label }) => {
+        if (oldProduct[field] !== updatedProduct[field]) {
+            changes.push(
+                `${label} changed from "${oldProduct[field] || "N/A"}" to "${
+                    updatedProduct[field] || "N/A"
+                }"`
+            );
+        }
+    });
+    
+    // If there are changes, prepare the log payload
+    if (changes.length > 0) {
+      const logPayload = {
+          LLOG_TYPE: "User logs",
+          LOG_DESCRIPTION: `${username} updated the Product details:${changes.join("\n")}`,
+          USER_ID: userId,
+      };
+
+      try {
+        
+          // Send the log data to the backend
+          const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify(logPayload),
+          });
+
+          // Handle the response
+          if (response.ok) {
+              console.log("Product updated details:", logPayload);
+          } else {
+              const errorData = await response.json();
+              console.error("Failed to create log:", errorData);
+          }
+      } catch (error) {
+          console.error("Error logging product updates:", error);
+      }
+  } else {
+      console.log("No changes detected. Logging skipped.");
+  }  
   };
 
   const handleRemove = () => {

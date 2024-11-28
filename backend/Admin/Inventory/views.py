@@ -123,3 +123,52 @@ class InventoryListView(APIView):
         # Serialize the data using the InventorySerializer
         serializer = InventorySerializer(inventory_items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class InventorySearchView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        # Extract query parameters
+        product_name_query = request.query_params.get("PRODUCT_NAME", None)
+        batch_id_query = request.query_params.get("BATCH_ID", None)
+        expiry_date_query = request.query_params.get("expiry_date", None)
+
+        # Ensure at least one query parameter is provided
+        if not product_name_query and not batch_id_query and not expiry_date_query:
+            return Response(
+                {"error": "At least one query parameter (product_name, batch_id, expiry_date) must be provided."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Build the filter dynamically based on provided query parameters
+        filters = {}
+        if product_name_query:
+            filters["PRODUCT_NAME__icontains"] = product_name_query
+        if batch_id_query:
+            filters["BATCH_ID__icontains"] = batch_id_query
+        if expiry_date_query:
+            filters["EXPIRY_DATE"] = expiry_date_query
+
+        # Query the Inventory model
+        inventory_items = Inventory.objects.filter(**filters)
+
+        if not inventory_items.exists():
+            return Response(
+                {"message": "No inventory items found matching the query."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Serialize the results into a dictionary
+        inventory_data = inventory_items.values(
+            "INVENTORY_ID",
+            "PRODUCT_ID",
+            "PRODUCT_NAME",
+            "INBOUND_DEL_ID",
+            "BATCH_ID",
+            "EXPIRY_DATE",
+            "QUANTITY_ON_HAND",
+            "LAST_UPDATED",
+            "DATE_CREATED",
+        )
+
+        return Response(inventory_data, status=status.HTTP_200_OK)

@@ -74,3 +74,14 @@ export const createLog = async (logData) => {
     throw error;
   }
 };
+
+export const fetchTotalLogs = async  () => {
+  try {
+    const response = await axios.get(`http://127.0.0.1:8000/logs/total/`);
+    console.log('Total logs:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch total logs');
+    throw new Error('Failed error');
+  }
+};

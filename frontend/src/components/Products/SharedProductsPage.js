@@ -82,9 +82,7 @@ const SharedProductsPage = () => {
 
   const openProductDetailsModal = async (product) => {
     try {
-      await axios.get(
-        `http://127.0.0.1:8000/items/productList/${product.id}`
-      );
+      await axios.get(`http://127.0.0.1:8000/items/productList/${product.id}`);
       setSelectedProductId(product.id);
       setIsProductDetailsModalOpen(true);
     } catch (error) {
@@ -116,6 +114,9 @@ const SharedProductsPage = () => {
 
   return (
     <>
+      <AnalyticsContainer>
+        <CardTotalProducts />
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter product..."
@@ -128,9 +129,6 @@ const SharedProductsPage = () => {
           </StyledButton>
         </ButtonGroup>
       </Controls>
-      <AnalyticsContainer>
-        <CardTotalProducts />
-      </AnalyticsContainer>
       <Table headers={headers} rows={rows} />
       {isAddProductModalOpen && (
         <AddProductModal onClose={closeAddProductModal} />
