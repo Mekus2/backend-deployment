@@ -51,7 +51,7 @@ class PurchaseOrderListCreateView(APIView):
         )
 
     def get(self, request):
-        queryset = PurchaseOrder.objects.all()
+        queryset = PurchaseOrder.objects.all().order_by('-PURCHASE_ORDER_DATE_CREATED')
         serializer = PurchaseOrderSerializer(queryset, many=True)
         return Response(serializer.data)
 

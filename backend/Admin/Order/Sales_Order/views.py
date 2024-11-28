@@ -33,10 +33,10 @@ class SalesOrderListCreateAPIView(APIView):
 
     def get(self, request):
         """List all Sales Orders without their details."""
-        queryset = SalesOrder.objects.all()
+        queryset = SalesOrder.objects.all().order_by('-SALES_ORDER_DATE_CREATED')  # Prefix the field with '-' for descending order
         serializer = SalesOrderSerializer(queryset, many=True)
         return Response(serializer.data)
-
+    
     def post(self, request):
         """Create a new Sales Order along with its details."""
         print("Incoming request data:", request.data)
