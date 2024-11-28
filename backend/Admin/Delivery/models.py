@@ -42,7 +42,12 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_STATUS = models.CharField(
         max_length=15, choices=DELIVERY_STATUS_CHOICES, default="Pending"
     )
-    OUTBOUND_DEL_DLVRD_QTY = models.PositiveIntegerField(null=False, default=0)
+    OUTBOUND_DEL_TOTAL_ORDERED_QTY = models.PositiveIntegerField(
+        null=False, default=0
+    )  # Qty based on sales order
+    OUTBOUND_DEL_DLVRD_QTY = models.PositiveIntegerField(
+        null=False, default=0
+    )  # Accepted Qty
     OUTBOUND_DEL_DLVRY_OPTION = models.CharField(
         max_length=30, null=False, blank=False, default="Standard Delivery"
     )
@@ -72,6 +77,9 @@ class OutboundDelivery(models.Model):
 class OutboundDeliveryDetails(models.Model):
     OUTBOUND_DEL_DETAIL_ID = models.AutoField(primary_key=True)
     OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
+    OUTBOUND_DETAILS_PROD_ID = models.ForeignKey(
+        Product, on_delete=models.CASCADE, null=True
+    )
     OUTBOUND_DETAILS_PROD_NAME = models.CharField(max_length=100, null=False)
     OUTBOUND_DETAILS_PROD_QTY = models.PositiveIntegerField(null=False, default="0")
     OUTBOUND_DETAILS_SELL_PRICE = models.DecimalField(
