@@ -263,7 +263,7 @@ class SalesOrderUpdateAPIView(APIView):
                     "CLIENT_ID", sales_order.CLIENT_ID
                 )  # Update Client ID if changed
                 sales_order.SALES_ORDER_CLIENT_NAME = request.data.get(
-                    "CLIENT_NAME", sales_order.CLIENT_NAME
+                    "CLIENT_NAME", sales_order.SALES_ORDER_CLIENT_NAME
                 )  # Update Client Name
                 sales_order.SALES_ORDER_CLIENT_PROVINCE = request.data.get(
                     "CLIENT_PROVINCE", sales_order.SALES_ORDER_CLIENT_PROVINCE
@@ -273,10 +273,10 @@ class SalesOrderUpdateAPIView(APIView):
                 )  # Update Client City
                 sales_order.SALES_ORDER_DLVRY_OPTION = request.data.get(
                     "DELIVERY_OPTION", sales_order.SALES_ORDER_DLVRY_OPTION
-                )
+                )  # Update delivery option
                 sales_order.SALES_ORDER_PYMNT_OPTION = request.data.get(
                     "PAYMENT_OPTION", sales_order.SALES_ORDER_PYMNT_OPTION
-                )
+                )  # Update payment option
                 sales_order.save()
 
                 # Check if there is an existing OutboundDelivery for the SalesOrder
@@ -289,21 +289,25 @@ class SalesOrderUpdateAPIView(APIView):
                 existing_details_ids = set()
 
                 for detail_data in updated_details:
-                    product_id = detail_data.get("SALES_ORDER_DET_PROD_ID")
-                    product_name = detail_data.get("SALES_ORDER_DET_PROD_NAME")
-                    quantity = detail_data.get("SALES_ORDER_DET_PROD_LINE_QTY")
-                    price = detail_data.get("SALES_ORDER_DET_PROD_PRICE")
+                    product_id = detail_data.get("SALES_ORDER_PROD_ID")
+                    product_name = detail_data.get("SALES_ORDER_PROD_NAME")
+                    quantity = detail_data.get("SALES_ORDER_LINE_QTY")
+                    price = detail_data.get("SALES_ORDER_LINE_PRICE")
+                    discount = detail_data.get("SALES_ORDER_LINE_DISCOUNT")
+                    line_total = detail_data.get("SALES_ORDER_LINE_TOTAL")
 
                     product = get_object_or_404(Product, id=product_id)
 
                     # Update or create SalesOrderDetails
                     sales_order_detail, _ = SalesOrderDetails.objects.update_or_create(
                         SALES_ORDER_ID=sales_order,
-                        SALES_ORDER_DET_PROD_ID=product_id,
+                        SALES_ORDER_PROD_ID=product,
                         defaults={
-                            "SALES_ORDER_DET_PROD_NAME": product_name,
-                            "SALES_ORDER_DET_PROD_LINE_QTY": quantity,
-                            "SALES_ORDER_DET_PROD_PRICE": price,
+                            "SALES_ORDER_PROD_NAME": product_name,
+                            "SALES_ORDER_LINE_QTY": quantity,
+                            "SALES_ORDER_LINE_PRICE": price,
+                            "SALES_ORDER_LINE_DISCOUNT": discount,
+                            "SALES_ORDER_LINE_TOTAL": line_total,
                         },
                     )
                     existing_details_ids.add(sales_order_detail.SALES_ORDER_DET_ID)
@@ -312,10 +316,12 @@ class SalesOrderUpdateAPIView(APIView):
                     if outbound_delivery:
                         OutboundDeliveryDetails.objects.update_or_create(
                             OUTBOUND_DEL_ID=outbound_delivery,
-                            OUTBOUND_DEL_DETAIL_PROD_ID=product,
+                            OUTBOUND_DETAILS_PROD_ID=product,
                             defaults={
-                                "OUTBOUND_DEL_DETAIL_PROD_NAME": product_name,
-                                "OUTBOUND_DEL_DETAIL_QTY": quantity,
+                                "OUTBOUND_DETAILS_PROD_NAME": product_name,
+                                "OUTBOUND_DETAILS_PROD_QTY": quantity,
+                                "OUTBOUND_DETAILS_SELL_PRICE": price,
+                                "OUTBOUND_DETAIL_LINE_TOTAL": line_total,
                             },
                         )
 
@@ -328,21 +334,18 @@ class SalesOrderUpdateAPIView(APIView):
                     OutboundDeliveryDetails.objects.filter(
                         OUTBOUND_DEL_ID=outbound_delivery
                     ).exclude(
-                        OUTBOUND_DEL_DETAIL_PROD_ID__in=[
-                            detail["SALES_ORDER_DET_PROD_ID"]
-                            for detail in updated_details
+                        OUTBOUND_DETAILS_PROD_ID__in=[
+                            detail["SALES_ORDER_PROD_ID"] for detail in updated_details
                         ]
                     ).delete()
 
                 # Recalculate the total quantity and total price
                 total_qty = SalesOrderDetails.objects.filter(
                     SALES_ORDER_ID=sales_order
-                ).aggregate(total_qty=Sum("SALES_ORDER_DET_PROD_LINE_QTY"))["total_qty"]
+                ).aggregate(total_qty=Sum("SALES_ORDER_LINE_QTY"))["total_qty"]
                 total_price = SalesOrderDetails.objects.filter(
                     SALES_ORDER_ID=sales_order
-                ).aggregate(total_price=Sum("SALES_ORDER_DET_PROD_PRICE"))[
-                    "total_price"
-                ]
+                ).aggregate(total_price=Sum("SALES_ORDER_LINE_PRICE"))["total_price"]
 
                 # Update the total quantity and price in SalesOrder
                 sales_order.SALES_ORDER_TOTAL_QTY = total_qty or 0
@@ -351,7 +354,7 @@ class SalesOrderUpdateAPIView(APIView):
 
                 # Update the total quantity in the OutboundDelivery if it exists
                 if outbound_delivery:
-                    outbound_delivery.OUTBOUND_DEL_TOTAL_QTY = total_qty or 0
+                    outbound_delivery.OUTBOUND_DEL_TOTAL_ORDERED_QTY = total_qty or 0
                     outbound_delivery.save()
 
                 return Response(
