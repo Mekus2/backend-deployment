@@ -51,7 +51,7 @@ class PurchaseOrderListCreateView(APIView):
         )
 
     def get(self, request):
-        queryset = PurchaseOrder.objects.all().order_by('-PURCHASE_ORDER_DATE_CREATED')
+        queryset = PurchaseOrder.objects.all().order_by("-PURCHASE_ORDER_DATE_CREATED")
         serializer = PurchaseOrderSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -86,7 +86,13 @@ class PurchaseOrderListCreateView(APIView):
                 # If product doesn't exist by name, create it
                 if not check_product_exists(product_name):
                     print(f"Product does not exist, creating: {product_name}")
-                    product = add_product(product_name)
+                    # Assuming the supplier name is passed with the request data
+                    supplier_name = request.data.get(
+                        "PURCHASE_ORDER_SUPPLIER_CMPNY_NAME", "Unknown Supplier"
+                    )
+                    product = add_product(
+                        product_name, supplier_name
+                    )  # Pass the supplier name here
                 else:
                     print(f"Product exists, fetching by name: {product_name}")
                     product_id = get_existing_product_(product_name)

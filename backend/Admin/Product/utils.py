@@ -1,4 +1,4 @@
-from .models import Product
+from .models import Product, ProductCategory, ProductDetails
 
 
 def check_product_exists(product_name):
@@ -9,12 +9,41 @@ def check_product_exists(product_name):
     return Product.objects.filter(PROD_NAME=product_name).exists()
 
 
-def add_product(product_name):
+def add_product(product_name, supplier_name):
     """
-    Adds a new product to the database with the provided product name.
+    Adds a new product to the database with the provided product name and supplier.
+    Creates a default ProductDetails with PROD_CAT_CODE set to 1.
     Returns the created Product instance.
     """
-    return Product.objects.create(PROD_NAME=product_name)
+    # Check if the product already exists
+    existing_product = Product.objects.filter(PROD_NAME=product_name).first()
+    if existing_product:
+        print(f"Product {product_name} already exists. Skipping creation.")
+        return existing_product  # Return the existing product
+
+    # Ensure that a default ProductCategory with PROD_CAT_CODE = 1 exists
+    default_category, _ = ProductCategory.objects.get_or_create(
+        PROD_CAT_CODE=1,
+        defaults={
+            "PROD_CAT_NAME": "Default Category",
+            "PROD_CAT_SUBCATEGORY": "Default Subcategory",
+        },
+    )
+
+    # Create the ProductDetails instance
+    product_details = ProductDetails.objects.create(
+        PROD_DETAILS_DESCRIPTION=f"Details for {product_name}",
+        PROD_DETAILS_SUPPLIER=supplier_name,  # Assign the supplier name
+        PROD_CAT_CODE=default_category,  # Link to the default category
+    )
+
+    # Create the Product instance and associate it with the ProductDetails
+    product = Product.objects.create(
+        PROD_NAME=product_name,
+        PROD_DETAILS_CODE=product_details,  # Link to the ProductDetails instance
+    )
+
+    return product
 
 
 def get_existing_product_(product_name):
