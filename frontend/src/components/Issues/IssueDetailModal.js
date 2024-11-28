@@ -77,11 +77,11 @@ const IssueDetailModal = ({ returnItem = {}, onClose, onCancelReturn }) => {
       </ProductTable>
 
       <FormSection>
-        <FormGroup>
+        <FormGroup style={{ display: "flex", alignItems: "left", marginLeft: "740px" }}>
           <Label>Order Sub Total:</Label>
           <Value>{formatCurrency(calculateSubTotal())}</Value>
         </FormGroup>
-        <FormGroup>
+        <FormGroup style={{ display: "flex", alignItems: "left", marginLeft: "740px" }}>
           <Label>Total Quantity:</Label>
           <Value>{calculateTotalQuantity()}</Value>
         </FormGroup>

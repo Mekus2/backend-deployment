@@ -63,10 +63,8 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
 
   const sortedSales = filteredSales.sort((a, b) => {
     if (sortConfig.key === "SALES_ORDER_DATE_CREATED") {
-      return (
-        (new Date(b.SALES_ORDER_DATE_CREATED) - new Date(a.SALES_ORDER_DATE_CREATED)) *
-        (sortConfig.direction === "asc" ? 1 : -1)
-      );
+      // Always sort in descending order by date
+      return new Date(b.SALES_ORDER_DATE_CREATED) - new Date(a.SALES_ORDER_DATE_CREATED);
     }
     return (
       a.SALES_ORDER_CLIENT_NAME.localeCompare(b.SALES_ORDER_CLIENT_NAME) *
