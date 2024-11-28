@@ -103,6 +103,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
 
     try {
       const response = await addNewCustomerDelivery(newDelivery);
+      logAcceptOrder(newOrderDelivery);
       if (response) {
         console.log("New outbound delivery created:", response);
         alert("Outbound delivery accepted successfully!");
@@ -121,6 +122,46 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     // Logic to cancel the order
     console.log("Customer order cancelled");
     onClose(); // Close modal after action
+  };
+
+  const logAcceptOrder = async (newOrderDelivery) => {
+    const userId = localStorage.getItem("user_id"); // Ensure "user_id" is correctly stored in localStorage
+    console.log("User ID:", userId);
+    try {
+      // Fetch the user details using the userId
+      const userResponse = await fetch(`http://127.0.0.1:8000/account/logs/${userId}/`);
+      if (!userResponse.ok) {
+        throw new Error("Failed to fetch user details");
+      }
+  
+      const user = await userResponse.json(); // Assuming the response contains the user object
+      const username = user.username;
+      
+      const salesId = newOrderDelivery.SALES_ORDER_ID;
+      // Construct the log payload
+      const logPayload = {
+        LLOG_TYPE: "Transaction logs",
+        LOG_DESCRIPTION: `${username} accepted the customer order ID: (${salesId})`,
+        USER_ID: userId,
+      };
+  
+      // Send the log payload
+      const logResponse = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(logPayload),
+      });
+  
+      if (logResponse.ok) {
+        console.log("Order log successfully created:", logPayload);
+      } else {
+        console.error("Failed to create order log:", logResponse);
+      }
+    } catch (error) {
+      console.error("Error logging order acceptance:", error);
+    }
   };
 
   const handleUpdateOrder = () => {
