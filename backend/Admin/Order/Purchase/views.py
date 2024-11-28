@@ -401,18 +401,13 @@ class PurchaseOrderUpdateAPIView(APIView):
                 )
                 purchase_order.save()
 
-                # Update or create InboundDelivery
-                inbound_delivery, created = InboundDelivery.objects.get_or_create(
-                    PURCHASE_ORDER_ID=purchase_order,
-                    defaults={
-                        "INBOUND_DEL_STATUS": "Pending",  # Default status
-                        "INBOUND_DEL_TOTAL_ORDERED_QTY": 0,  # Will be updated later
-                        "INBOUND_DEL_SUPP_ID": purchase_order.PURCHASE_ORDER_SUPPLIER_ID,
-                        "INBOUND_DEL_SUPP_NAME": purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME,
-                    },
-                )
+                # Check if there is an existing InboundDelivery for the PurchaseOrder
+                inbound_delivery = InboundDelivery.objects.filter(
+                    PURCHASE_ORDER_ID=purchase_order
+                ).first()
 
-                if not created:
+                if inbound_delivery:
+                    # Update existing InboundDelivery fields
                     inbound_delivery.INBOUND_DEL_SUPP_ID = (
                         purchase_order.PURCHASE_ORDER_SUPPLIER_ID
                     )
@@ -421,7 +416,7 @@ class PurchaseOrderUpdateAPIView(APIView):
                     )
                     inbound_delivery.save()
 
-                # Update PurchaseOrderDetails and InboundDeliveryDetails
+                # Update PurchaseOrderDetails and optionally InboundDeliveryDetails
                 updated_details = request.data.get("details", [])
                 existing_details_ids = set()
 
@@ -430,9 +425,9 @@ class PurchaseOrderUpdateAPIView(APIView):
                     prod_name = detail_data.get("PURCHASE_ORDER_DET_PROD_NAME")
                     prod_line_qty = detail_data.get("PURCHASE_ORDER_DET_PROD_LINE_QTY")
 
-                    product = Product.objects.get(id=prod_id)
+                    product = get_object_or_404(Product, id=prod_id)
 
-                    # Update or create PurchaseOrderDetail
+                    # Update or create PurchaseOrderDetails
                     purchase_order_detail, _ = (
                         PurchaseOrderDetails.objects.update_or_create(
                             PURCHASE_ORDER_ID=purchase_order,
@@ -447,57 +442,80 @@ class PurchaseOrderUpdateAPIView(APIView):
                         purchase_order_detail.PURCHASE_ORDER_DET_ID
                     )
 
-                    # Update or create InboundDeliveryDetail
-                    InboundDeliveryDetails.objects.update_or_create(
-                        INBOUND_DEL_ID=inbound_delivery,
-                        INBOUND_DEL_DETAIL_PROD_ID=product,
-                        defaults={
-                            "INBOUND_DEL_DETAIL_PROD_NAME": prod_name,
-                            "INBOUND_DEL_DETAIL_ORDERED_QTY": prod_line_qty,
-                        },
-                    )
+                    # If an InboundDelivery exists, update or create InboundDeliveryDetails
+                    if inbound_delivery:
+                        InboundDeliveryDetails.objects.update_or_create(
+                            INBOUND_DEL_ID=inbound_delivery,
+                            INBOUND_DEL_DETAIL_PROD_ID=product,
+                            defaults={
+                                "INBOUND_DEL_DETAIL_PROD_NAME": prod_name,
+                                "INBOUND_DEL_DETAIL_ORDERED_QTY": prod_line_qty,
+                            },
+                        )
 
                 # Remove outdated details
                 PurchaseOrderDetails.objects.filter(
                     PURCHASE_ORDER_ID=purchase_order
                 ).exclude(PURCHASE_ORDER_DET_ID__in=existing_details_ids).delete()
 
-                InboundDeliveryDetails.objects.filter(
-                    INBOUND_DEL_ID=inbound_delivery
-                ).exclude(
-                    INBOUND_DEL_DETAIL_PROD_ID__in=[
-                        d["PURCHASE_ORDER_DET_PROD_ID"] for d in updated_details
+                if inbound_delivery:
+                    InboundDeliveryDetails.objects.filter(
+                        INBOUND_DEL_ID=inbound_delivery
+                    ).exclude(
+                        INBOUND_DEL_DETAIL_PROD_ID__in=[
+                            d["PURCHASE_ORDER_DET_PROD_ID"] for d in updated_details
+                        ]
+                    ).delete()
+
+                    # Recalculate the total quantity
+                    total_qty = (
+                        PurchaseOrderDetails.objects.filter(
+                            PURCHASE_ORDER_ID=purchase_order
+                        ).aggregate(total_qty=Sum("PURCHASE_ORDER_DET_PROD_LINE_QTY"))[
+                            "total_qty"
+                        ]
+                        or 0
+                    )
+
+                    # Update the total quantity in the InboundDelivery
+                    inbound_delivery.INBOUND_DEL_TOTAL_ORDERED_QTY = total_qty
+                    inbound_delivery.save()
+
+                # Recalculate and update the total quantity in the PurchaseOrder
+                total_qty = (
+                    PurchaseOrderDetails.objects.filter(
+                        PURCHASE_ORDER_ID=purchase_order
+                    ).aggregate(total_qty=Sum("PURCHASE_ORDER_DET_PROD_LINE_QTY"))[
+                        "total_qty"
                     ]
-                ).delete()
+                    or 0
+                )
 
-                # Recalculate the total quantity
-                total_qty = PurchaseOrderDetails.objects.filter(
-                    PURCHASE_ORDER_ID=purchase_order
-                ).aggregate(total_qty=Sum("PURCHASE_ORDER_DET_PROD_LINE_QTY"))[
-                    "total_qty"
-                ]
-
-                # Update the total quantity in the PurchaseOrder and InboundDelivery
                 purchase_order.PURCHASE_ORDER_TOTAL_QTY = total_qty
                 purchase_order.save()
 
-                inbound_delivery.INBOUND_DEL_TOTAL_ORDERED_QTY = total_qty
-                inbound_delivery.save()
-
                 return Response(
                     {
-                        "message": "Purchase Order and related Inbound Delivery updated successfully."
+                        "message": (
+                            "Purchase Order and related Inbound Delivery updated successfully."
+                            if inbound_delivery
+                            else "Purchase Order updated successfully. No related Inbound Delivery exists."
+                        ),
                     },
                     status=status.HTTP_200_OK,
                 )
 
         except Http404 as e:
-            logger.error(f"Resource not found: {str(e)}")
-            raise
+            return Response(
+                {"error": f"Resource not found: {str(e)}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         except Exception as e:
-            logger.error(f"An unexpected error occurred: {str(e)}")
-            raise
+            return Response(
+                {"error": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         # except PurchaseOrder.DoesNotExist:
         #     return Response(
