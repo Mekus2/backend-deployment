@@ -62,8 +62,10 @@ const SharedSuppliersPage = () => {
 
   const openDetailsModal = async (supplier) => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/supplier/suppliers/${supplier.id}/`);
-      console.log('API RESPONSE:', response.data);
+      const response = await axios.get(
+        `http://127.0.0.1:8000/supplier/suppliers/${supplier.id}/`
+      );
+      console.log("API RESPONSE:", response.data);
       setSelectedSupplier(response.data);
       setShowDetailsModal(true);
     } catch (error) {
@@ -128,6 +130,9 @@ const SharedSuppliersPage = () => {
 
   return (
     <>
+      <SummarySection>
+        <CardTotalSuppliers />
+      </SummarySection>
       <Controls>
         <SearchBar
           placeholder="Search / Filter supplier..."
@@ -138,9 +143,6 @@ const SharedSuppliersPage = () => {
           <FaPlus className="icon" /> Supplier
         </StyledButton>
       </Controls>
-      <SummarySection>
-        <CardTotalSuppliers />
-      </SummarySection>
       <Table
         headers={headers.map((header, index) => (
           <TableHeader

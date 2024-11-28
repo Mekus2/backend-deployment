@@ -51,11 +51,7 @@ const SharedLogsPage = () => {
   // Filtered logs based on the search term
   const filteredLogs = logs.filter((log) => {
     const userFullName = userDetails[log.USER_ID] || "Unknown User";
-    const logValues = [
-      log.LOG_DATETIME,
-      log.LOG_DESCRIPTION,
-      userFullName,
-    ]
+    const logValues = [log.LOG_DATETIME, log.LOG_DESCRIPTION, userFullName]
       .join(" ")
       .toLowerCase();
 
@@ -91,13 +87,6 @@ const SharedLogsPage = () => {
               Transaction Logs
             </StyledTabButton>
           </Tabs>
-          <Controls>
-            <SearchBar
-              placeholder={`Search / Filter ${activeTab.toLowerCase()}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </Controls>
           <AnalyticsContainer>
             {/* Logs Card */}
             <Card
@@ -107,11 +96,14 @@ const SharedLogsPage = () => {
               icon={<FaListAlt />}
             />
           </AnalyticsContainer>
-          {error ? (
-            <p>{error}</p>
-          ) : (
-            <Table headers={headers} rows={rows} />
-          )}
+          <Controls>
+            <SearchBar
+              placeholder={`Search / Filter ${activeTab.toLowerCase()}...`}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </Controls>
+          {error ? <p>{error}</p> : <Table headers={headers} rows={rows} />}
         </div>
       )}
     </>
