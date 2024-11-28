@@ -125,3 +125,12 @@ class TransactionLogsAPIView(APIView):
             )
         serializer = LogsSerializer(transaction_logs, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TotalLogs (APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        total_logs = Logs.objects.count()
+        return Response ({total_logs}, status=status.HTTP_200_OK)
