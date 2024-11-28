@@ -27,6 +27,22 @@ const ReportBody = ({
 
   return (
     <>
+      <CardsContainer>
+        <ReportCard
+          label={`Total Orders`}
+          value={`${totalOrders} Orders`}
+          startDate={startDate ? formatDate(startDate) : ""}
+          endDate={endDate ? formatDate(endDate) : ""}
+          icon={<FaShoppingCart />}
+        />
+        <ReportCard
+          label={`Order Value`}
+          value={`₱${totalOrderValue.toFixed(2)}`} // Keep peso sign in the value
+          startDate={startDate ? formatDate(startDate) : ""}
+          endDate={endDate ? formatDate(endDate) : ""}
+          icon={<FaDollarSign />}
+        />
+      </CardsContainer>
       <Controls>
         <SearchBar
           placeholder="Search reports..."
@@ -52,23 +68,6 @@ const ReportBody = ({
           </label>
         </DateContainer>
       </Controls>
-
-      <CardsContainer>
-        <ReportCard
-          label={`Total Orders`}
-          value={`${totalOrders} Orders`}
-          startDate={startDate ? formatDate(startDate) : ""}
-          endDate={endDate ? formatDate(endDate) : ""}
-          icon={<FaShoppingCart />}
-        />
-        <ReportCard
-          label={`Order Value`}
-          value={`₱${totalOrderValue.toFixed(2)}`} // Keep peso sign in the value
-          startDate={startDate ? formatDate(startDate) : ""}
-          endDate={endDate ? formatDate(endDate) : ""}
-          icon={<FaDollarSign />}
-        />
-      </CardsContainer>
 
       <ReportContent>
         <Table headers={headers} rows={rows} />

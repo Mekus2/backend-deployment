@@ -10,6 +10,7 @@ import { FaPlus } from "react-icons/fa";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import CustomerOrderDetailsModal from "./CustomerOrderDetailsModal";
 import Loading from "../../../components/Layout/Loading"; // Import the Loading component
+import { TotalSection, TotalRow } from "../OrderStyles";
 
 const SharedCustomerOrdersPage = ({ userRole }) => {
   const [customer, setCustomer] = useState([]); // Use customer data instead of orders
@@ -64,7 +65,8 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const sortedSales = filteredSales.sort((a, b) => {
     if (sortConfig.key === "SALES_ORDER_DATE_CREATED") {
       return (
-        (new Date(b.SALES_ORDER_DATE_CREATED) - new Date(a.SALES_ORDER_DATE_CREATED)) *
+        (new Date(b.SALES_ORDER_DATE_CREATED) -
+          new Date(a.SALES_ORDER_DATE_CREATED)) *
         (sortConfig.direction === "asc" ? 1 : -1)
       );
     }
@@ -115,6 +117,9 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
 
   return (
     <>
+      <AnalyticsContainer>
+        <CardTotalCustomerOrder />
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter customer..."
@@ -125,9 +130,6 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
           <FaPlus className="icon" /> Customer Order
         </StyledButton>
       </Controls>
-      <AnalyticsContainer>
-        <CardTotalCustomerOrder />
-      </AnalyticsContainer>
       <Table
         headers={headers.map((header, index) => (
           <TableHeader

@@ -51,6 +51,9 @@ const SharedReturnsPage = () => {
 
   return (
     <>
+      <AnalyticsContainer>
+        <CardTotalReturns totalReturns={totalReturns} />
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter returns..."
@@ -58,9 +61,6 @@ const SharedReturnsPage = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </Controls>
-      <AnalyticsContainer>
-        <CardTotalReturns totalReturns={totalReturns} />
-      </AnalyticsContainer>
       <Table headers={headers} rows={rows} />
       {selectedReturn && (
         <ReturnDetailModal

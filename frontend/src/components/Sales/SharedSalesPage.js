@@ -28,7 +28,8 @@ const SharedSalesPage = () => {
 
   // Process purchase orders
   PURCHASE_ORDR.forEach((order) => {
-    const grossProfit = order.PURCHASE_ORDER_REVENUE - order.PURCHASE_ORDER_COST;
+    const grossProfit =
+      order.PURCHASE_ORDER_REVENUE - order.PURCHASE_ORDER_COST;
     combinedOrders.push({
       type: "Purchase",
       date: new Date(order.PURCHASE_ORDER_DATE),
@@ -84,6 +85,28 @@ const SharedSalesPage = () => {
 
   return (
     <>
+      <CardsContainer>
+        <ReportCard
+          label="Total Orders"
+          value={`${totalOrders} Orders`}
+          icon={<FaShoppingCart />}
+        />
+        <ReportCard
+          label="Revenue"
+          value={formatCurrency(totalSales)}
+          icon={<FaDollarSign />}
+        />
+        <ReportCard
+          label="Cost"
+          value={formatCurrency(-totalExpenses)} // Negative value for cost
+          icon={<FaDollarSign />}
+        />
+        <ReportCard
+          label="Gross Profit"
+          value={formatCurrency(netProfit)}
+          icon={<FaDollarSign />}
+        />
+      </CardsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter orders..."
@@ -109,29 +132,6 @@ const SharedSalesPage = () => {
           </label>
         </DateContainer>
       </Controls>
-
-      <CardsContainer>
-        <ReportCard
-          label="Total Orders"
-          value={`${totalOrders} Orders`}
-          icon={<FaShoppingCart />}
-        />
-        <ReportCard
-          label="Revenue"
-          value={formatCurrency(totalSales)}
-          icon={<FaDollarSign />}
-        />
-        <ReportCard
-          label="Cost"
-          value={formatCurrency(-totalExpenses)} // Negative value for cost
-          icon={<FaDollarSign />}
-        />
-        <ReportCard
-          label="Gross Profit"
-          value={formatCurrency(netProfit)}
-          icon={<FaDollarSign />}
-        />
-      </CardsContainer>
 
       <ReportContent>
         <Table headers={header} rows={tableData} />
