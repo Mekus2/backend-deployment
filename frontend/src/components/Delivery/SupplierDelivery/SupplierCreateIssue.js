@@ -4,10 +4,9 @@ import Modal from "../../Layout/Modal"; // Import the existing Modal component
 import Button from "../../Layout/Button"; // Import the Button component
 import { colors } from "../../../colors";
 
-const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
+const SupplierCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   const [updatedOrderDetails, setUpdatedOrderDetails] = useState(orderDetails);
   const [remarks, setRemarks] = useState("");
-  const [issueType, setIssueType] = useState(""); // State to track selected issue type
 
   const handleQuantityChange = (index, value) => {
     const newOrderDetails = [...updatedOrderDetails];
@@ -24,11 +23,6 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   };
 
   const handleSubmit = () => {
-    if (issueType.trim() === "") {
-      alert("Please select the type of issue.");
-      return;
-    }
-
     if (remarks.trim() === "") {
       alert("Please provide a description of the issue.");
       return;
@@ -44,31 +38,15 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
       return;
     }
 
-    onSubmit(updatedOrderDetails, remarks, issueType); // Pass issueType in onSubmit
+    onSubmit(updatedOrderDetails, remarks);
   };
 
   return (
     <Modal
-      data-cy="customer-issue-modal"
+      data-cy="supplier-issue-modal"
       title="Report an Issue"
       onClose={onClose}
     >
-      {/* Type of Issue Dropdown */}
-      <Label htmlFor="issue-type">Type of Issue:</Label>
-      <Select
-        id="issue-type"
-        value={issueType}
-        onChange={(e) => setIssueType(e.target.value)}
-      >
-        <option value="" disabled>
-          Select an issue type
-        </option>
-        <option value="Damaged Product">Damaged Product</option>
-        <option value="Missing Items">Missing Items</option>
-        <option value="Incorrect Product">Incorrect Product</option>
-        <option value="Other">Other</option>
-      </Select>
-
       {/* Remarks Section */}
       <RemarksLabel>Description of the Issue:</RemarksLabel>
       <RemarksTextArea
@@ -132,21 +110,6 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
 };
 
 // Styled Components
-const Label = styled.label`
-  font-weight: bold;
-  margin-bottom: 5px;
-  display: block;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  margin-bottom: 20px;
-`;
-
 const RemarksLabel = styled.label`
   font-weight: bold;
   margin-bottom: 5px;
@@ -202,4 +165,4 @@ const ButtonGroup = styled.div`
   margin-top: 20px;
 `;
 
-export default CustomerCreateIssueModal;
+export default SupplierCreateIssueModal;

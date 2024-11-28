@@ -30,6 +30,7 @@ import {
 import { addNewInventoy } from "../../../api/InventoryApi";
 import { notify } from "../../Layout/CustomToast";
 import styled from "styled-components";
+import SupplierCreateIssue from "./SupplierCreateIssue"; 
 
 const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   const abortControllerRef = useRef(null);
@@ -46,7 +47,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   );
   const [receivedClicked, setReceivedClicked] = useState(false); // Track if the Mark as Received button was clicked
   const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
-  const [issueReported, setIssueReported] = useState(false);
   useEffect(() => {
     const fetchDetails = async () => {
       if (abortControllerRef.current) {
@@ -103,11 +103,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .getDate()
       .toString()
       .padStart(2, "0")}/${date.getFullYear()}`;
-  };
-
-  const handleIssueModalOpen = () => {
-    setIssueReported(true); // Open the issue modal
-    // You can add logic here to show the modal or update other state related to the issue
   };
 
   const handleStatusChange = async (
@@ -342,10 +337,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
 
     return defectQty;
   };
-  const handleIssueDetailsOpen = () => {
-    // Implement logic to open the issue modal
-    setIssueReported(true); // You may want to set a state that controls the modal visibility
-  };
   return (
     <Modal
       data-cy="inbound-delivery-details-modal"
@@ -508,7 +499,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       <ModalFooter>
   {/* Show the "What's the issue?" button only if the status is "Dispatched" */}
   {status === "Dispatched" && (
-    <IssueButton onClick={handleIssueModalOpen}>
+    <IssueButton>
       What's the issue?
     </IssueButton>
   )}
@@ -525,6 +516,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     {status === "Delivered" && "Invoice"}
   </StatusButton>
 </ModalFooter>
+
 
 
 
