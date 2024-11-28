@@ -103,7 +103,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
 
     try {
       const response = await addNewCustomerDelivery(newDelivery);
-      logAcceptOrder(newOrderDelivery);
+      logAcceptOrder(newDelivery);
       if (response) {
         console.log("New outbound delivery created:", response);
         alert("Outbound delivery accepted successfully!");
