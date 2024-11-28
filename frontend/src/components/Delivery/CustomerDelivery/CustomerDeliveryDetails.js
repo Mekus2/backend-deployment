@@ -4,8 +4,7 @@ import Modal from "../../Layout/Modal";
 import Loading from "../../Layout/Loading"; // Import the Loading component
 import { colors } from "../../../colors";
 import { fetchCustomerDelDetails } from "../../../api/CustomerDeliveryApi";
-import CustomerIssueModal from "./CustomerIssueModal"; // Import the Issue Modal
-import IssueDetails from "./IssueDetails";
+import CustomerCreateIssueModal from "./CustomerCreateIssueModal"; // Import the Issue Modal
 import { notify } from "../../Layout/CustomToast";
 import { jsPDF } from "jspdf";
 import { logoBase64 } from "../../../data/imageData";
@@ -346,8 +345,9 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                   {orderDetails
                     .reduce((acc, detail) => {
                       const discountValue =
-                        (((parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
-                          0) *
+                        (((parseFloat(
+                          detail.OUTBOUND_DETAILS_PROD_SELL_PRICE
+                        ) || 0) *
                           (parseFloat(detail.OUTBOUND_DETAILS_PROD_DISCOUNT) ||
                             0)) /
                           100) *
@@ -430,42 +430,38 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
             </ProgressSection>
 
             <ModalFooter>
-              {status === "Delivered with Issues" && !issueReported && (
-                <IssueButton onClick={handleIssueModalOpen}>
-                  What's the issue?
-                </IssueButton>
+              {status === "Pending" && (
+                <StatusButton onClick={handleStatusChange}>
+                  Mark as In Transit
+                </StatusButton>
               )}
-              {status === "Delivered with Issues" && issueReported && (
-                <IssueButton onClick={handleIssueDetailsOpen}>
-                  Issue details
-                </IssueButton>
+              {status === "In Transit" && (
+                <>
+                  <IssueButton onClick={handleIssueModalOpen}>
+                    What's the issue?
+                  </IssueButton>
+                  <StatusButton onClick={handleStatusChange}>
+                    Mark as Delivered
+                  </StatusButton>
+                </>
               )}
               {status === "Delivered" && (
                 <InvoiceButton onClick={generateInvoice}>Invoice</InvoiceButton>
               )}
-              <StatusButton onClick={handleStatusChange}>
-                {status === "Pending"
-                  ? "Mark as In Transit"
-                  : status === "In Transit"
-                  ? "Mark as Delivered"
-                  : status === "Delivered"
-                  ? "Mark as Delivered with Issues"
-                  : "Mark as Delivered"}
-              </StatusButton>
             </ModalFooter>
           </>
         )}
       </Modal>
 
       {isIssueModalOpen && (
-        <CustomerIssueModal
+        <CustomerCreateIssueModal
           orderDetails={orderDetails}
           onClose={handleIssueModalClose}
           onSubmit={handleIssueModalSubmit}
         />
       )}
 
-      {isIssueDetailsOpen && <IssueDetails onClose={handleIssueDetailsClose} />}
+      {isIssueDetailsOpen}
     </>
   );
 };

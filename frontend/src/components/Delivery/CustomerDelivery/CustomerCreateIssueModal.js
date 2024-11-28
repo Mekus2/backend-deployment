@@ -4,7 +4,7 @@ import Modal from "../../Layout/Modal"; // Import the existing Modal component
 import Button from "../../Layout/Button"; // Import the Button component
 import { colors } from "../../../colors";
 
-const CustomerIssueModal = ({ orderDetails, onClose, onSubmit }) => {
+const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   const [updatedOrderDetails, setUpdatedOrderDetails] = useState(orderDetails);
   const [remarks, setRemarks] = useState("");
 
@@ -102,7 +102,7 @@ const CustomerIssueModal = ({ orderDetails, onClose, onSubmit }) => {
           Cancel
         </Button>
         <Button variant="primary" onClick={handleSubmit}>
-          Submit Issue
+          Submit Issuee
         </Button>
       </ButtonGroup>
     </Modal>
@@ -165,4 +165,4 @@ const ButtonGroup = styled.div`
   margin-top: 20px;
 `;
 
-export default CustomerIssueModal;
+export default CustomerCreateIssueModal;
