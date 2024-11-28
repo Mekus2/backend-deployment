@@ -239,9 +239,6 @@ const CustomerDetailsModal = ({ client, onClose, onRemove }) => {
             </Detail>
           </Section>
           <ButtonGroup>
-            <Button variant="red" onClick={handleRemove}>
-              Remove
-            </Button>
             <Button variant="primary" onClick={handleEdit}>
               Edit
             </Button>
