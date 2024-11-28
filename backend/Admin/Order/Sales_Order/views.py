@@ -316,11 +316,12 @@ class SalesOrderUpdateAPIView(APIView):
                     if outbound_delivery:
                         OutboundDeliveryDetails.objects.update_or_create(
                             OUTBOUND_DEL_ID=outbound_delivery,
-                            OUTBOUND_DEL_DETAIL_PROD_ID=product,
+                            OUTBOUND_DETAILS_PROD_ID=product,
                             defaults={
-                                "OUTBOUND_DEL_DETAIL_PROD_NAME": product_name,
-                                "OUTBOUND_DEL_DETAIL_QTY": quantity,
+                                "OUTBOUND_DETAILS_PROD_NAME": product_name,
+                                "OUTBOUND_DETAILS_PROD_QTY": quantity,
                                 "OUTBOUND_DETAILS_SELL_PRICE": price,
+                                "OUTBOUND_DETAIL_LINE_TOTAL": line_total,
                             },
                         )
 

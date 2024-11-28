@@ -85,6 +85,9 @@ class OutboundDeliveryDetails(models.Model):
     OUTBOUND_DETAILS_SELL_PRICE = models.DecimalField(
         null=False, max_digits=10, decimal_places=2, default=0
     )
+    OUTBOUND_DETAIL_LINE_TOTAL = models.DecimalField(
+        null=True, max_digits=10, decimal_places=2, default=0
+    )
 
     def __str__(self):
         return f"Customer Delivery Detail #{self.OUTBOUND_DETAILS_ID} for Delivery No.{self.OUTBOUND_DEL_ID}"
