@@ -5,6 +5,7 @@ import SearchBar from "../../Layout/SearchBar";
 import Table from "../../Layout/Table";
 import IssueData from "../../../data/IssueData"; // Import IssueData
 import Button from "../../Layout/Button";
+import CardTotalIssues from "../../CardsData/CardTotalIssues";
 
 const SharedIssuesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,6 +44,9 @@ const SharedIssuesPage = () => {
 
   return (
     <>
+      <AnalyticsContainer>
+        <CardTotalIssues />
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search Issue Type or Resolution Status..."
@@ -63,6 +67,13 @@ const SharedIssuesPage = () => {
 };
 
 // Styled components
+const AnalyticsContainer = styled.div`
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 0 1px;
+`;
+
 const Controls = styled.div`
   display: flex;
   justify-content: space-between;

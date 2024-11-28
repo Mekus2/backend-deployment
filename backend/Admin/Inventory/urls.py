@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import AddProductInventoryView, InventoryListView
+from .views import (
+    AddProductInventoryView,
+    InventoryListView,
+    InventorySearchView,
+)
 
 urlpatterns = [
     path("", AddProductInventoryView.as_view(), name="add-product-inventory"),
@@ -10,4 +14,7 @@ urlpatterns = [
     ),
     path("list/", InventoryListView.as_view(), name="Inventory list"),
     path("list/<str:pk>/", InventoryListView.as_view(), name="Inventory list"),
+
+    # Path for inventory search
+    path("search/", InventorySearchView.as_view(), name="inventory-search"),
 ]

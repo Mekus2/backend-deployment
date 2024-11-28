@@ -86,11 +86,11 @@ const IssueDetailModal = ({ issue = {}, onClose, onCancelIssue, onChangeStatus }
       {/* Only apply flex-end to the totals section below the table */}
       <SummarySection>
         <FormGroup>
-          <Label>Total Defect Amount:</Label>
+          <Label style={{ display: "flex", alignItems: "left", marginLeft: "690px" }}>Total Defect Amount:</Label>
           <Value>{formatCurrency(calculateTotalDefectAmount())}</Value>
         </FormGroup>
         <FormGroup>
-          <Label>Total Order Value:</Label>
+          <Label style={{ display: "flex", alignItems: "left", marginLeft: "690px" }}>Total Order Value:</Label>
           <Value>{formatCurrency(calculateTotalOrderValue())}</Value>
         </FormGroup>
       </SummarySection>
