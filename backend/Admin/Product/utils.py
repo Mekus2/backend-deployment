@@ -1,4 +1,5 @@
 from .models import Product, ProductCategory, ProductDetails
+from django.db.models import Max
 
 
 def check_product_exists(product_name):
@@ -30,8 +31,18 @@ def add_product(product_name, supplier_name):
         },
     )
 
-    # Create the ProductDetails instance
+    # Fetch the latest PROD_DETAILS_CODE
+    latest_prod_details_code = (
+        ProductDetails.objects.aggregate(latest_code=Max("PROD_DETAILS_CODE"))[
+            "latest_code"
+        ]
+        or 0  # Default to 0 if no ProductDetails exist
+    )
+    new_prod_details_code = latest_prod_details_code + 1
+
+    # Create the ProductDetails instance with the incremented PROD_DETAILS_CODE
     product_details = ProductDetails.objects.create(
+        PROD_DETAILS_CODE=new_prod_details_code,  # Set the new code
         PROD_DETAILS_DESCRIPTION=f"Details for {product_name}",
         PROD_DETAILS_SUPPLIER=supplier_name,  # Assign the supplier name
         PROD_CAT_CODE=default_category,  # Link to the default category

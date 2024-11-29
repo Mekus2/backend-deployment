@@ -21,7 +21,13 @@ from .serializers import (
     UpdateInboundStatus,
 )
 from django.db import transaction
+from django.shortcuts import get_object_or_404
+from django.http import Http404
 from Admin.Order.Purchase.models import PurchaseOrder
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class OutboundDeliveryListCreateAPIView(APIView):
@@ -120,6 +126,63 @@ class OutboundDeliveryDetailsAPIView(APIView):
             {"message": "Outbound Delivery details deleted successfully."},
             status=status.HTTP_204_NO_CONTENT,
         )
+
+
+class AcceptOutboundDeliveryAPI(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def patch(self, request, pk):
+        try:
+            # Start a transaction to ensure atomicity
+            with transaction.atomic():
+                # Fetch the OutboundDelivery by pk
+                logger.debug(f"Fetching OutboundDelivery with pk: {pk}")
+                outbound_delivery = get_object_or_404(OutboundDelivery, pk=pk)
+                logger.debug(f"OutboundDelivery fetched: {outbound_delivery}")
+
+                # Check if the OutboundDelivery is already dispatched
+                if outbound_delivery.OUTBOUND_DEL_STATUS == "Dispatched":
+                    return Response(
+                        {
+                            "error": "This Outbound Delivery has already been dispatched."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Update the Outbound Delivery status to "Dispatched"
+                outbound_delivery.OUTBOUND_DEL_STATUS = "Dispatched"
+                outbound_delivery.save()
+
+                # Fetch the related SalesOrder associated with the OutboundDelivery
+                sales_order = outbound_delivery.SALES_ORDER_ID
+                logger.debug(f"SalesOrder fetched: {sales_order}")
+
+                # Update the SalesOrder status to "Dispatched"
+                if sales_order.SALES_ORDER_STATUS != "Completed":
+                    sales_order.SALES_ORDER_STATUS = "Completed"
+                    sales_order.save()
+
+                # Return success response
+                return Response(
+                    {
+                        "message": "Outbound Delivery and related Sales Order updated to Dispatched successfully."
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+        except Http404 as e:
+            logger.error(f"Http404 error: {str(e)}")
+            return Response(
+                {"error": f"Resource not found: {str(e)}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}")
+            return Response(
+                {"error": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class GetTotalInboundPendingCount(APIView):

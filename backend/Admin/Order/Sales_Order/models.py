@@ -13,6 +13,7 @@ class SalesOrder(models.Model):
         ("Shipped", "Shipped"),
         ("Delivered", "Delivered"),
         ("Cancelled", "Cancelled"),
+        ("Completed", "Completed"),
     ]
 
     # Database Fields for SALES_ORDER
