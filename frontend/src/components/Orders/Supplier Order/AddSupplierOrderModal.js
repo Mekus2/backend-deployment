@@ -255,9 +255,10 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                   {errors[`productName${index}`] && (
                     <span style={{ color: "red", marginLeft: "5px" }}>*</span>
                   )}
-                  {productSearch && index === currentEditingIndex && (
-                    <SuggestionsContainer>
-                      {filteredProducts.length > 0 && (
+                  {productSearch &&
+                    index === currentEditingIndex &&
+                    filteredProducts.length > 0 && (
+                      <SuggestionsContainer>
                         <SuggestionsList>
                           {filteredProducts.map((product) => (
                             <SuggestionItem
@@ -274,9 +275,8 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                             </SuggestionItem>
                           ))}
                         </SuggestionsList>
-                      )}
-                    </SuggestionsContainer>
-                  )}
+                      </SuggestionsContainer>
+                    )}
                 </td>
                 <td>
                   <QuantityInput

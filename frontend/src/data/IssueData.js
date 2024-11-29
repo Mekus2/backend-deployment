@@ -44,7 +44,7 @@ const IssueData = [
     ISSUE_TYPE: "No Issues Reported",
     ISSUE_DESCRIPTION: "No issues with the delivery or product.",
     REPORTED_DATE: "2024-11-03",
-    RESOLUTION_STATUS: "N/A",
+    RESOLUTION_STATUS: "Pending",
     ACTION_REQUIRED: "No Action Required",
     REMARKS: "Customer confirmed no issues.",
     PRODUCTS: [

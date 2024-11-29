@@ -195,7 +195,7 @@ export const QuantityInput = styled(Input)`
 export const SuggestionsContainer = styled.div`
   position: absolute; /* Ensure it appears in the right place relative to the input */
   z-index: 10; /* Keep it above other content */
-  width: 100%; /* Match the width of the input */
+  width: 50%; /* Match the width of the input */
   background-color: white; /* Make it stand out */
   border: 1px solid #ccc;
   border-radius: 4px;

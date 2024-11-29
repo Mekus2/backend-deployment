@@ -78,7 +78,15 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
       },
     ]);
   };
-
+// Add validation when manually setting supplier data
+const validateSupplierInput = () => {
+  if (!supplierCompanyNum || supplierCompanyNum.length !== 11) {
+    alert("Supplier Company Number must be 11 digits.");
+    return false;
+  }
+  return true;
+  };
+  
   const handleProductInputChange = (index, value) => {
     console.log(`Input changed at index ${index}: ${value}`); // Log the input change
     setCurrentEditingIndex(index);
@@ -185,16 +193,24 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
 
   const handleSupplierSelect = (supplier) => {
     console.log("Selected Supplier Details:", supplier);
+    console.log("Supplier Company Number from supplier object:", supplier.Supp_Company_Num);
+  
     setSupplierID(supplier.id);
     setContactPersonName(supplier.Supp_Contact_Pname);
     setContactPersonNumber(supplier.Supp_Contact_Num);
     setSupplierCompanyName(supplier.Supp_Company_Name);
+  
+    // Log the value before setting it
+    console.log("Setting Supplier Company Number:", supplier.Supp_Company_Num);
     setSupplierCompanyNum(supplier.Supp_Company_Num);
-
+  
+    console.log("Supplier Company Number after selection:", supplier.Supp_Company_Num);
+  
     setSupplierSearch("");
     setFilteredSuppliers([]);
   };
-
+  
+  
   const handleQuantityChange = (index, value) => {
     const quantity = Math.max(1, value);
     setOrderDetails((prevOrderDetails) => {
@@ -235,6 +251,11 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
   };
 
   const handleSave = async () => {
+    // Validate supplier input
+    if (!validateSupplierInput()) {
+      return; // Exit if validation fails
+    }
+  
     try {
       const newOrder = {
         PURCHASE_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
@@ -250,25 +271,20 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
           PURCHASE_ORDER_DET_PROD_LINE_QTY: item.quantity,
         })),
       };
-
+  
       console.log("Final Data to be passed:", newOrder);
-
-      // Call API to save order
+  
       const createdOrder = await addNewPurchaseOrder(newOrder);
       console.log("Order Saved:", createdOrder);
-      logAddSupplierOrder(createdOrder);
-      // Optionally, trigger a state update or re-fetch to reflect new order without reloading page
-      if (onSave) {
-        onSave(newOrder); // Call onSave with order data
-      }
-
-      if (onClose) {
-        onClose(); // Close modal after save
-      }
+  
+      if (onSave) onSave(newOrder);
+      if (onClose) onClose();
     } catch (error) {
       console.error("Error saving order:", error);
     }
   };
+  
+  
 
   const logAddSupplierOrder = async (createdOrder) => {
     // Retrieve the userId from localStorage
