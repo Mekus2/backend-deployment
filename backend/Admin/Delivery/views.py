@@ -141,35 +141,62 @@ class AcceptOutboundDeliveryAPI(APIView):
                 outbound_delivery = get_object_or_404(OutboundDelivery, pk=pk)
                 logger.debug(f"OutboundDelivery fetched: {outbound_delivery}")
 
-                # Check if the OutboundDelivery is already dispatched
-                if outbound_delivery.OUTBOUND_DEL_STATUS == "Dispatched":
+                # Get the status from the request data (In Transit or Delivered)
+                new_status = request.data.get("status")
+                if not new_status:
                     return Response(
-                        {
-                            "error": "This Outbound Delivery has already been dispatched."
-                        },
+                        {"error": "Status must be provided."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # Update the Outbound Delivery status to "Dispatched"
-                outbound_delivery.OUTBOUND_DEL_STATUS = "Dispatched"
-                outbound_delivery.save()
+                # Valid statuses and logic
+                if new_status == "In Transit":
+                    # Check if it's a valid transition from Pending to In Transit
+                    if outbound_delivery.OUTBOUND_DEL_STATUS == "Pending":
+                        outbound_delivery.OUTBOUND_DEL_STATUS = "In Transit"
+                        outbound_delivery.save()
 
-                # Fetch the related SalesOrder associated with the OutboundDelivery
-                sales_order = outbound_delivery.SALES_ORDER_ID
-                logger.debug(f"SalesOrder fetched: {sales_order}")
+                        return Response(
+                            {
+                                "message": "Outbound Delivery marked as In Transit successfully."
+                            },
+                            status=status.HTTP_200_OK,
+                        )
+                    else:
+                        return Response(
+                            {"error": "Invalid status transition."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
 
-                # Update the SalesOrder status to "Dispatched"
-                if sales_order.SALES_ORDER_STATUS != "Completed":
-                    sales_order.SALES_ORDER_STATUS = "Completed"
-                    sales_order.save()
+                elif new_status == "Delivered":
+                    # Check if it's a valid transition from In Transit to Delivered
+                    if outbound_delivery.OUTBOUND_DEL_STATUS == "In Transit":
+                        outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
+                        outbound_delivery.save()
 
-                # Return success response
-                return Response(
-                    {
-                        "message": "Outbound Delivery and related Sales Order updated to Dispatched successfully."
-                    },
-                    status=status.HTTP_200_OK,
-                )
+                        # Optionally, update the related Sales Order to "Completed"
+                        sales_order = outbound_delivery.SALES_ORDER_ID
+                        if sales_order and sales_order.SALES_ORDER_STATUS != "Completed":
+                            sales_order.SALES_ORDER_STATUS = "Completed"
+                            sales_order.save()
+
+                        return Response(
+                            {
+                                "message": "Outbound Delivery and Sales Order marked as Delivered successfully."
+                            },
+                            status=status.HTTP_200_OK,
+                        )
+                    else:
+                        return Response(
+                            {"error": "Invalid status transition."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+
+                else:
+                    return Response(
+                        {"error": "Invalid status provided."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
 
         except Http404 as e:
             logger.error(f"Http404 error: {str(e)}")
@@ -184,7 +211,6 @@ class AcceptOutboundDeliveryAPI(APIView):
                 {"error": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
 
 class GetTotalInboundPendingCount(APIView):
     def get(self, request):

@@ -137,33 +137,37 @@ const SharedCustomerDeliveryPage = () => {
 
   // Table headers definition
   const headers = [
-    { title: "Shipped Date", key: "OUTBOUND_DEL_SHIPPED_DATE" },
-    { title: "Received Date", key: "OUTBOUND_DEL_DATE_CUST_RCVD" },
+    { title: "Customer Name", key: "OUTBOUND_DEL_CUSTOMER_NAME" },
     { title: "Status", key: "OUTBOUND_DEL_STATUS" },
-    { title: "Delivered Qty", key: "OUTBOUND_DEL_DLVRD_QTY" },
-    { title: "Customer Name", key: "CUSTOMER_NAME" },
+    { title: "Location", key: "OUTBOUND_DEL_LOCATION" },
+    { title: "Delivery Option", key: "OUTBOUND_DEL_DLVRY_OPTION" },
+    { title: "Created Date", key: "OUTBOUND_DEL_CREATED" },
+    { title: "Total Price", key: "OUTBOUND_DEL_TOTAL_PRICE" },
     { title: "Action", key: "action" },
   ];
+  
 
-  // Table rows rendering
-  const rows = sortedDeliveries.map((delivery) => [
-    delivery.OUTBOUND_DEL_SHIPPED_DATE || "Not Shipped",
-    delivery.OUTBOUND_DEL_CSTMR_RCVD_DATE || "Not Received",
-    <Status status={delivery.OUTBOUND_DEL_STATUS}>
-      {delivery.OUTBOUND_DEL_STATUS}
-    </Status>,
-    delivery.OUTBOUND_DEL_DLVRD_QTY,
-    delivery.OUTBOUND_DEL_CUSTOMER_NAME,
-    <Button
-      data-cy="details-button"
-      backgroundColor={colors.primary}
-      hoverColor={colors.primaryHover}
-      onClick={() => openDetailsModal(delivery)}
-    >
-      Details
-    </Button>,
-  ]);
-
+// Table rows rendering
+const rows = sortedDeliveries.map((delivery) => [
+  delivery.OUTBOUND_DEL_CUSTOMER_NAME || "Unknown",
+  <Status status={delivery.OUTBOUND_DEL_STATUS}>
+    {delivery.OUTBOUND_DEL_STATUS}
+  </Status>,
+  `${delivery.OUTBOUND_DEL_CITY || "Unknown"}, ${
+    delivery.OUTBOUND_DEL_PROVINCE || "Unknown"
+  }`,
+  delivery.OUTBOUND_DEL_DLVRY_OPTION || "Not Specified",
+  new Date(delivery.OUTBOUND_DEL_CREATED).toLocaleString(),
+  `₱${(Number(delivery.OUTBOUND_DEL_TOTAL_PRICE) || 0).toFixed(2)}`,
+  <Button
+    data-cy="details-button"
+    backgroundColor={colors.primary}
+    hoverColor={colors.primaryHover}
+    onClick={() => openDetailsModal(delivery)}
+  >
+    Details
+  </Button>,
+]);
   // Show loading spinner while fetching data
   if (loading) {
     return <Loading />;

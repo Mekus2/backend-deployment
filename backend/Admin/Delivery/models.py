@@ -73,6 +73,15 @@ class OutboundDelivery(models.Model):
         verbose_name = "Outbound Delivery"
         verbose_name_plural = "Outbound Deliveries"
 
+    def update_status(self, new_status):
+        """
+        Updates the delivery status to a new status if it is a valid status.
+        """
+        if new_status in dict(self.DELIVERY_STATUS_CHOICES):
+            self.OUTBOUND_DEL_STATUS = new_status
+            self.save()  # Save the model after updating the status
+            return True
+        return False  # Return False if the status is invalid
 
 class OutboundDeliveryDetails(models.Model):
     OUTBOUND_DEL_DETAIL_ID = models.AutoField(primary_key=True)

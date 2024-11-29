@@ -153,6 +153,7 @@ export const IssueButton = styled.button`
     color: black;
   }
 `;
+
 // Modal Wrapper for the background and center alignment
 export const ModalWrapper = styled.div`
   position: fixed;

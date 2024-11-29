@@ -110,12 +110,12 @@ const Header = ({ toggleSidebar }) => {
       <HamburgerMenu onClick={toggleSidebar} />
       <PageTitle>{pageTitle}</PageTitle>
       <RightSection>
-        <BellIcon
+        {/* <BellIcon
           className={
             location.pathname.includes("/notifications") ? "active" : ""
           }
           onClick={goToNotifications}
-        />
+        /> */}
         <ProfileContainer
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}

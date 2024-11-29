@@ -178,6 +178,15 @@ class SalesOrderDetailsAPIView(APIView):
         )
 
 
+from django.db import transaction
+from django.db.models import Sum
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import SalesOrder, SalesOrderDetails
+from Admin.Delivery.models import OutboundDelivery, OutboundDeliveryDetails
+
+
 class TransferToOutboundDelivery(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -187,7 +196,7 @@ class TransferToOutboundDelivery(APIView):
                 # Fetch the SalesOrder
                 sales_order = SalesOrder.objects.get(SALES_ORDER_ID=sales_order_id)
 
-                # Check if the status is being updated to 'Accepted'
+                # Ensure the status is being updated to 'Accepted'
                 if request.data.get("SALES_ORDER_STATUS") == "Accepted":
                     # Update the sales order status to 'Accepted'
                     sales_order.SALES_ORDER_STATUS = "Accepted"
@@ -195,19 +204,55 @@ class TransferToOutboundDelivery(APIView):
 
                     accepted_by_user = request.data.get("USERNAME")
 
-                    # Create OutboundDelivery from the SalesOrder
+                    # Calculate Total Quantity, Total Discount, Total Revenue, Total Cost, Gross Profit
+                    total_qty = (
+                        SalesOrderDetails.objects.filter(
+                            SALES_ORDER_ID=sales_order
+                        ).aggregate(total_qty=Sum("SALES_ORDER_LINE_QTY"))["total_qty"]
+                        or 0
+                    )
+                    total_discount = (
+                        SalesOrderDetails.objects.filter(
+                            SALES_ORDER_ID=sales_order
+                        ).aggregate(total_discount=Sum("SALES_ORDER_LINE_DISCOUNT"))[
+                            "total_discount"
+                        ]
+                        or 0
+                    )
+                    total_revenue = (
+                        SalesOrderDetails.objects.filter(
+                            SALES_ORDER_ID=sales_order
+                        ).aggregate(total_revenue=Sum("SALES_ORDER_LINE_TOTAL"))[
+                            "total_revenue"
+                        ]
+                        or 0
+                    )
+                    total_cost = (
+                        SalesOrderDetails.objects.filter(
+                            SALES_ORDER_ID=sales_order
+                        ).aggregate(total_cost=Sum("SALES_ORDER_LINE_COST"))[
+                            "total_cost"
+                        ]
+                        or 0
+                    )
+
+                    gross_profit = total_revenue - total_cost
+
+                    # Create OutboundDelivery from the SalesOrder with calculated totals
                     outbound_delivery = OutboundDelivery.objects.create(
                         SALES_ORDER_ID=sales_order,
                         CLIENT_ID=sales_order.CLIENT_ID,
                         OUTBOUND_DEL_CUSTOMER_NAME=sales_order.SALES_ORDER_CLIENT_NAME,
-                        OUTBOUND_DEL_TOTAL_PRICE=sales_order.SALES_ORDER_TOTAL_PRICE,
-                        OUTBOUNND_DEL_DISCOUNT=sales_order.SALES_ORDER_TOTAL_DISCOUNT,
-                        OUTBOUND_DEL_STATUS="Pending",  # Default status, can be updated later
-                        OUTBOUND_DEL_DLVRD_QTY=sales_order.SALES_ORDER_TOTAL_QTY,
+                        OUTBOUND_DEL_TOTAL_PRICE=total_revenue,  # Revenue
+                        OUTBOUNND_DEL_DISCOUNT=total_discount,  # Discount
+                        OUTBOUND_DEL_STATUS="Pending",  # Default status
+                        OUTBOUND_DEL_DLVRD_QTY=total_qty,  # Total Quantity
                         OUTBOUND_DEL_DLVRY_OPTION=sales_order.SALES_ORDER_DLVRY_OPTION,
                         OUTBOUND_DEL_CITY=sales_order.SALES_ORDER_CLIENT_CITY,
                         OUTBOUND_DEL_PROVINCE=sales_order.SALES_ORDER_CLIENT_PROVINCE,
                         OUTBOUND_DEL_ACCPTD_BY_USER=accepted_by_user,
+                        OUTBOUND_DEL_COST=total_cost,  # Total Cost (Assuming you have a field for this in OutboundDelivery)
+                        OUTBOUND_DEL_GROSS_PROFIT=gross_profit,  # Gross Profit
                     )
 
                     # Transfer SalesOrderDetails to OutboundDeliveryDetails
@@ -224,7 +269,12 @@ class TransferToOutboundDelivery(APIView):
 
                     return Response(
                         {
-                            "message": "Sales Order accepted and transferred to Outbound Delivery successfully."
+                            "message": "Sales Order accepted and transferred to Outbound Delivery successfully.",
+                            "Total Quantity": total_qty,
+                            "Total Discount": total_discount,
+                            "Total Revenue": total_revenue,
+                            "Total Cost": total_cost,
+                            "Gross Profit": gross_profit,
                         },
                         status=status.HTTP_200_OK,
                     )

@@ -1,13 +1,35 @@
 import React, { useEffect, useState, useRef } from "react";
-import styled from "styled-components";
 import Modal from "../../Layout/Modal";
-import Loading from "../../Layout/Loading"; // Import the Loading component
-import { colors } from "../../../colors";
-import { fetchCustomerDelDetails } from "../../../api/CustomerDeliveryApi";
+import Loading from "../../Layout/Loading";
+import { fetchCustomerDelDetails, updateDeliveryStatus } from "../../../api/CustomerDeliveryApi";
 import CustomerCreateIssueModal from "./CustomerCreateIssueModal"; // Import the Issue Modal
 import { notify } from "../../Layout/CustomToast";
 import { jsPDF } from "jspdf";
 import { logoBase64 } from "../../../data/imageData";
+import {
+  InvoiceButton,
+  ErrorContainer,
+  DetailsContainer,
+  Column,
+  FormGroup,
+  Label,
+  Value,
+  ProductTable,
+  TableHeader,
+  TableRow,
+  TableCell,
+  TotalSummary,
+  SummaryItem,
+  HighlightedTotal,
+  ProgressSection,
+  ProgressBar,
+  ProgressFiller,
+  ProgressText,
+  ModalFooter,
+  StatusButton,
+  IssueButton,
+} from "../DeliveryStyles"; // Ensure correct path
+
 const getProgressForStatus = (status) => {
   switch (status) {
     case "Pending":
@@ -96,16 +118,19 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     0
   );
 
-  const handleStatusChange = () => {
+  const handleStatusChange = async () => {
     let newStatus;
+    let updatedReceivedDate = receivedDate; // Store the updated received date (if applicable)
+  
+    // Determine the new status based on the current one
     if (status === "Pending") {
       newStatus = "In Transit";
       notify.info("Delivery status updated to In Transit.");
     } else if (status === "In Transit") {
       newStatus = "Delivered";
       const currentDate = new Date().toISOString().split("T")[0];
-      setReceivedDate(currentDate);
-      delivery.OUTBOUND_DEL_DATE_CUST_RCVD = currentDate;
+      updatedReceivedDate = currentDate;  // Set the received date when marking as Delivered
+      setReceivedDate(currentDate); // Update the local received date
       notify.success("Delivery marked as Delivered.");
     } else if (status === "Delivered") {
       newStatus = "Delivered with Issues";
@@ -115,10 +140,31 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       setReceivedDate("Not Received");
       notify.error("Delivery status reset to Pending.");
     }
-
+  
+    // Update the local status
     setStatus(newStatus);
+  
+    // Prepare the status update data
+    const statusData = {
+      status: newStatus,
+      receivedDate: updatedReceivedDate,  // Send the updated received date if applicable
+    };
+  
+    // Sync the status with the backend using the API
+    try {
+      const response = await updateDeliveryStatus(delivery.OUTBOUND_DEL_ID, statusData);
+      
+      // Check if the status was successfully updated
+      if (response) {
+        console.log(`Delivery status successfully updated to ${newStatus}`);
+      } else {
+        notify.error("Failed to update delivery status on the backend.");
+      }
+    } catch (error) {
+      console.error('Error updating delivery status on the backend:', error);
+      notify.error('Failed to update delivery status.');
+    }
   };
-
   const handleIssueModalOpen = () => setIsIssueModalOpen(true); // This remains for opening the initial "What's the issue?" modal
   const handleIssueModalClose = () => setIsIssueModalOpen(false); // This closes the initial modal
 
@@ -431,7 +477,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
 
             <ModalFooter>
               {status === "Pending" && (
-                <StatusButton onClick={handleStatusChange}>
+                <StatusButton onClick={() => handleStatusChange("In Transit")}>
                   Mark as In Transit
                 </StatusButton>
               )}
@@ -440,13 +486,18 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                   <IssueButton onClick={handleIssueModalOpen}>
                     What's the issue?
                   </IssueButton>
-                  <StatusButton onClick={handleStatusChange}>
+                  <StatusButton onClick={() => handleStatusChange("Delivered")}>
                     Mark as Delivered
                   </StatusButton>
                 </>
               )}
               {status === "Delivered" && (
-                <InvoiceButton onClick={generateInvoice}>Invoice</InvoiceButton>
+                <>
+                  <InvoiceButton onClick={generateInvoice}>
+                    Generate Invoice
+                  </InvoiceButton>
+                  {/* No "Delivered with Issues" button here */}
+                </>
               )}
             </ModalFooter>
           </>
@@ -465,158 +516,5 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     </>
   );
 };
-
-// Styled components
-const InvoiceButton = styled.button`
-  background-color: ${colors.primary}; /* Green color */
-  color: white;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  border-radius: 5px;
-  margin-right: 10px;
-
-  &:hover {
-    background-color: ${colors.primaryHover};
-  }
-`;
-
-const ErrorContainer = styled.div`
-  text-align: center;
-  padding: 20px;
-  font-size: 16px;
-  color: ${colors.error};
-`;
-
-const DetailsContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-`;
-
-const Column = styled.div`
-  width: 48%;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-`;
-
-const Label = styled.div`
-  font-weight: bold;
-  color: black;
-`;
-
-const Value = styled.div`
-  color: ${colors.text};
-`;
-
-const ProductTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  text-align: center;
-  margin-top: 15px;
-  margin-bottom: 20px;
-`;
-
-const TableHeader = styled.th`
-  background-color: ${colors.primary};
-  color: white;
-  padding: 10px;
-  text-align: center;
-`;
-
-const TableRow = styled.tr`
-  &:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-`;
-
-const TableCell = styled.td`
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-`;
-
-const TotalSummary = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  margin-top: 20px;
-  font-weight: bold;
-`;
-
-const SummaryItem = styled.div`
-  margin-top: 10px;
-`;
-
-const HighlightedTotal = styled.span`
-  color: green;
-  font-size: 16px;
-`;
-
-const ProgressSection = styled.div`
-  margin-top: 20px;
-  text-align: center;
-`;
-
-const ProgressBar = styled.div`
-  width: 100%;
-  height: 20px;
-  background-color: #e0e0e0;
-  border-radius: 10px;
-  margin: 10px 0;
-`;
-
-const ProgressFiller = styled.div`
-  height: 100%;
-  width: ${(props) => props.progress}%;
-  background-color: ${colors.primary};
-  border-radius: 10px;
-  transition: width 0.5s ease;
-`;
-
-const ProgressText = styled.div`
-  font-size: 1.1em;
-  font-weight: bold;
-  color: ${colors.primary};
-`;
-
-const ModalFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-`;
-
-const StatusButton = styled.button`
-  background-color: ${colors.primary};
-  color: white;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  border-radius: 5px;
-  margin-left: 10px;
-
-  &:hover {
-    background-color: ${colors.primaryHover};
-  }
-`;
-
-const IssueButton = styled.button`
-  color: Gray;
-  padding: 5px 10px;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  border-radius: 5px;
-  margin-right: 10px;
-
-  &:hover {
-    color: black;
-  }
-`;
 
 export default CustomerDeliveryDetails;
