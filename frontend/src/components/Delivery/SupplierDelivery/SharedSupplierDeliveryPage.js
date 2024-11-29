@@ -3,6 +3,7 @@ import styled from "styled-components";
 import SupplierDeliveryDetails from "./SupplierDeliveryDetails";
 import { colors } from "../../../colors";
 import SearchBar from "../../Layout/SearchBar";
+// import Table from "../../Layout/Table_Pagination";
 import Table from "../../Layout/Table";
 import CardTotalSupplierDelivery from "../../CardsData/CardTotalSupplierDelivery";
 import Button from "../../Layout/Button";

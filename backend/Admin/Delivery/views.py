@@ -1,6 +1,7 @@
 from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from .models import (
     OutboundDelivery,
     OutboundDeliveryDetails,
@@ -198,14 +199,30 @@ class GetTotalInboundPendingCount(APIView):
             )
 
 
+class InboundDeliveryPagination(PageNumberPagination):
+    """
+    Custom pagination class for Inbound Deliveries.
+    """
+
+    page_size = 10  # Number of records per page
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
 class InboundDeliveryListCreateAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        """List all Inbound Deliveries."""
+        # """List all Inbound Deliveries."""
         queryset = InboundDelivery.objects.all()
         serializer = InboundDeliverySerializer(queryset, many=True)
         return Response(serializer.data)
+
+        # queryset = InboundDelivery.objects.all()
+        # paginator = InboundDeliveryPagination()
+        # paginated_queryset = paginator.paginate_queryset(queryset, request)
+        # serializer = InboundDeliverySerializer(paginated_queryset, many=True)
+        # return paginator.get_paginated_response(serializer.data)
 
     def post(self, request):
         """Create a new Inbound Delivery with details."""

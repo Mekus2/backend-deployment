@@ -3,11 +3,32 @@ import axios from "axios";
 const BASE_URL = "http://127.0.0.1:8000/items"; // Base URL for the product API
 
 // Function to get the list of products
-export const fetchProductList = async () => {
+// export const fetchProductList = async () => {
+//   try {
+//     const response = await axios.get(`${BASE_URL}/productList/`);
+//     console.log("Fetched Product List:", response.data);
+//     return response.data; // Return the data from the response
+//   } catch (error) {
+//     console.error("Error fetching product list:", error);
+//     throw error;
+//   }
+// };
+
+export const fetchProductList = async (
+  page = 1,
+  pageSize = 10,
+  searchTerm = ""
+) => {
   try {
-    const response = await axios.get(`${BASE_URL}/productList/`);
-    return response.data; // Return the data from the response
-    
+    const response = await axios.get(`${BASE_URL}/productList/`, {
+      params: {
+        page, // Current page number
+        page_size: pageSize, // Number of products per page
+        search: searchTerm, // Add search query
+      },
+    });
+    console.log("Fetched Product List:", response.data);
+    return response.data; // Includes paginated data and metadata
   } catch (error) {
     console.error("Error fetching product list:", error);
     throw error;
@@ -17,7 +38,9 @@ export const fetchProductList = async () => {
 // Function to get product details by ID
 export const fetchProductDetails = async (productId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/product-details/${productId}/`);
+    const response = await axios.get(
+      `${BASE_URL}/product-details/${productId}/`
+    );
     return response.data; // Return the data from the response
   } catch (error) {
     console.error(`Error fetching product details for ID ${productId}:`, error);
@@ -28,7 +51,10 @@ export const fetchProductDetails = async (productId) => {
 // Function to create a new product
 export const createProduct = async (productData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/productDetails/`, productData);
+    const response = await axios.post(
+      `${BASE_URL}/productDetails/`,
+      productData
+    );
     return response.data; // Return the data from the response
   } catch (error) {
     console.error("Error creating product:", error);
@@ -39,7 +65,10 @@ export const createProduct = async (productData) => {
 // Function to update an existing product
 export const updateProduct = async (productId, productData) => {
   try {
-    const response = await axios.put(`${BASE_URL}/product-details/${productId}/`, productData);
+    const response = await axios.put(
+      `${BASE_URL}/product-details/${productId}/`,
+      productData
+    );
     return response.data; // Return the data from the response
   } catch (error) {
     console.error(`Error updating product with ID ${productId}:`, error);
@@ -50,7 +79,9 @@ export const updateProduct = async (productId, productData) => {
 // Function to delete a product
 export const deleteProduct = async (productId) => {
   try {
-    const response = await axios.delete(`${BASE_URL}/product-details/${productId}/`);
+    const response = await axios.delete(
+      `${BASE_URL}/product-details/${productId}/`
+    );
     return response.data; // Return a success message or confirmation
   } catch (error) {
     console.error(`Error deleting product with ID ${productId}:`, error);
@@ -64,7 +95,10 @@ export const fetchProductCategoryById = async (categoryId) => {
     const response = await axios.get(`${BASE_URL}/categories/${categoryId}/`); // Fetch category by ID
     return response.data; // Return the data from the response
   } catch (error) {
-    console.error(`Error fetching product category with ID ${categoryId}:`, error);
+    console.error(
+      `Error fetching product category with ID ${categoryId}:`,
+      error
+    );
     throw error;
   }
 };
@@ -89,11 +123,13 @@ export const fetchTotalProduct = async () => {
 
 export const fetchTotalCategory = async () => {
   try {
-    const response = await axios.get(`http://127.0.0.1:8000/product/totalCategories/`);
-    console.log('total categories:', response.data);
+    const response = await axios.get(
+      `http://127.0.0.1:8000/product/totalCategories/`
+    );
+    console.log("total categories:", response.data);
     return response.data;
   } catch (error) {
-    console.error('Failed to fetch total categories', error);
-    throw new Error('Failed to fetch total categories'); // Corrected error message
+    console.error("Failed to fetch total categories", error);
+    throw new Error("Failed to fetch total categories"); // Corrected error message
   }
-};  
+};
