@@ -42,10 +42,16 @@ export const fetchCustomerDelivery = async () => {
   }
 };
 
+// Update Delivery Status
 export const updateDeliveryStatus = async (orderId, statusData) => {
   try {
+    // Add the received date when updating the status to 'Delivered'
+    if (statusData.status === "Delivered") {
+      statusData.receivedDate = new Date().toISOString(); // Add current date and time as ISO string
+    }
+
     const response = await axios.patch(
-      `${BASE_URL}/api/delivery/customer/${orderId}/accept`, // Change here
+      `${BASE_URL}/api/delivery/customer/${orderId}/accept`, // Ensure correct endpoint
       statusData,
       { headers: { "Content-Type": "application/json" } }
     );

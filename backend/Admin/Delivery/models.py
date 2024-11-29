@@ -19,6 +19,7 @@ class OutboundDelivery(models.Model):
         ("Cancelled", "Cancelled"),
         ("Pending", "Pending"),
         ("Delivered", "Delivered"),
+        ("Received", "Received"),
     ]
 
     OUTBOUND_DEL_ID = models.AutoField(primary_key=True)
@@ -58,6 +59,10 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_ACCPTD_BY_USER = models.CharField(
         max_length=60, null=False, default="Admin"
     )
+    OUTBOUND_DEL_RECEIVED_DATE = models.DateTimeField(
+        null=True, blank=True
+    )  # New field for received date
+
     # OUTBOUND_DEL_CREATEDBY_USER_ID = models.ForeignKey(
     #     settings.AUTH_USER_MODEL,
     #     on_delete=models.CASCADE,
@@ -73,15 +78,23 @@ class OutboundDelivery(models.Model):
         verbose_name = "Outbound Delivery"
         verbose_name_plural = "Outbound Deliveries"
 
-    def update_status(self, new_status):
-        """
-        Updates the delivery status to a new status if it is a valid status.
-        """
-        if new_status in dict(self.DELIVERY_STATUS_CHOICES):
-            self.OUTBOUND_DEL_STATUS = new_status
-            self.save()  # Save the model after updating the status
-            return True
-        return False  # Return False if the status is invalid
+
+def update_status(self, new_status):
+    """
+    Updates the delivery status to a new status if it is a valid status.
+    Records the time the status was updated to 'Delivered' or 'Received'.
+    """
+    if new_status in dict(self.DELIVERY_STATUS_CHOICES):
+        self.OUTBOUND_DEL_STATUS = new_status
+
+        # If the status is "Delivered" or "Received", record the time
+        if new_status == "Delivered" or new_status == "Received":
+            self.OUTBOUND_DEL_RECEIVED_DATE = timezone.now()
+
+        self.save()  # Save the model after updating the status
+        return True
+    return False  # Return False if the status is invalid
+
 
 class OutboundDeliveryDetails(models.Model):
     OUTBOUND_DEL_DETAIL_ID = models.AutoField(primary_key=True)

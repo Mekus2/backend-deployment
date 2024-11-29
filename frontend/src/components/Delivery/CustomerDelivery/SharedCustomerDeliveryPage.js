@@ -1,4 +1,3 @@
-// Imports
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import CustomerDeliveryDetails from "./CustomerDeliveryDetails"; // Ensure correct path
@@ -143,31 +142,37 @@ const SharedCustomerDeliveryPage = () => {
     { title: "Delivery Option", key: "OUTBOUND_DEL_DLVRY_OPTION" },
     { title: "Created Date", key: "OUTBOUND_DEL_CREATED" },
     { title: "Total Price", key: "OUTBOUND_DEL_TOTAL_PRICE" },
+    // Commenting out the "Received Date" column for now
+    // { title: "Received Date", key: "OUTBOUND_DEL_RECEIVED_DATE" }, // Ensure correct field key
     { title: "Action", key: "action" },
   ];
-  
 
-// Table rows rendering
-const rows = sortedDeliveries.map((delivery) => [
-  delivery.OUTBOUND_DEL_CUSTOMER_NAME || "Unknown",
-  <Status status={delivery.OUTBOUND_DEL_STATUS}>
-    {delivery.OUTBOUND_DEL_STATUS}
-  </Status>,
-  `${delivery.OUTBOUND_DEL_CITY || "Unknown"}, ${
-    delivery.OUTBOUND_DEL_PROVINCE || "Unknown"
-  }`,
-  delivery.OUTBOUND_DEL_DLVRY_OPTION || "Not Specified",
-  new Date(delivery.OUTBOUND_DEL_CREATED).toLocaleString(),
-  `₱${(Number(delivery.OUTBOUND_DEL_TOTAL_PRICE) || 0).toFixed(2)}`,
-  <Button
-    data-cy="details-button"
-    backgroundColor={colors.primary}
-    hoverColor={colors.primaryHover}
-    onClick={() => openDetailsModal(delivery)}
-  >
-    Details
-  </Button>,
-]);
+  // Table rows rendering
+  const rows = sortedDeliveries.map((delivery) => [
+    delivery.OUTBOUND_DEL_CUSTOMER_NAME || "Unknown",
+    <Status status={delivery.OUTBOUND_DEL_STATUS}>
+      {delivery.OUTBOUND_DEL_STATUS}
+    </Status>,
+    `${delivery.OUTBOUND_DEL_CITY || "Unknown"}, ${
+      delivery.OUTBOUND_DEL_PROVINCE || "Unknown"
+    }`,
+    delivery.OUTBOUND_DEL_DLVRY_OPTION || "Not Specified",
+    new Date(delivery.OUTBOUND_DEL_CREATED).toLocaleString(),
+    `₱${(Number(delivery.OUTBOUND_DEL_TOTAL_PRICE) || 0).toFixed(2)}`,
+    // Commented out the received date logic for now
+    // delivery.OUTBOUND_DEL_STATUS === "Delivered" && delivery.OUTBOUND_DEL_RECEIVED_DATE
+    //   ? new Date(delivery.OUTBOUND_DEL_RECEIVED_DATE).toLocaleString()
+    //   : "Not Updated",
+    <Button
+      data-cy="details-button"
+      backgroundColor={colors.primary}
+      hoverColor={colors.primaryHover}
+      onClick={() => openDetailsModal(delivery)}
+    >
+      Details
+    </Button>,
+  ]);
+
   // Show loading spinner while fetching data
   if (loading) {
     return <Loading />;
