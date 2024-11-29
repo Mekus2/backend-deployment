@@ -8,9 +8,11 @@ from .views import (
     UpdateInboundDelStatus,
     GetTotalOutboundPendingCount,
     GetTotalInboundPendingCount,
+    AcceptOutboundDeliveryAPI,
 )
 
 urlpatterns = [
+    # Customer Delivery Paths
     path(
         "customer",
         OutboundDeliveryListCreateAPIView.as_view(),
@@ -21,6 +23,12 @@ urlpatterns = [
         OutboundDeliveryDetailsAPIView.as_view(),
         name="customer-delivery-details",
     ),
+    path(
+        "customer/<int:pk>/accept",
+        AcceptOutboundDeliveryAPI.as_view(),
+        name="dispatch-delivery",
+    ),
+    # Supplier Delivery paths
     path(
         "supplier",
         InboundDeliveryListCreateAPIView.as_view(),
@@ -41,6 +49,7 @@ urlpatterns = [
         UpdateInboundDelStatus.as_view(),
         name="update-inbound-status",
     ),
+    # Path for fetching Total Orders for both
     path(
         "customer/total-orders",
         GetTotalOutboundPendingCount.as_view(),
