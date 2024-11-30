@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Modal from "../../Layout/Modal";
 import Button from "../../Layout/Button";
+import styled from "styled-components";
 import { IoCloseCircle } from "react-icons/io5";
 import {
   Field,
@@ -175,18 +176,28 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
 
       <Field>
         <Label>
-          Customer Name{" "}
+          Customer Details{" "}
           {errors.clientName && <span style={{ color: "red" }}>*</span>}
         </Label>
-        <Input
-          value={clientName}
-          onChange={(e) => {
-            setClientName(e.target.value);
-            clearError("clientName");
-          }}
-          placeholder="Customer Name"
-          disabled={!editable}
-        />
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Input
+            value={clientName}
+            onChange={(e) => {
+              setClientName(e.target.value);
+              clearError("clientName");
+            }}
+            placeholder="Customer Name"
+            disabled={!editable}
+            style={{ flex: 1 }}
+          />
+          <Input
+            value={clientNumber}
+            onChange={(e) => handleClientNumberChange(e.target.value)}
+            placeholder="Customer Number"
+            disabled={!editable}
+            style={{ flex: 1 }}
+          />
+        </div>
       </Field>
 
       <Field>
@@ -220,57 +231,43 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           )}
         </div>
       </Field>
-      <Field>
-        <Label>
-          Customer Number{" "}
-          {errors.clientNumber && <span style={{ color: "red" }}>*</span>}
-        </Label>
-        <Input
-          value={clientNumber}
-          onChange={(e) => handleClientNumberChange(e.target.value)}
-          placeholder="Customer Number"
-          disabled={!editable}
-        />
-      </Field>
 
       <Field>
         <Label>
-          Delivery Option{" "}
+          Order Preferences{" "}
           {errors.deliveryOption && <span style={{ color: "red" }}>*</span>}
         </Label>
-        <Select
-          value={deliveryOption}
-          onChange={(e) => {
-            setDeliveryOption(e.target.value);
-            clearError("deliveryOption");
-          }}
-        >
-          <option value="">Select Delivery Option</option>
-          <option value="pickup">Pickup</option>
-          <option value="lbc">LBC</option>
-          <option value="jnt">J&T Express</option>
-          <option value="grab">Grab Express</option>
-          <option value="courier">Courier Service</option>
-        </Select>
-      </Field>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Select
+            value={deliveryOption}
+            onChange={(e) => {
+              setDeliveryOption(e.target.value);
+              clearError("deliveryOption");
+            }}
+            style={{ flex: 1 }}
+          >
+            <option value="">Select Delivery Option</option>
+            <option value="pickup">Pickup</option>
+            <option value="lbc">LBC</option>
+            <option value="jnt">J&T Express</option>
+            <option value="grab">Grab Express</option>
+            <option value="courier">Courier Service</option>
+          </Select>
 
-      <Field>
-        <Label>
-          Payment Terms{" "}
-          {errors.paymentTerms && <span style={{ color: "red" }}>*</span>}
-        </Label>
-        <Select
-          value={paymentTerms}
-          onChange={(e) => {
-            setPaymentTerms(e.target.value);
-            clearError("paymentTerms");
-          }}
-        >
-          <option value="">Select Payment Terms</option>
-          <option value="cod">Cash on Delivery (COD)</option>
-          <option value="gcash">GCash</option>
-          <option value="installment">Installment</option>
-        </Select>
+          <Select
+            value={paymentTerms}
+            onChange={(e) => {
+              setPaymentTerms(e.target.value);
+              clearError("paymentTerms");
+            }}
+            style={{ flex: 1 }}
+          >
+            <option value="">Select Payment Terms</option>
+            <option value="cod">Cash on Delivery (COD)</option>
+            <option value="gcash">GCash</option>
+            <option value="installment">Installment</option>
+          </Select>
+        </div>
       </Field>
 
       <OrderDetailsSection>
@@ -278,13 +275,13 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
         <Table>
           <thead>
             <tr>
-              <th>Product Name</th>
-              <th>Qty</th>
+              <th style={{ minWidth: "300px", width: "auto" }}>Product Name</th>
+              <th style={{ minWidth: "100px", width: "auto" }}>Qty</th>
               {/* <th>Purchase Price</th> New column for Purchase Price */}
-              <th>Sell Price</th>
-              <th>Discount (%)</th>
-              <th>Total</th>
-              <th></th>
+              <th style={{ minWidth: "150px", width: "auto" }}>Sell Price</th>
+              <th style={{ minWidth: "100px", width: "auto" }}>Discount (%)</th>
+              <th style={{ minWidth: "100px", width: "auto" }}>Total</th>
+              <th style={{ minWidth: "20px", width: "auto" }}></th>
             </tr>
           </thead>
           <tbody>
@@ -424,7 +421,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                       };
                       setOrderDetails(updatedOrderDetails);
                     }}
-                    style={{ textAlign: "center", width: "40%" }}
+                    style={{ textAlign: "center", width: "100%" }}
                     placeholder="Sell Price"
                   />
                 </td>
@@ -458,18 +455,14 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
         <div style={{ textAlign: "right", marginTop: "10px" }}>
           <Button onClick={handleAddProductWithValidation}>Add Product</Button>
         </div>
-        <TotalSection>
-          <TotalRow
-            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
-          >
-            <TotalLabel>Total Qty: </TotalLabel>
-            <TotalValue>{totalQuantity}</TotalValue>
-          </TotalRow>
-          <TotalRow
-            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
-          >
-            <TotalLabel>Total Discount: </TotalLabel>
-            <TotalValue>
+        <TotalSummary>
+          <TotalItem>
+            <strong>Total Quantity:</strong> {totalQuantity}
+          </TotalItem>
+
+          <TotalItem>
+            <strong>Total Discount: </strong>
+            <HighlightedDiscount style={{ color: "red" }}>
               ₱
               {orderDetails
                 .reduce((acc, detail) => {
@@ -482,59 +475,16 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                   return acc + discountValue;
                 }, 0)
                 .toFixed(2)}
-            </TotalValue>
-          </TotalRow>
+            </HighlightedDiscount>
+          </TotalItem>
 
-          <TotalRow
-            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
-          >
-            <TotalLabel>Total Revenue: </TotalLabel>
-            <TotalValue style={{ color: "#f08400" }}>
+          <TotalItem>
+            <strong>Total Revenue: </strong>
+            <HighlightedTotal style={{ color: "#1DBA0B" }}>
               ₱{totalValue.toFixed(2)}
-            </TotalValue>
-          </TotalRow>
-          <TotalRow
-            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
-          >
-            <TotalLabel>Total Cost: </TotalLabel>
-            <TotalValue style={{ color: "#ff5757" }}>
-              ₱
-              {orderDetails
-                .reduce((acc, detail) => {
-                  // Calculate the total cost as Purchase Price * Quantity
-                  const totalCost =
-                    (parseFloat(detail.purchasePrice) || 0) *
-                    (parseInt(detail.quantity, 10) || 0);
-                  return acc + totalCost;
-                }, 0)
-                .toFixed(2)}
-            </TotalValue>
-          </TotalRow>
-          <TotalRow
-            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
-          >
-            <TotalLabel>Gross Profit: </TotalLabel>
-            <TotalValue style={{ color: "#1DBA0B" }}>
-              ₱
-              {(
-                orderDetails.reduce((acc, detail) => {
-                  // Calculate Total Revenue for this line (Sell Price * Quantity)
-                  const totalRevenue =
-                    (parseFloat(detail.price) || 0) *
-                    (parseInt(detail.quantity, 10) || 0);
-                  return acc + totalRevenue;
-                }, 0) -
-                orderDetails.reduce((acc, detail) => {
-                  // Calculate the total cost as Purchase Price * Quantity
-                  const totalCost =
-                    (parseFloat(detail.purchasePrice) || 0) *
-                    (parseInt(detail.quantity, 10) || 0);
-                  return acc + totalCost;
-                }, 0)
-              ).toFixed(2)}
-            </TotalValue>
-          </TotalRow>
-        </TotalSection>
+            </HighlightedTotal>
+          </TotalItem>
+        </TotalSummary>
       </OrderDetailsSection>
 
       <ButtonGroup>
@@ -548,5 +498,29 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     </Modal>
   );
 };
+
+
+const TotalSummary = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 20px;
+  font-weight: bold;
+`;
+
+const TotalItem = styled.p`
+  margin: 5px 0;
+  font-size: 14px;
+`;
+
+const HighlightedTotal = styled.span`
+  color: #1DBA0B;
+  font-size: 16px;
+`;
+
+const HighlightedDiscount = styled.span`
+  color: red;
+  font-size: 16px;
+`;
 
 export default AddCustomerOrderModal;

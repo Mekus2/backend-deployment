@@ -556,44 +556,6 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
             </HighlightedTotal>
           </TotalItem>
 
-          <TotalItem>
-            <strong>Total Cost: </strong>
-            <HighlightedTotal style={{ color: "#ff5757" }}>
-              ₱
-              {orderDetails
-                .reduce((acc, detail) => {
-                  // Calculate Total Cost as Purchase Price * Quantity
-                  const totalCost =
-                    (parseFloat(detail.SALES_ORDER_LINE_PURCHASE_PRICE) || 0) *
-                    (parseInt(detail.SALES_ORDER_LINE_QTY, 10) || 0);
-                  return acc + totalCost;
-                }, 0)
-                .toFixed(2)}
-            </HighlightedTotal>
-          </TotalItem>
-
-          <TotalItem>
-            <strong>Gross Profit: </strong>
-            <HighlightedTotal style={{ color: "#1DBA0B" }}>
-              ₱
-              {(
-                orderDetails.reduce((acc, detail) => {
-                  // Calculate Total Revenue for each line (Sell Price * Quantity)
-                  const totalRevenue =
-                    (parseFloat(detail.SALES_ORDER_LINE_PRICE) || 0) *
-                    (parseInt(detail.SALES_ORDER_LINE_QTY, 10) || 0);
-                  return acc + totalRevenue;
-                }, 0) -
-                orderDetails.reduce((acc, detail) => {
-                  // Calculate Total Cost as Purchase Price * Quantity
-                  const totalCost =
-                    (parseFloat(detail.SALES_ORDER_LINE_PURCHASE_PRICE) || 0) *
-                    (parseInt(detail.SALES_ORDER_LINE_QTY, 10) || 0);
-                  return acc + totalCost;
-                }, 0)
-              ).toFixed(2)}
-            </HighlightedTotal>
-          </TotalItem>
         </TotalSummary>
       </Section>
 
@@ -719,7 +681,7 @@ const TotalItem = styled.p`
 `;
 
 const HighlightedTotal = styled.span`
-  color: green;
+  color: #1DBA0B;
   font-size: 16px;
 `;
 

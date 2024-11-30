@@ -159,67 +159,66 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
       </Field>
       <Field>
         <Label>
-          Supplier Name{" "}
+          Supplier Details{" "}
           {errors.supplierCompanyName && (
             <span style={{ color: "red" }}>*</span>
           )}
-        </Label>
-        <Input
-          value={supplierCompanyName}
-          onChange={(e) => {
-            setSupplierCompanyName(e.target.value);
-            clearError("supplierCompanyName");
-          }}
-          placeholder="Supplier Name"
-          disabled={!editable}
-        />
-      </Field>
-      <Field>
-        <Label>
-          Supplier Contact Number{" "}
           {errors.supplierCompanyNum && <span style={{ color: "red" }}>*</span>}
         </Label>
-        <Input
-          value={supplierCompanyNum}
-          onChange={(e) => {
-            handlePhoneNumberChange(setSupplierCompanyNum, e.target.value);
-            clearError("supplierCompanyNum");
-          }}
-          placeholder="Supplier Contact Number"
-          disabled={!editable}
-        />
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Input
+            value={supplierCompanyName}
+            onChange={(e) => {
+              setSupplierCompanyName(e.target.value);
+              clearError("supplierCompanyName");
+            }}
+            placeholder="Supplier Name"
+            style={{ flex: 1 }}
+            disabled={!editable}
+          />
+          <Input
+            value={supplierCompanyNum}
+            onChange={(e) => {
+              handlePhoneNumberChange(setSupplierCompanyNum, e.target.value);
+              clearError("supplierCompanyNum");
+            }}
+            placeholder="Supplier Contact Number"
+            style={{ flex: 1 }}
+            disabled={!editable}
+          />
+        </div>
       </Field>
+
       <Field>
         <Label>
-          Contact Person{" "}
+          Contact Person Details{" "}
           {errors.contactPersonName && <span style={{ color: "red" }}>*</span>}
-        </Label>
-        <Input
-          value={contactPersonName}
-          onChange={(e) => {
-            setContactPersonName(e.target.value);
-            clearError("contactPersonName");
-          }}
-          placeholder="Contact Person Name"
-          disabled={!editable}
-        />
-      </Field>
-      <Field>
-        <Label>
-          Contact Number{" "}
           {errors.contactPersonNumber && (
             <span style={{ color: "red" }}>*</span>
           )}
         </Label>
-        <Input
-          value={contactPersonNumber}
-          onChange={(e) => {
-            handlePhoneNumberChange(setContactPersonNumber, e.target.value);
-            clearError("contactPersonNumber");
-          }}
-          placeholder="Contact Person Number"
-          disabled={!editable}
-        />
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Input
+            value={contactPersonName}
+            onChange={(e) => {
+              setContactPersonName(e.target.value);
+              clearError("contactPersonName");
+            }}
+            placeholder="Contact Person Name"
+            style={{ flex: 1 }}
+            disabled={!editable}
+          />
+          <Input
+            value={contactPersonNumber}
+            onChange={(e) => {
+              handlePhoneNumberChange(setContactPersonNumber, e.target.value);
+              clearError("contactPersonNumber");
+            }}
+            placeholder="Contact Person Number"
+            style={{ flex: 1 }}
+            disabled={!editable}
+          />
+        </div>
       </Field>
 
       <OrderDetailsSection>
