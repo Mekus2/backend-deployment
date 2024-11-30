@@ -107,23 +107,24 @@ class InventoryListView(APIView):
             except Inventory.DoesNotExist:
                 return Response(
                     {"error": "Inventory item not found."},
-                    status=status.HTTP_404_NOT_FOUND
+                    status=status.HTTP_404_NOT_FOUND,
                 )
 
         # Otherwise, fetch all inventory records
         inventory_items = Inventory.objects.all()
-        
+
         # Check if there are no inventory items
         if not inventory_items.exists():
             return Response(
                 {"error": "No inventory records found."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
-        
+
         # Serialize the data using the InventorySerializer
         serializer = InventorySerializer(inventory_items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
 class InventorySearchView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -136,7 +137,9 @@ class InventorySearchView(APIView):
         # Ensure at least one query parameter is provided
         if not product_name_query and not batch_id_query and not expiry_date_query:
             return Response(
-                {"error": "At least one query parameter (product_name, batch_id, expiry_date) must be provided."},
+                {
+                    "error": "At least one query parameter (product_name, batch_id, expiry_date) must be provided."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
