@@ -1,11 +1,15 @@
+# Django imports
 from django.shortcuts import render, get_object_or_404
 from django.db import transaction
 from django.db.models import Sum
 from django.http import Http404
 
+# rest_framework Imports
+from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+
+# App imports
 from .models import SalesOrder, SalesOrderDetails
 from .serializers import SalesOrderSerializer, SalesOrderDetailsSerializer
 from ...Customer.utils import (
@@ -176,15 +180,6 @@ class SalesOrderDetailsAPIView(APIView):
             {"message": "Sales Order details deleted successfully."},
             status=status.HTTP_204_NO_CONTENT,
         )
-
-
-from django.db import transaction
-from django.db.models import Sum
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .models import SalesOrder, SalesOrderDetails
-from Admin.Delivery.models import OutboundDelivery, OutboundDeliveryDetails
 
 
 class TransferToOutboundDelivery(APIView):

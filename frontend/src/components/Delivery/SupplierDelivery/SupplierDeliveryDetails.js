@@ -30,22 +30,18 @@ import {
 import { addNewInventoy } from "../../../api/InventoryApi";
 import { notify } from "../../Layout/CustomToast";
 import styled from "styled-components";
-import SupplierCreateIssue from "./SupplierCreateIssue"; 
+import SupplierCreateIssue from "./SupplierCreateIssue";
 
 const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   const abortControllerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
-  const [status, setStatus] = useState(""); // Use state to track the status
-  const [receivedDate, setReceivedDate] = useState("Not yet Received"); // Use state for received date
-  const [expiryDates, setExpiryDates] = useState(
-    Array((orderDetails || []).length).fill("") // Track expiry dates as an array
-  );
-  const [qtyAccepted, setQtyAccepted] = useState(
-    Array((orderDetails || []).length).fill(0) // Track accepted quantities, initialized to 0
-  );
-  const [receivedClicked, setReceivedClicked] = useState(false); // Track if the Mark as Received button was clicked
+  const [status, setStatus] = useState("");
+  const [receivedDate, setReceivedDate] = useState("Not yet Received");
+  const [expiryDates, setExpiryDates] = useState([]);
+  const [qtyAccepted, setQtyAccepted] = useState([]);
+  const [receivedClicked, setReceivedClicked] = useState(false);
   const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
   useEffect(() => {
     const fetchDetails = async () => {
@@ -108,73 +104,54 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   const handleStatusChange = async (
     orderId,
     currentStatus,
+    newStatus,
     expiryDates = []
   ) => {
-    let newStatus;
     let toastMessage = "";
-    let toastType = "info"; // Default to info toast type
+    let toastType = "info"; // Default toast type
 
-    // Temporarily skip expiry date validation for development (can toggle with a flag)
-    const skipExpiryDateValidation = true; // Set to `false` for production, if needed
-
-    // Define the cyclical transitions
-    switch (currentStatus) {
-      case "Pending":
-        newStatus = "Dispatched";
-        toastMessage = "Order has been dispatched.";
-        toastType = "info"; // Informational toast
-        break;
-      case "Dispatched":
-        newStatus = "Delivered";
-        toastMessage = "Order has been delivered successfully.";
-        toastType = "success"; // Success toast
-        break;
-      case "Delivered":
-        newStatus = "Delivered with Issues"; // Change to Delivered with Issues
-        toastMessage = "Order delivered with issues.";
-        toastType = "warning"; // Warning toast
-        break;
-      case "Delivered with Issues":
-        newStatus = "Pending"; // Revert back to "Pending"
-        toastMessage = "Order status has been reset to 'Pending'.";
-        toastType = "warning"; // Warning toast
-        break;
-      default:
-        console.error("Invalid status:", currentStatus);
-        toastMessage = "Invalid status, update failed.";
-        toastType = "error"; // Error toast
-        break;
-    }
-
-    // Skip expiry date validation for development
-    if (
-      !skipExpiryDateValidation &&
-      currentStatus === "Dispatched" &&
-      newStatus === "Delivered"
-    ) {
+    // Check if expiry dates are required
+    if (currentStatus === "Dispatched" && newStatus === "Delivered") {
       const areAllExpiryDatesFilled = expiryDates.every((date) => date !== "");
       if (!areAllExpiryDatesFilled) {
         console.error("Please fill in all expiry dates.");
-        toastMessage = "Please fill in all expiry dates before proceeding.";
-        toastType = "warning"; // Warning toast for missing expiry dates
-        notify[toastType](toastMessage); // Show the warning toast and exit
+        toastMessage =
+          "All expiry dates must be filled before marking as delivered.";
+        toastType = "warning"; // Warning toast
+        notify[toastType](toastMessage); // Show the warning toast
         return;
       }
     }
 
+    // Prevent invalid status transitions
+    if (currentStatus !== "Dispatched" && newStatus === "Delivered") {
+      console.error(
+        "Invalid status transition. Can only mark as delivered from 'Dispatched'."
+      );
+      toastMessage =
+        "Invalid status transition. Can only mark as delivered from 'Dispatched'.";
+      toastType = "error"; // Error toast
+      notify[toastType](toastMessage); // Show the error toast
+      return;
+    }
+
     try {
+      // Call backend to update status
       const updatedOrder = await updateOrderStatus(orderId, newStatus);
       if (updatedOrder) {
-        console.log("Order updated successfully:", updatedOrder);
-        setStatus(newStatus); // Update the status state
+        console.log(`Order status updated to "${newStatus}":`, updatedOrder);
 
-        // If the update was successful, show the relevant toast
-        notify[toastType](toastMessage); // Display the appropriate toast type
+        // Display success toast
+        toastMessage = `Order status updated to "${newStatus}".`;
+        toastType = "success";
+        notify[toastType](toastMessage);
+
+        window.location.reload();
       }
     } catch (error) {
       console.error("Error updating order status:", error);
 
-      // Show an error toast if the update fails
+      // Show error toast
       toastMessage = "Failed to update the order status. Please try again.";
       toastType = "error";
       notify[toastType](toastMessage);
@@ -208,9 +185,11 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
 
     updatedOrderDetails[index] = {
       ...updatedOrderDetails[index],
-      INBOUND_DEL_DETAIL_LINE_QTY: newQtyAccepted[index],
+      INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT: newQtyAccepted[index],
       INBOUND_DEL_DETAIL_LINE_QTY_DEFECT: defectQty,
     };
+
+    console.log("Updated Qty Accepted:", updatedOrderDetails);
 
     // Set both states in one go
     setQtyAccepted(newQtyAccepted);
@@ -248,6 +227,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         INBOUND_DEL_DETAIL_PROD_EXP_DATE: value, // Update the expiry date
       };
 
+      console.log("Updated Expiry Dates:", updatedOrderDetails);
       setOrderDetails(updatedOrderDetails); // Update orderDetails state
     }
   };
@@ -275,42 +255,67 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     setReceivedClicked(true); // Custom behavior (if needed)
 
     // Check if all expiry dates are filled
-    if (!expiryDates.every((date) => date !== "")) {
-      console.error("Please fill in all expiry dates.");
-      return;
+    const areExpiryDatesFilled = expiryDates.every(
+      (date) => date && date.trim() !== ""
+    );
+
+    // Check if all quantities are filled
+    const areQuantitiesFilled = orderDetails.every(
+      (item) =>
+        item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT &&
+        item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT > 0
+    );
+
+    if (!areExpiryDatesFilled || !areQuantitiesFilled) {
+      if (!areExpiryDatesFilled) {
+        console.log("Some expiry dates are missing.");
+        notify.warning("Please fill in all expiry dates before proceeding.");
+      }
+      if (!areQuantitiesFilled) {
+        console.log("Some quantities are missing or invalid.");
+        notify.warning(
+          "Please ensure all accepted quantities are filled and greater than 0."
+        );
+      }
+      return; // Early exit if validation fails
     }
-    console.info("Order Details Data:", orderDetails);
 
     // Prepare inventory data to be posted
-    // const inventoryData = orderDetails.map((item, index) => {
-    //   const expiryDate = expiryDates[index];
-    //   return {
-    //     PRODUCT_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Assuming `PRODUCT_ID` is part of `orderDetails`
-    //     INBOUND_DEL_ID: delivery.INBOUND_DEL_ID,
-    //     EXPIRY_DATE: expiryDate,
-    //     QUANTITY: item.QUANTITY, // Assuming `QUANTITY` is part of `orderDetails`
-    //   };
-    // });
+    const inventoryData = orderDetails.map((item, index) => {
+      const expiryDate = expiryDates[index];
+      return {
+        PRODUCT_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Assuming `PRODUCT_ID` is part of `orderDetails`
+        PRODUCT_NAME: item.INBOUND_DEL_DETAIL_PROD_NAME,
+        INBOUND_DEL_ID: delivery.INBOUND_DEL_ID,
+        EXPIRY_DATE: expiryDate,
+        QUANTITY: item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT, // Assuming `QUANTITY` is part of `orderDetails`
+      };
+    });
 
-    // console.log("Inventory data prepared for posting:", inventoryData);
+    console.log("Inventory data prepared for posting:", inventoryData);
 
-    // Try posting the inventory data and updating the status
-    // // try {
-    // //   // Iterate over inventoryData and post each entry
-    // //   for (const inventoryItem of inventoryData) {
-    // //     const response = await addNewInventoy(inventoryItem); // Posting inventory item
-    // //     if (response) {
-    // //       console.log("Inventory entry created successfully:", response);
-    // //     } else {
-    // //       console.error("Failed to create inventory entry for:", inventoryItem);
-    // //     }
-    // //   }
+    // try {
+    //   // Try posting the inventory data and updating the status
+    //   for (const inventoryItem of inventoryData) {
+    //     const response = await addNewInventory(inventoryItem); // Posting inventory item
+    //     if (response) {
+    //       console.log("Inventory entry created successfully:", response);
+    //     } else {
+    //       console.error("Failed to create inventory entry for:", inventoryItem);
+    //     }
+    //   }
 
-    // //   // After all inventory data is posted, update the status
-    // //   console.log("All inventory data posted successfully, updating status...");
-    // //   handleStatusChange(delivery.INBOUND_DEL_ID, status, expiryDates);
+    //   // After all inventory data is posted, update the status
+    //   console.log("All inventory data posted successfully, updating status...");
+    //   await handleStatusChange(
+    //     delivery.INBOUND_DEL_ID,
+    //     status,
+    //     "Received",
+    //     expiryDates
+    //   );
     // } catch (error) {
     //   console.error("Error posting to Inventory:", error);
+    //   notify.error("Error posting to Inventory. Please try again.");
     // }
   };
   // Calculate Qty Defect (Difference between Delivered Quantity and Accepted Quantity)
@@ -497,29 +502,25 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         <ProgressText>{getProgressPercentage()}%</ProgressText>
       </ProgressSection>
       <ModalFooter>
-  {/* Show the "What's the issue?" button only if the status is "Dispatched" */}
-  {status === "Dispatched" && (
-    <IssueButton>
-      What's the issue?
-    </IssueButton>
-  )}
+        {/* Show the "What's the issue?" button only if the status is "Dispatched" */}
+        {status === "Dispatched" && (
+          <IssueButton>What's the issue?</IssueButton>
+        )}
 
-  {/* General Status Button that adapts to the status */}
-  <StatusButton
-    onClick={() =>
-      handleStatusChange(delivery.INBOUND_DEL_ID, status, expiryDates)
-    }
-  >
-    {status === "Pending" && "Mark as Dispatched"}
-    {status === "Dispatched" && "Mark as Delivered"}
-    {status === "Delivered with Issues" && "Reset to Pending"}
-    {status === "Delivered" && "Invoice"}
-  </StatusButton>
-</ModalFooter>
-
-
-
-
+        {/* General Status Button that adapts to the status */}
+        <StatusButton
+          onClick={() => {
+            if (status === "Pending") {
+              handleStatusChange(delivery.INBOUND_DEL_ID, status, "Dispatched");
+            } else if (status === "Dispatched") {
+              handleMarkAsReceivedClick();
+            }
+          }}
+        >
+          {status === "Pending" && "Mark as Dispatched"}
+          {status === "Dispatched" && "Mark as Received"}
+        </StatusButton>
+      </ModalFooter>
     </Modal>
   );
 };

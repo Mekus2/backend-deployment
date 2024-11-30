@@ -21,6 +21,7 @@ from .serializers import (
     CreateOutboundDeliverySerializer,
     UpdateInboundStatus,
 )
+from django.utils import timezone
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.http import Http404
@@ -128,6 +129,7 @@ class OutboundDeliveryDetailsAPIView(APIView):
             status=status.HTTP_204_NO_CONTENT,
         )
 
+
 class AcceptOutboundDeliveryAPI(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -142,7 +144,9 @@ class AcceptOutboundDeliveryAPI(APIView):
 
                 # Get the status and received date from the request data
                 new_status = request.data.get("status")
-                received_date = request.data.get("receivedDate")  # Get the received date if provided
+                received_date = request.data.get(
+                    "receivedDate"
+                )  # Get the received date if provided
 
                 if not new_status:
                     return Response(
@@ -158,7 +162,9 @@ class AcceptOutboundDeliveryAPI(APIView):
                         outbound_delivery.save()
 
                         return Response(
-                            {"message": "Outbound Delivery marked as In Transit successfully."},
+                            {
+                                "message": "Outbound Delivery marked as In Transit successfully."
+                            },
                             status=status.HTTP_200_OK,
                         )
                     else:
@@ -171,24 +177,31 @@ class AcceptOutboundDeliveryAPI(APIView):
                     # Check if it's a valid transition from In Transit to Delivered
                     if outbound_delivery.OUTBOUND_DEL_STATUS == "In Transit":
                         outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
-                        
+
                         # If receivedDate is provided, use it
                         if received_date:
                             outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE = received_date
                         else:
                             # Default to the current time if receivedDate is not provided
-                            outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE = timezone.now()
+                            outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE = (
+                                timezone.now()
+                            )
 
                         outbound_delivery.save()
 
                         # Optionally, update the related Sales Order to "Completed"
                         sales_order = outbound_delivery.SALES_ORDER_ID
-                        if sales_order and sales_order.SALES_ORDER_STATUS != "Completed":
+                        if (
+                            sales_order
+                            and sales_order.SALES_ORDER_STATUS != "Completed"
+                        ):
                             sales_order.SALES_ORDER_STATUS = "Completed"
                             sales_order.save()
 
                         return Response(
-                            {"message": "Outbound Delivery and Sales Order marked as Delivered successfully."},
+                            {
+                                "message": "Outbound Delivery and Sales Order marked as Delivered successfully."
+                            },
                             status=status.HTTP_200_OK,
                         )
                     else:
@@ -217,7 +230,10 @@ class AcceptOutboundDeliveryAPI(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
 class GetTotalInboundPendingCount(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def get(self, request):
         try:
             pending_count = InboundDelivery.objects.filter(

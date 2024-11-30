@@ -280,7 +280,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             <tr>
               <th>Product Name</th>
               <th>Qty</th>
-              <th>Purchase Price</th> {/* New column for Purchase Price */}
+              {/* <th>Purchase Price</th> New column for Purchase Price */}
               <th>Sell Price</th>
               <th>Discount (%)</th>
               <th>Total</th>
@@ -294,7 +294,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                   <Input
                     style={{
                       display: "inline-block",
-                      width: "calc(100% - 10px)",
+                      width: "100%",
                     }}
                     value={inputStates[index] || ""}
                     onChange={(e) => {
@@ -315,6 +315,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                         right: "-10px", // Adjust as needed for spacing
                         top: "50%",
                         transform: "translateY(-50%)",
+                        width: "100%",
                       }}
                     >
                       *
@@ -362,7 +363,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                 </td>
 
                 {/* Purchase Price Input */}
-                <td>
+                {/* <td>
                   <Input
                     type="number"
                     style={{ textAlign: "center" }}
@@ -377,7 +378,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                     }}
                     placeholder="Purchase Price"
                   />
-                </td>
+                </td> */}
 
                 <td>
                   <Input
@@ -423,7 +424,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                       };
                       setOrderDetails(updatedOrderDetails);
                     }}
-                    style={{ textAlign: "center" }}
+                    style={{ textAlign: "center", width: "40%" }}
                     placeholder="Sell Price"
                   />
                 </td>
@@ -458,11 +459,15 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
           <Button onClick={handleAddProductWithValidation}>Add Product</Button>
         </div>
         <TotalSection>
-          <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
+          <TotalRow
+            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
+          >
             <TotalLabel>Total Qty: </TotalLabel>
             <TotalValue>{totalQuantity}</TotalValue>
           </TotalRow>
-          <TotalRow style={{ display: "flex",  alignItems: "left", marginLeft: "780px" }}>
+          <TotalRow
+            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
+          >
             <TotalLabel>Total Discount: </TotalLabel>
             <TotalValue>
               ₱
@@ -480,13 +485,17 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             </TotalValue>
           </TotalRow>
 
-          <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
+          <TotalRow
+            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
+          >
             <TotalLabel>Total Revenue: </TotalLabel>
             <TotalValue style={{ color: "#f08400" }}>
               ₱{totalValue.toFixed(2)}
             </TotalValue>
           </TotalRow>
-          <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
+          <TotalRow
+            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
+          >
             <TotalLabel>Total Cost: </TotalLabel>
             <TotalValue style={{ color: "#ff5757" }}>
               ₱
@@ -501,7 +510,9 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                 .toFixed(2)}
             </TotalValue>
           </TotalRow>
-          <TotalRow style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}>
+          <TotalRow
+            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
+          >
             <TotalLabel>Gross Profit: </TotalLabel>
             <TotalValue style={{ color: "#1DBA0B" }}>
               ₱
