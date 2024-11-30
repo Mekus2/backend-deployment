@@ -15,7 +15,7 @@ const AddProductModal = ({ onClose, onSave }) => {
   const [supplier, setSupplier] = useState("");
   const [size, setSize] = useState("");
   const [measurement] = useState("");
-  const [image, setImage] = useState(null);
+  // const [image, setImage] = useState(null);
   const [errors, setErrors] = useState({});
   const [purchasePrice, setPurchasePrice] = useState(""); // Add this line
 
@@ -34,12 +34,12 @@ const AddProductModal = ({ onClose, onSave }) => {
     };
   }, [onClose]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(URL.createObjectURL(file));
-    }
-  };
+  // const handleImageChange = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     setImage(URL.createObjectURL(file));
+  //   }
+  // };
 
   const validate = () => {
     const newErrors = {};
@@ -91,7 +91,7 @@ const AddProductModal = ({ onClose, onSave }) => {
       PROD_RO_LEVEL: parseInt(roLevel),
       PROD_RO_QTY: parseInt(roQty),
       PROD_QOH: parseInt(qoh),
-      PROD_IMG: image || "https://via.placeholder.com/50", // Use default image if none uploaded
+      // PROD_IMG: image || "https://via.placeholder.com/50", // Use default image if none uploaded
       PROD_DATECREATED: new Date().toISOString().split("T")[0],
       PROD_DATEUPDATED: new Date().toISOString().split("T")[0],
       PROD_TAGS: tags, // Save the tags instead of category
@@ -121,10 +121,10 @@ const AddProductModal = ({ onClose, onSave }) => {
           </CloseButton>
         </ModalHeader>
         <ModalBody>
-          <ImageUpload>
+          {/* <ImageUpload>
             {image ? <ImagePreview src={image} alt="Product Preview" /> : null}
             <input type="file" accept="image/*" onChange={handleImageChange} />
-          </ImageUpload>
+          </ImageUpload> */}
           <Field>
             <Label>Product Name</Label>
             <Input
@@ -357,25 +357,25 @@ const CloseButton = styled.button`
 
 const ModalBody = styled.div``;
 
-const ImageUpload = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin-bottom: 15px;
-`;
+// const ImageUpload = styled.div`
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   flex-direction: column;
+//   margin-bottom: 15px;
+// `;
 
-const ImagePreview = styled.img`
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-bottom: 10px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto; /* Center horizontally */
-`;
+// const ImagePreview = styled.img`
+//   width: 100px;
+//   height: 100px;
+//   object-fit: cover;
+//   border: 1px solid #ddd;
+//   border-radius: 4px;
+//   margin-bottom: 10px;
+//   display: block;
+//   margin-left: auto;
+//   margin-right: auto; /* Center horizontally */
+// `;
 
 const Field = styled.div`
   margin-bottom: 15px;
