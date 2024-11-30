@@ -106,7 +106,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     0
   );
   const handleAcceptOrder = async () => {
-    const newDelivery  = {
+    const newDelivery = {
       SALES_ORDER_ID: order.SALES_ORDER_ID,
       OUTBOUND_DEL_CUSTOMER_NAME: order.SALES_ORDER_CLIENT_NAME,
       OUTBOUND_DEL_DLVRY_OPTION: order.SALES_ORDER_DLVRY_OPTION,
@@ -140,20 +140,21 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     onClose();
   };
 
-
   const logAcceptOrder = async (newOrderDelivery) => {
     const userId = localStorage.getItem("user_id"); // Ensure "user_id" is correctly stored in localStorage
     console.log("User ID:", userId);
     try {
       // Fetch the user details using the userId
-      const userResponse = await fetch(`http://127.0.0.1:8000/account/logs/${userId}/`);
+      const userResponse = await fetch(
+        `http://127.0.0.1:8000/account/logs/${userId}/`
+      );
       if (!userResponse.ok) {
         throw new Error("Failed to fetch user details");
       }
-  
+
       const user = await userResponse.json(); // Assuming the response contains the user object
       const username = user.username;
-      
+
       const salesId = newOrderDelivery.SALES_ORDER_ID;
       // Construct the log payload
       const logPayload = {
@@ -161,7 +162,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
         LOG_DESCRIPTION: `${username} accepted the customer order ID: (${salesId})`,
         USER_ID: userId,
       };
-  
+
       // Send the log payload
       const logResponse = await fetch("http://127.0.0.1:8000/logs/logs/", {
         method: "POST",
@@ -170,7 +171,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
         },
         body: JSON.stringify(logPayload),
       });
-  
+
       if (logResponse.ok) {
         console.log("Order log successfully created:", logPayload);
       } else {
@@ -624,7 +625,7 @@ const SuggestionsContainer = styled.div`
   position: absolute;
   top: calc(100% + 4px); /* 4px gap between input and dropdown */
   left: 0;
-  width: 100%;
+  width: 150%;
   max-height: 150px;
   overflow-y: auto;
   border: 1px solid #ddd;

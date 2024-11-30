@@ -105,10 +105,9 @@ class InboundDeliveryDetailsSerializer(serializers.ModelSerializer):
             "INBOUND_DEL_DETAIL_PROD_NAME",
             "INBOUND_DEL_DETAIL_LINE_PRICE",
             "INBOUND_DEL_DETAIL_ORDERED_QTY",
-            "INBOUND_DEL_DETAIL_LINE_QTY",
+            "INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT",
             "INBOUND_DEL_DETAIL_LINE_QTY_DEFECT",
             "INBOUND_DEL_DETAIL_PROD_EXP_DATE",
-            "INBOUND_DEL_DETAIL_BATCH_ID",
         ]
 
         extra_kwargs = {"INBOUND_DEL_ID": {"required": False}}
