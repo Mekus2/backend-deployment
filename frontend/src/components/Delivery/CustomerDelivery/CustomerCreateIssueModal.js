@@ -50,7 +50,7 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   return (
     <Modal
       data-cy="customer-issue-modal"
-      title="Report an Issue"
+      title="Report a Customer Orders Issue"
       onClose={onClose}
     >
       {/* Type of Issue Dropdown */}
@@ -66,6 +66,10 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
         <option value="Damaged Product">Damaged Product</option>
         <option value="Missing Items">Missing Items</option>
         <option value="Incorrect Product">Incorrect Product</option>
+        <option value="Expired Product">Expired Product</option>
+        <option value="Defective Product">Defective Product</option>
+        <option value="Wrong Quantity">Wrong Quantity</option>
+        <option value="Packaging Issues">Packaging Issues</option>
         <option value="Other">Other</option>
       </Select>
 

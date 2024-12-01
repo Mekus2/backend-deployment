@@ -42,7 +42,12 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   const [expiryDates, setExpiryDates] = useState([]);
   const [qtyAccepted, setQtyAccepted] = useState([]);
   const [receivedClicked, setReceivedClicked] = useState(false);
+  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false); // State for IssueDetails modal
+  const [issueReported, setIssueReported] = useState(false); // Track if issue has been reported
+
   const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
+
   useEffect(() => {
     const fetchDetails = async () => {
       if (abortControllerRef.current) {
@@ -99,6 +104,12 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .getDate()
       .toString()
       .padStart(2, "0")}/${date.getFullYear()}`;
+  };
+  
+  const handleIssueModalSubmit = (updatedOrderDetails, remarks) => {
+    console.log("Issue reported:", updatedOrderDetails, remarks);
+    setIssueReported(true); // Mark issue as reported after submission
+    setIsIssueModalOpen(false); // Close the modal
   };
 
   const handleStatusChange = async (
@@ -209,6 +220,11 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         return 0; // Default progress if status is unknown
     }
   };
+  const handleIssueModalOpen = () => setIsIssueModalOpen(true);
+  const handleIssueModalClose = () => setIsIssueModalOpen(false); // This closes the initial modal
+
+  const handleIssueDetailsOpen = () => setIsIssueDetailsOpen(true); // Open IssueDetails modal
+  const handleIssueDetailsClose = () => setIsIssueDetailsOpen(false); // Close IssueDetails modal
 
   // Update expiry date for specific row
   const handleExpiryDateChange = (index, value) => {
@@ -494,7 +510,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         </SummaryItem>
       </TotalSummary>
       {/* Progress Bar */}
-      {/* Progress Bar */}
       <ProgressSection>
         <ProgressBar>
           <ProgressFiller progress={getProgressPercentage()} />
@@ -504,23 +519,39 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       <ModalFooter>
         {/* Show the "What's the issue?" button only if the status is "Dispatched" */}
         {status === "Dispatched" && (
-          <IssueButton>What's the issue?</IssueButton>
+          <IssueButton onClick={handleIssueModalOpen}>
+            What's the issue?
+          </IssueButton>
         )}
 
         {/* General Status Button that adapts to the status */}
-        <StatusButton
-          onClick={() => {
-            if (status === "Pending") {
-              handleStatusChange(delivery.INBOUND_DEL_ID, status, "Dispatched");
-            } else if (status === "Dispatched") {
-              handleMarkAsReceivedClick();
-            }
-          }}
-        >
-          {status === "Pending" && "Mark as Dispatched"}
-          {status === "Dispatched" && "Mark as Received"}
-        </StatusButton>
+        {status !== "Delivered" && ( // Exclude the button for Delivered status
+          <StatusButton
+            onClick={() => {
+              if (status === "Pending") {
+                handleStatusChange(
+                  delivery.INBOUND_DEL_ID,
+                  status,
+                  "Dispatched"
+                );
+              } else if (status === "Dispatched") {
+                handleMarkAsReceivedClick();
+              }
+            }}
+          >
+            {status === "Pending" && "Mark as Dispatched"}
+            {status === "Dispatched" && "Mark as Received"}
+          </StatusButton>
+        )}
       </ModalFooter>
+      {/* Issue Modal */}
+      {isIssueModalOpen && (
+        <SupplierCreateIssue
+          orderDetails={orderDetails}
+          onClose={handleIssueModalClose}
+          onSubmit={handleIssueModalSubmit} // Assuming this is defined somewhere in your code
+        />
+      )}
     </Modal>
   );
 };
