@@ -105,7 +105,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .toString()
       .padStart(2, "0")}/${date.getFullYear()}`;
   };
-  
+
   const handleIssueModalSubmit = (updatedOrderDetails, remarks) => {
     console.log("Issue reported:", updatedOrderDetails, remarks);
     setIssueReported(true); // Mark issue as reported after submission
@@ -391,8 +391,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           </FormGroup>
         </Column>
       </DetailsContainer>
-      {/* Product Table */}
-      {/* Product Table */}
       <ProductTable>
         <thead>
           <tr>
@@ -408,93 +406,33 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         <tbody>
           {orderDetails.map((item, index) => (
             <TableRow key={index}>
-              <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
-              <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
-              <TableCell>
-                <input
-                  type="number"
-                  min="0"
-                  max={item.INBOUND_DEL_DETAIL_LINE_QTY}
-                  value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
-                  onChange={(e) =>
-                    handleQtyAcceptedChange(index, e.target.value)
-                  }
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "5px",
-                    borderRadius: "4px",
-                    appearance: "none", // Remove the up/down arrows in the input field
-                    WebkitAppearance: "none", // Remove for Safari
-                    MozAppearance: "textfield", // Remove for Firefox
-                  }}
-                />
-              </TableCell>
-              <TableCell>
-                {/* Calculate the Qty Defect, show 0 if not accepted */}
-                {calculateQtyDefect(index)}
-              </TableCell>
-              <TableCell>
-                <InputContainer>
-                  <input
-                    type="date"
-                    min={today} // Set min date to today for future validation
-                    value={expiryDates[index] || ""} // Access individual expiry date
-                    onChange={(e) =>
-                      handleExpiryDateChange(index, e.target.value)
-                    } // Handle change for specific index
-                    style={{
-                      border: "1px solid #ccc",
-                      padding: "5px",
-                      borderRadius: "4px",
-                    }}
-                  />
-                  {receivedClicked && expiryDates[index] === "" && (
-                    <Asterisk>*</Asterisk>
-                  )}
-                </InputContainer>
-              </TableCell>
-              <TableCell>
-                <input
-                  type="number"
-                  value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""} // Allow customization of the price
-                  min="0" // Ensure price cannot be negative
-                  onChange={(e) => {
-                    // Validate price input
-                    const newPrice = parseFloat(e.target.value);
-                    if (isNaN(newPrice) || newPrice < 0) {
-                      // If invalid, keep the previous valid value
-                      return;
-                    }
-                    // Update the price for the product in the orderDetails array
-                    const updatedOrderDetails = [...orderDetails];
-                    updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
-                      newPrice;
-                    setOrderDetails(updatedOrderDetails);
-                  }}
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "5px",
-                    borderRadius: "4px",
-                    appearance: "none", // Remove the up/down arrows in the input field
-                    WebkitAppearance: "none", // Remove for Safari
-                    MozAppearance: "textfield", // Remove for Firefox
-                  }}
-                />
-              </TableCell>
+  <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME || "NaN"}</TableCell>
+  <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY || "NaN"}</TableCell>
+  <TableCell>{item.INBOUND_DEL_DETAIL_ACCEPTED_QTY || "NaN"}</TableCell>
+  <TableCell>{calculateQtyDefect(index) || "NaN"}</TableCell>
+  <TableCell>{item.INBOUND_DEL_DETAIL_EXPIRY_DATE || "NaN"}</TableCell>
+  <TableCell>
+    ₱
+    {typeof item.INBOUND_DEL_DETAIL_LINE_PRICE === "number"
+      ? item.INBOUND_DEL_DETAIL_LINE_PRICE.toFixed(2)
+      : "NaN"}
+  </TableCell>
+  <TableCell>
+    ₱
+    {typeof item.INBOUND_DEL_DETAIL_LINE_PRICE === "number" &&
+    typeof item.INBOUND_DEL_DETAIL_ACCEPTED_QTY === "number"
+      ? calculateItemTotal(
+          item.INBOUND_DEL_DETAIL_ACCEPTED_QTY,
+          item.INBOUND_DEL_DETAIL_LINE_PRICE
+        ).toFixed(2)
+      : "NaN"}
+  </TableCell>
+</TableRow>
 
-              <TableCell>
-                ₱
-                {
-                  calculateItemTotal(
-                    qtyAccepted[index] ?? 0, // If qtyAccepted[index] is null or undefined, use 0
-                    item.INBOUND_DEL_DETAIL_LINE_PRICE ?? 0 // If price is null or undefined, use 0
-                  ).toFixed(2) // Format as two decimal places
-                }
-              </TableCell>
-            </TableRow>
           ))}
         </tbody>
       </ProductTable>
+
       {/* Summary Section */}
       <TotalSummary>
         <SummaryItem>
