@@ -335,16 +335,40 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                     <TableCell>
                       {status === "Dispatched" ? (
                         <input
-                          type="number"
-                          min="0"
+                          type="text"
                           value={item.QTY_ACCEPTED || ""}
                           onChange={(e) => {
-                            const newQtyAccepted =
-                              parseInt(e.target.value, 10) || 0;
+                            // Allow only numeric input (including leading zeros, but no negative sign or other characters)
+                            const value = e.target.value;
+                            const numericValue = value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
+
+                            // If the value is empty after cleaning, set to 0, otherwise parse the value
+                            let newQtyAccepted =
+                              numericValue === ""
+                                ? 0
+                                : parseInt(numericValue, 10);
+
+                            // Ensure the new quantity is within the valid range
+                            if (newQtyAccepted < 0) newQtyAccepted = 0;
+                            if (newQtyAccepted > item.OUTBOUND_DETAILS_PROD_QTY)
+                              newQtyAccepted = item.OUTBOUND_DETAILS_PROD_QTY;
+
+                            // Calculate Qty Defect
+                            const newQtyDefect =
+                              newQtyAccepted === 0
+                                ? 0
+                                : item.OUTBOUND_DETAILS_PROD_QTY -
+                                  newQtyAccepted;
+
+                            // Update the order details state
                             setOrderDetails((prevDetails) =>
                               prevDetails.map((detail, detailIndex) =>
                                 detailIndex === index
-                                  ? { ...detail, QTY_ACCEPTED: newQtyAccepted }
+                                  ? {
+                                      ...detail,
+                                      QTY_ACCEPTED: newQtyAccepted,
+                                      QTY_DEFECT: newQtyDefect, // Set to 0 if Qty Accepted is 0
+                                    }
                                   : detail
                               )
                             );
@@ -362,6 +386,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                     </TableCell>
 
                     <TableCell>{item.QTY_DEFECT || 0}</TableCell>
+
                     <TableCell>
                       {item.OUTBOUND_DETAILS_DISCOUNT
                         ? `${item.OUTBOUND_DETAILS_DISCOUNT}%`
