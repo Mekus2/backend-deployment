@@ -406,26 +406,77 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         <tbody>
           {orderDetails.map((item, index) => (
             <TableRow key={index}>
-  <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME || "NaN"}</TableCell>
-  <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY || "NaN"}</TableCell>
-  <TableCell>{item.INBOUND_DEL_DETAIL_ACCEPTED_QTY || "NaN"}</TableCell>
-  <TableCell>{calculateQtyDefect(index) || "NaN"}</TableCell>
-  <TableCell>{item.INBOUND_DEL_DETAIL_EXPIRY_DATE || "NaN"}</TableCell>
+  <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
+  <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
   <TableCell>
-    ₱
-    {typeof item.INBOUND_DEL_DETAIL_LINE_PRICE === "number"
-      ? item.INBOUND_DEL_DETAIL_LINE_PRICE.toFixed(2)
-      : "NaN"}
+    <input
+      type="number"
+      min="0"
+      max={item.INBOUND_DEL_DETAIL_LINE_QTY}
+      value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
+      onChange={(e) =>
+        handleQtyAcceptedChange(index, e.target.value)
+      }
+      disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
+      style={{
+        border: "1px solid #ccc",
+        padding: "5px",
+        borderRadius: "4px",
+        appearance: "none", // Remove the up/down arrows in the input field
+        WebkitAppearance: "none", // Remove for Safari
+        MozAppearance: "textfield", // Remove for Firefox
+      }}
+    />
+  </TableCell>
+  <TableCell>{calculateQtyDefect(index)}</TableCell>
+  <TableCell>
+    <InputContainer>
+      <input
+        type="date"
+        min={today}
+        value={expiryDates[index] || ""}
+        onChange={(e) =>
+          handleExpiryDateChange(index, e.target.value)
+        }
+        disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
+        style={{
+          border: "1px solid #ccc",
+          padding: "5px",
+          borderRadius: "4px",
+        }}
+      />
+    </InputContainer>
+  </TableCell>
+  <TableCell>
+    <input
+      type="number"
+      value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""}
+      min="0"
+      onChange={(e) => {
+        const newPrice = parseFloat(e.target.value);
+        if (isNaN(newPrice) || newPrice < 0) return;
+        const updatedOrderDetails = [...orderDetails];
+        updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
+          newPrice;
+        setOrderDetails(updatedOrderDetails);
+      }}
+      disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
+      style={{
+        border: "1px solid #ccc",
+        padding: "5px",
+        borderRadius: "4px",
+        appearance: "none",
+        WebkitAppearance: "none",
+        MozAppearance: "textfield",
+      }}
+    />
   </TableCell>
   <TableCell>
     ₱
-    {typeof item.INBOUND_DEL_DETAIL_LINE_PRICE === "number" &&
-    typeof item.INBOUND_DEL_DETAIL_ACCEPTED_QTY === "number"
-      ? calculateItemTotal(
-          item.INBOUND_DEL_DETAIL_ACCEPTED_QTY,
-          item.INBOUND_DEL_DETAIL_LINE_PRICE
-        ).toFixed(2)
-      : "NaN"}
+    {calculateItemTotal(
+      qtyAccepted[index] ?? 0,
+      item.INBOUND_DEL_DETAIL_LINE_PRICE ?? 0
+    ).toFixed(2)}
   </TableCell>
 </TableRow>
 

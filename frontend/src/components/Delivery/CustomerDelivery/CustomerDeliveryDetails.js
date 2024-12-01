@@ -311,162 +311,92 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
               </Column>
             </DetailsContainer>
             <ProductTable>
-              <thead>
-                <tr>
-                  <TableHeader>Product Name</TableHeader>
-                  <TableHeader>Qty</TableHeader>
-                  <TableHeader>Purchase Price</TableHeader>{" "}
-                  {/* New Column for Purchase Price */}
-                  <TableHeader>Sell Price</TableHeader>{" "}
-                  {/* New Column for Sell Price */}
-                  <TableHeader>Discount</TableHeader>{" "}
-                  {/* New Column for Discount */}
-                  <TableHeader>Total</TableHeader>
-                </tr>
-              </thead>
-              <tbody>
-                {orderDetails.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
-                    <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
+  <thead>
+    <tr>
+      <TableHeader>Product Name</TableHeader>
+      <TableHeader>Qty</TableHeader>
+      <TableHeader>Discount</TableHeader>
+      <TableHeader>Total</TableHeader> {/* Removed Sell Price and Purchase Price columns */}
+    </tr>
+  </thead>
+  <tbody>
+    {orderDetails.map((item, index) => (
+      <TableRow key={index}>
+        <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
+        <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
 
-                    {/* Purchase Price (Assumed to be a different field, use the correct field for Purchase Price) */}
-                    <TableCell>
-                      ₱
-                      {(
-                        Number(item.OUTBOUND_DETAILS_PURCHASE_PRICE) || 0
-                      ).toFixed(2)}{" "}
-                      {/* Update with correct purchase price field */}
-                    </TableCell>
+        {/* Removed Purchase Price and Sell Price */}
 
-                    {/* Sell Price */}
-                    <TableCell>
-                      ₱
-                      {(Number(item.OUTBOUND_DETAILS_SELL_PRICE) || 0).toFixed(
-                        2
-                      )}{" "}
-                      {/* Renamed to SELL_PRICE */}
-                    </TableCell>
+        {/* Discount (Assumed to be a percentage value) */}
+        <TableCell>
+          {item.OUTBOUND_DETAILS_DISCOUNT
+            ? `${item.OUTBOUND_DETAILS_DISCOUNT}%`
+            : "No Discount"}
+        </TableCell>
 
-                    {/* Discount (Assumed to be a percentage value) */}
-                    <TableCell>
-                      {item.OUTBOUND_DETAILS_DISCOUNT
-                        ? `${item.OUTBOUND_DETAILS_DISCOUNT}%`
-                        : "No Discount"}
-                    </TableCell>
+        {/* Total (Calculation considering Qty, Sell Price, and Discount) */}
+        <TableCell>
+          ₱
+          {(
+            calculateItemTotal(
+              item.OUTBOUND_DETAILS_PROD_QTY,
+              item.OUTBOUND_DETAILS_SELL_PRICE
+            ) *
+            (1 - (item.OUTBOUND_DETAILS_DISCOUNT || 0) / 100)
+          ).toFixed(2)}
+        </TableCell>
+      </TableRow>
+    ))}
+  </tbody>
+</ProductTable>
 
-                    {/* Total (Calculation considering Qty, Sell Price, and Discount) */}
-                    <TableCell>
-                      ₱
-                      {(
-                        calculateItemTotal(
-                          item.OUTBOUND_DETAILS_PROD_QTY,
-                          item.OUTBOUND_DETAILS_SELL_PRICE
-                        ) *
-                        (1 - (item.OUTBOUND_DETAILS_DISCOUNT || 0) / 100)
-                      ).toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </tbody>
-            </ProductTable>
 
-            <TotalSummary>
-              {/* Total Quantity */}
-              <SummaryItem>
-                <strong>Total Quantity:</strong>{" "}
-                {orderDetails.reduce(
-                  (acc, detail) =>
-                    acc +
-                    (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0),
-                  0
-                )}
-              </SummaryItem>
+<TotalSummary>
+  {/* Total Quantity */}
+  <SummaryItem>
+    <strong>Total Quantity:</strong>{" "}
+    {orderDetails.reduce(
+      (acc, detail) =>
+        acc + (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0),
+      0
+    )}
+  </SummaryItem>
 
-              {/* Total Discount */}
-              <SummaryItem>
-                <strong>Total Discount:</strong>{" "}
-                <HighlightedTotal>
-                  ₱
-                  {orderDetails
-                    .reduce((acc, detail) => {
-                      const discountValue =
-                        (((parseFloat(
-                          detail.OUTBOUND_DETAILS_PROD_SELL_PRICE
-                        ) || 0) *
-                          (parseFloat(detail.OUTBOUND_DETAILS_PROD_DISCOUNT) ||
-                            0)) /
-                          100) *
-                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
-                          0);
-                      return acc + discountValue;
-                    }, 0)
-                    .toFixed(2)}
-                </HighlightedTotal>
-              </SummaryItem>
+  {/* Total Discount */}
+  <SummaryItem>
+    <strong>Total Discount:</strong>{" "}
+    <HighlightedTotal>
+      ₱
+      {orderDetails
+        .reduce((acc, detail) => {
+          const discountValue =
+            (((parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) || 0) *
+              (parseFloat(detail.OUTBOUND_DETAILS_PROD_DISCOUNT) || 0)) /
+              100) *
+            (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0);
+          return acc + discountValue;
+        }, 0)
+        .toFixed(2)}
+    </HighlightedTotal>
+  </SummaryItem>
 
-              {/* Total Revenue */}
-              <SummaryItem>
-                <strong>Total Revenue:</strong>{" "}
-                <HighlightedTotal style={{ color: "#f08400" }}>
-                  ₱
-                  {orderDetails
-                    .reduce((acc, detail) => {
-                      const totalRevenue =
-                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
-                          0) *
-                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
-                          0);
-                      return acc + totalRevenue;
-                    }, 0)
-                    .toFixed(2)}
-                </HighlightedTotal>
-              </SummaryItem>
+  {/* Total Cost */}
+  <SummaryItem>
+    <strong>Total Cost:</strong>{" "}
+    <HighlightedTotal style={{ color: "#ff5757" }}>
+      ₱
+      {orderDetails
+        .reduce((acc, detail) => {
+          const totalCost =
+            (parseFloat(detail.OUTBOUND_DETAILS_PROD_SALES_PRICE) || 0) *
+            (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0);
+          return acc + totalCost;
+        }, 0)
+        .toFixed(2)}
+    </HighlightedTotal>
+  </SummaryItem>
+</TotalSummary>
 
-              {/* Total Cost */}
-              <SummaryItem>
-                <strong>Total Cost:</strong>{" "}
-                <HighlightedTotal style={{ color: "#ff5757" }}>
-                  ₱
-                  {orderDetails
-                    .reduce((acc, detail) => {
-                      const totalCost =
-                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SALES_PRICE) ||
-                          0) *
-                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
-                          0);
-                      return acc + totalCost;
-                    }, 0)
-                    .toFixed(2)}
-                </HighlightedTotal>
-              </SummaryItem>
-
-              {/* Gross Profit */}
-              <SummaryItem>
-                <strong>Gross Profit:</strong>{" "}
-                <HighlightedTotal style={{ color: "#1DBA0B" }}>
-                  ₱
-                  {(
-                    orderDetails.reduce((acc, detail) => {
-                      const totalRevenue =
-                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
-                          0) *
-                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
-                          0);
-                      return acc + totalRevenue;
-                    }, 0) -
-                    orderDetails.reduce((acc, detail) => {
-                      const totalCost =
-                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) ||
-                          0) *
-                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
-                          0);
-                      return acc + totalCost;
-                    }, 0)
-                  ).toFixed(2)}
-                </HighlightedTotal>
-              </SummaryItem>
-            </TotalSummary>
 
             <ProgressSection>
               <ProgressBar>
