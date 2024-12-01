@@ -39,7 +39,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [status, setStatus] = useState("");
-  const [receivedDate, setReceivedDate] = useState("Not yet Received");
+  const [receivedDate, setReceivedDate] = useState("");
   const [expiryDates, setExpiryDates] = useState([]);
   const [qtyAccepted, setQtyAccepted] = useState([]);
   const [receivedClicked, setReceivedClicked] = useState(false);
@@ -72,6 +72,9 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           console.log("Received Details:", details);
           setOrderDetails(details);
           setStatus(delivery.INBOUND_DEL_STATUS);
+          setReceivedDate(
+            delivery.INBOUND_DEL_DATE_DELIVERED || "Not yet Received"
+          );
         } catch (err) {
           if (err.name === "AbortError") {
             console.log("Fetch aborted"); // Request was canceled
@@ -283,7 +286,12 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT > 0
     );
 
-    if (!areExpiryDatesFilled || !areQuantitiesFilled) {
+    const areAllItemsAccepted = orderDetails.every(
+      (item) => item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT == 0
+    );
+
+    // Check if any of the required fields are missing or invalid
+    if (!areExpiryDatesFilled || !areQuantitiesFilled || !areAllItemsAccepted) {
       if (!areExpiryDatesFilled) {
         console.log("Some expiry dates are missing.");
         notify.warning("Please fill in all expiry dates before proceeding.");
@@ -294,6 +302,10 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           "Please ensure all accepted quantities are filled and greater than 0."
         );
       }
+      if (!areAllItemsAccepted) {
+        console.log("Some items are not accepted due to defects.");
+        notify.warning("Has defective items. Submit Issue ticket?");
+      }
       return; // Early exit if validation fails
     }
 
@@ -301,12 +313,14 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     const inventoryData = {
       INBOUND_DEL_ID: delivery.INBOUND_DEL_ID, // This will be the inbound delivery ID
       status: "Delivered",
+      user: localStorage.getItem("user_first_name"),
       details: orderDetails.map((item, index) => {
         const expiryDate = expiryDates[index];
         return {
           PRODUCT_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Assuming this field exists in `orderDetails`
           PRODUCT_NAME: item.INBOUND_DEL_DETAIL_PROD_NAME,
           QUANTITY_ON_HAND: item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT, // Assuming this is the correct field for accepted quantity
+          PRICE: item.INBOUND_DEL_DETAIL_LINE_PRICE,
           EXPIRY_DATE: expiryDate,
         };
       }),
@@ -317,17 +331,22 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     try {
       // Try posting the inventory data and updating the status
       const response = await addNewInventory(inventoryData); // Posting all inventory items in one batch
-      if (response && response.status === 201) {
+      if ((response && response.status === 200) || 201) {
         console.log(response.data.message); // Logs "Inventory added and status updated successfully."
+        notify.success("Delivery successful");
+        window.location.reload();
       } else {
         console.error(
           "Failed to create inventory entries. Status:",
           response?.status
         );
+        notify.error("Delivery Failed");
+        window.location.reload();
       }
     } catch (error) {
       console.error("Error posting to Inventory:", error);
       notify.error("Error posting to Inventory. Please try again.");
+      window.location.reload();
     }
   };
   // Calculate Qty Defect (Difference between Delivered Quantity and Accepted Quantity)
@@ -373,7 +392,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           </FormGroup>
           <FormGroup>
             <Label>Received Date:</Label>
-            <Value>{receivedDate}</Value>
+            <Value>{formatDate(receivedDate)}</Value>
           </FormGroup>
         </Column>
         <Column>
@@ -387,7 +406,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           </FormGroup>
           <FormGroup>
             <Label>Received By:</Label>
-            <Value>{delivery.OUTBOUND_DEL_ACCPTD_BY_USER || ""}</Value>
+            <Value>{delivery.INBOUND_DEL_RCVD_BY_USER_NAME || ""}</Value>
           </FormGroup>
         </Column>
       </DetailsContainer>
@@ -406,80 +425,79 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         <tbody>
           {orderDetails.map((item, index) => (
             <TableRow key={index}>
-  <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
-  <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
-  <TableCell>
-    <input
-      type="number"
-      min="0"
-      max={item.INBOUND_DEL_DETAIL_LINE_QTY}
-      value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
-      onChange={(e) =>
-        handleQtyAcceptedChange(index, e.target.value)
-      }
-      disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
-      style={{
-        border: "1px solid #ccc",
-        padding: "5px",
-        borderRadius: "4px",
-        appearance: "none", // Remove the up/down arrows in the input field
-        WebkitAppearance: "none", // Remove for Safari
-        MozAppearance: "textfield", // Remove for Firefox
-      }}
-    />
-  </TableCell>
-  <TableCell>{calculateQtyDefect(index)}</TableCell>
-  <TableCell>
-    <InputContainer>
-      <input
-        type="date"
-        min={today}
-        value={expiryDates[index] || ""}
-        onChange={(e) =>
-          handleExpiryDateChange(index, e.target.value)
-        }
-        disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
-        style={{
-          border: "1px solid #ccc",
-          padding: "5px",
-          borderRadius: "4px",
-        }}
-      />
-    </InputContainer>
-  </TableCell>
-  <TableCell>
-    <input
-      type="number"
-      value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""}
-      min="0"
-      onChange={(e) => {
-        const newPrice = parseFloat(e.target.value);
-        if (isNaN(newPrice) || newPrice < 0) return;
-        const updatedOrderDetails = [...orderDetails];
-        updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
-          newPrice;
-        setOrderDetails(updatedOrderDetails);
-      }}
-      disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
-      style={{
-        border: "1px solid #ccc",
-        padding: "5px",
-        borderRadius: "4px",
-        appearance: "none",
-        WebkitAppearance: "none",
-        MozAppearance: "textfield",
-      }}
-    />
-  </TableCell>
-  <TableCell>
-    ₱
-    {calculateItemTotal(
-      qtyAccepted[index] ?? 0,
-      item.INBOUND_DEL_DETAIL_LINE_PRICE ?? 0
-    ).toFixed(2)}
-  </TableCell>
-</TableRow>
-
+              <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
+              <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
+              <TableCell>
+                <input
+                  type="number"
+                  min="0"
+                  max={item.INBOUND_DEL_DETAIL_LINE_QTY}
+                  value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
+                  onChange={(e) =>
+                    handleQtyAcceptedChange(index, e.target.value)
+                  }
+                  disabled={status !== "Dispatched"} // Make editable only if status is "Dispatched"
+                  style={{
+                    border: "1px solid #ccc",
+                    padding: "5px",
+                    borderRadius: "4px",
+                    appearance: "none", // Remove the up/down arrows in the input field
+                    WebkitAppearance: "none", // Remove for Safari
+                    MozAppearance: "textfield", // Remove for Firefox
+                  }}
+                />
+              </TableCell>
+              <TableCell>{calculateQtyDefect(index)}</TableCell>
+              <TableCell>
+                <InputContainer>
+                  <input
+                    type="date"
+                    min={today}
+                    value={expiryDates[index] || ""}
+                    onChange={(e) =>
+                      handleExpiryDateChange(index, e.target.value)
+                    }
+                    disabled={status !== "Dispatched"} // Make editable only if status is "Dispatched"
+                    style={{
+                      border: "1px solid #ccc",
+                      padding: "5px",
+                      borderRadius: "4px",
+                    }}
+                  />
+                </InputContainer>
+              </TableCell>
+              <TableCell>
+                <input
+                  type="number"
+                  value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""}
+                  min="0"
+                  onChange={(e) => {
+                    const newPrice = parseFloat(e.target.value);
+                    if (isNaN(newPrice) || newPrice < 0) return;
+                    const updatedOrderDetails = [...orderDetails];
+                    updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
+                      newPrice;
+                    setOrderDetails(updatedOrderDetails);
+                  }}
+                  disabled={status !== "Dispatched"} // Make editable only if status is "Dispatched"
+                  style={{
+                    border: "1px solid #ccc",
+                    padding: "5px",
+                    borderRadius: "4px",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    MozAppearance: "textfield",
+                  }}
+                />
+              </TableCell>
+              <TableCell>
+                ₱
+                {calculateItemTotal(
+                  qtyAccepted[index] ?? 0,
+                  item.INBOUND_DEL_DETAIL_LINE_PRICE ?? 0
+                ).toFixed(2)}
+              </TableCell>
+            </TableRow>
           ))}
         </tbody>
       </ProductTable>

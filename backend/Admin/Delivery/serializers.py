@@ -125,6 +125,7 @@ class InboundDeliverySerializer(serializers.ModelSerializer):
             "INBOUND_DEL_SUPP_NAME",
             "INBOUND_DEL_STATUS",
             "INBOUND_DEL_TOTAL_RCVD_QTY",
+            "INBOUND_DEL_DATE_DELIVERED",
             "INBOUND_DEL_TOTAL_PRICE",
             "INBOUND_DEL_ORDER_DATE_CREATED",
             "INBOUND_DEL_ORDER_APPRVDBY_USER",
