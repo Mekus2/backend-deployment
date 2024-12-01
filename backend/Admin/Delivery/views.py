@@ -155,15 +155,15 @@ class AcceptOutboundDeliveryAPI(APIView):
                     )
 
                 # Valid statuses and logic
-                if new_status == "In Transit":
-                    # Check if it's a valid transition from Pending to In Transit
+                if new_status == "Dispatched":
+                    # Check if it's a valid transition from Pending to Dispatched
                     if outbound_delivery.OUTBOUND_DEL_STATUS == "Pending":
-                        outbound_delivery.OUTBOUND_DEL_STATUS = "In Transit"
+                        outbound_delivery.OUTBOUND_DEL_STATUS = "Dispatched"
                         outbound_delivery.save()
 
                         return Response(
                             {
-                                "message": "Outbound Delivery marked as In Transit successfully."
+                                "message": "Outbound Delivery marked as Dispatched successfully."
                             },
                             status=status.HTTP_200_OK,
                         )
@@ -174,8 +174,8 @@ class AcceptOutboundDeliveryAPI(APIView):
                         )
 
                 elif new_status == "Delivered":
-                    # Check if it's a valid transition from In Transit to Delivered
-                    if outbound_delivery.OUTBOUND_DEL_STATUS == "In Transit":
+                    # Check if it's a valid transition from Dispatched to Delivered
+                    if outbound_delivery.OUTBOUND_DEL_STATUS == "Dispatched":
                         outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
 
                         # If receivedDate is provided, use it

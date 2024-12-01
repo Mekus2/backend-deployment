@@ -9,7 +9,7 @@ const getProgressForStatus = (status) => {
   switch (status) {
     case "Pending":
       return 0;
-    case "In Transit":
+    case "Dispatched":
       return 50;
     case "Delivered":
       return 100;
@@ -96,9 +96,9 @@ const useDeliveryLogic = (delivery) => {
   const handleStatusChange = () => {
     let newStatus;
     if (status === "Pending") {
-      newStatus = "In Transit";
-      notify.info("Delivery status updated to In Transit.");
-    } else if (status === "In Transit") {
+      newStatus = "Dispatched";
+      notify.info("Delivery status updated to Dispatched.");
+    } else if (status === "Dispatched") {
       newStatus = "Delivered";
       const currentDate = new Date().toISOString().split("T")[0];
       setReceivedDate(currentDate);

@@ -1,7 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import Modal from "../../Layout/Modal";
 import Loading from "../../Layout/Loading";
-import { fetchCustomerDelDetails, updateDeliveryStatus } from "../../../api/CustomerDeliveryApi";
+import {
+  fetchCustomerDelDetails,
+  updateDeliveryStatus,
+} from "../../../api/CustomerDeliveryApi";
 import CustomerCreateIssueModal from "./CustomerCreateIssueModal"; // Import the Issue Modal
 import { notify } from "../../Layout/CustomToast";
 import { jsPDF } from "jspdf";
@@ -34,7 +37,7 @@ const getProgressForStatus = (status) => {
   switch (status) {
     case "Pending":
       return 0;
-    case "In Transit":
+    case "Dispatched":
       return 50;
     case "Delivered":
       return 100;
@@ -121,15 +124,15 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
   const handleStatusChange = async () => {
     let newStatus;
     let updatedReceivedDate = receivedDate; // Store the updated received date (if applicable)
-  
+
     // Determine the new status based on the current one
     if (status === "Pending") {
-      newStatus = "In Transit";
-      notify.info("Delivery status updated to In Transit.");
-    } else if (status === "In Transit") {
+      newStatus = "Dispatched";
+      notify.info("Delivery status updated to Dispatched.");
+    } else if (status === "Dispatched") {
       newStatus = "Delivered";
       const currentDate = new Date().toISOString().split("T")[0];
-      updatedReceivedDate = currentDate;  // Set the received date when marking as Delivered
+      updatedReceivedDate = currentDate; // Set the received date when marking as Delivered
       setReceivedDate(currentDate); // Update the local received date
       notify.success("Delivery marked as Delivered.");
     } else if (status === "Delivered") {
@@ -140,20 +143,23 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       setReceivedDate("Not Received");
       notify.error("Delivery status reset to Pending.");
     }
-  
+
     // Update the local status
     setStatus(newStatus);
-  
+
     // Prepare the status update data
     const statusData = {
       status: newStatus,
-      receivedDate: updatedReceivedDate,  // Send the updated received date if applicable
+      receivedDate: updatedReceivedDate, // Send the updated received date if applicable
     };
-  
+
     // Sync the status with the backend using the API
     try {
-      const response = await updateDeliveryStatus(delivery.OUTBOUND_DEL_ID, statusData);
-      
+      const response = await updateDeliveryStatus(
+        delivery.OUTBOUND_DEL_ID,
+        statusData
+      );
+
       // Check if the status was successfully updated
       if (response) {
         console.log(`Delivery status successfully updated to ${newStatus}`);
@@ -161,8 +167,8 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
         notify.error("Failed to update delivery status on the backend.");
       }
     } catch (error) {
-      console.error('Error updating delivery status on the backend:', error);
-      notify.error('Failed to update delivery status.');
+      console.error("Error updating delivery status on the backend:", error);
+      notify.error("Failed to update delivery status.");
     }
   };
   const handleIssueModalOpen = () => setIsIssueModalOpen(true); // This remains for opening the initial "What's the issue?" modal
@@ -311,92 +317,123 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
               </Column>
             </DetailsContainer>
             <ProductTable>
-  <thead>
-    <tr>
-      <TableHeader>Product Name</TableHeader>
-      <TableHeader>Qty</TableHeader>
-      <TableHeader>Discount</TableHeader>
-      <TableHeader>Total</TableHeader> {/* Removed Sell Price and Purchase Price columns */}
-    </tr>
-  </thead>
-  <tbody>
-    {orderDetails.map((item, index) => (
-      <TableRow key={index}>
-        <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
-        <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
+              <thead>
+                <tr>
+                  <TableHeader>Product Name</TableHeader>
+                  <TableHeader>Qty Ordered</TableHeader>
+                  <TableHeader>Qty Accepted</TableHeader>
+                  <TableHeader>Qty Defect</TableHeader>
+                  <TableHeader>Discount</TableHeader>
+                  <TableHeader>Total</TableHeader>
+                </tr>
+              </thead>
+              <tbody>
+                {orderDetails.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
+                    <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
+                    <TableCell>
+                      {status === "Dispatched" ? (
+                        <input
+                          type="number"
+                          min="0"
+                          value={item.QTY_ACCEPTED || ""}
+                          onChange={(e) => {
+                            const newQtyAccepted =
+                              parseInt(e.target.value, 10) || 0;
+                            setOrderDetails((prevDetails) =>
+                              prevDetails.map((detail, detailIndex) =>
+                                detailIndex === index
+                                  ? { ...detail, QTY_ACCEPTED: newQtyAccepted }
+                                  : detail
+                              )
+                            );
+                          }}
+                          style={{
+                            border: "1px solid #ccc",
+                            padding: "5px",
+                            borderRadius: "4px",
+                            textAlign: "center",
+                          }}
+                        />
+                      ) : (
+                        item.QTY_ACCEPTED || 0
+                      )}
+                    </TableCell>
 
-        {/* Removed Purchase Price and Sell Price */}
+                    <TableCell>{item.QTY_DEFECT || 0}</TableCell>
+                    <TableCell>
+                      {item.OUTBOUND_DETAILS_DISCOUNT
+                        ? `${item.OUTBOUND_DETAILS_DISCOUNT}%`
+                        : "No Discount"}
+                    </TableCell>
+                    <TableCell>
+                      ₱
+                      {(
+                        calculateItemTotal(
+                          item.QTY_ACCEPTED || item.OUTBOUND_DETAILS_PROD_QTY,
+                          item.OUTBOUND_DETAILS_SELL_PRICE
+                        ) *
+                        (1 - (item.OUTBOUND_DETAILS_DISCOUNT || 0) / 100)
+                      ).toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </tbody>
+            </ProductTable>
 
-        {/* Discount (Assumed to be a percentage value) */}
-        <TableCell>
-          {item.OUTBOUND_DETAILS_DISCOUNT
-            ? `${item.OUTBOUND_DETAILS_DISCOUNT}%`
-            : "No Discount"}
-        </TableCell>
+            <TotalSummary>
+              {/* Total Quantity */}
+              <SummaryItem>
+                <strong>Total Quantity:</strong>{" "}
+                {orderDetails.reduce(
+                  (acc, detail) =>
+                    acc +
+                    (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0),
+                  0
+                )}
+              </SummaryItem>
 
-        {/* Total (Calculation considering Qty, Sell Price, and Discount) */}
-        <TableCell>
-          ₱
-          {(
-            calculateItemTotal(
-              item.OUTBOUND_DETAILS_PROD_QTY,
-              item.OUTBOUND_DETAILS_SELL_PRICE
-            ) *
-            (1 - (item.OUTBOUND_DETAILS_DISCOUNT || 0) / 100)
-          ).toFixed(2)}
-        </TableCell>
-      </TableRow>
-    ))}
-  </tbody>
-</ProductTable>
+              {/* Total Discount */}
+              <SummaryItem>
+                <strong>Total Discount:</strong>{" "}
+                <HighlightedTotal>
+                  ₱
+                  {orderDetails
+                    .reduce((acc, detail) => {
+                      const discountValue =
+                        (((parseFloat(
+                          detail.OUTBOUND_DETAILS_PROD_SELL_PRICE
+                        ) || 0) *
+                          (parseFloat(detail.OUTBOUND_DETAILS_PROD_DISCOUNT) ||
+                            0)) /
+                          100) *
+                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
+                          0);
+                      return acc + discountValue;
+                    }, 0)
+                    .toFixed(2)}
+                </HighlightedTotal>
+              </SummaryItem>
 
-
-<TotalSummary>
-  {/* Total Quantity */}
-  <SummaryItem>
-    <strong>Total Quantity:</strong>{" "}
-    {orderDetails.reduce(
-      (acc, detail) =>
-        acc + (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0),
-      0
-    )}
-  </SummaryItem>
-
-  {/* Total Discount */}
-  <SummaryItem>
-    <strong>Total Discount:</strong>{" "}
-    <HighlightedTotal>
-      ₱
-      {orderDetails
-        .reduce((acc, detail) => {
-          const discountValue =
-            (((parseFloat(detail.OUTBOUND_DETAILS_PROD_SELL_PRICE) || 0) *
-              (parseFloat(detail.OUTBOUND_DETAILS_PROD_DISCOUNT) || 0)) /
-              100) *
-            (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0);
-          return acc + discountValue;
-        }, 0)
-        .toFixed(2)}
-    </HighlightedTotal>
-  </SummaryItem>
-
-  {/* Total Cost */}
-  <SummaryItem>
-    <strong>Total Cost:</strong>{" "}
-    <HighlightedTotal style={{ color: "#ff5757" }}>
-      ₱
-      {orderDetails
-        .reduce((acc, detail) => {
-          const totalCost =
-            (parseFloat(detail.OUTBOUND_DETAILS_PROD_SALES_PRICE) || 0) *
-            (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0);
-          return acc + totalCost;
-        }, 0)
-        .toFixed(2)}
-    </HighlightedTotal>
-  </SummaryItem>
-</TotalSummary>
-
+              {/* Total Cost */}
+              <SummaryItem>
+                <strong>Total Cost:</strong>{" "}
+                <HighlightedTotal style={{ color: "#ff5757" }}>
+                  ₱
+                  {orderDetails
+                    .reduce((acc, detail) => {
+                      const totalCost =
+                        (parseFloat(detail.OUTBOUND_DETAILS_PROD_SALES_PRICE) ||
+                          0) *
+                        (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) ||
+                          0);
+                      return acc + totalCost;
+                    }, 0)
+                    .toFixed(2)}
+                </HighlightedTotal>
+              </SummaryItem>
+            </TotalSummary>
 
             <ProgressSection>
               <ProgressBar>
@@ -407,11 +444,11 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
 
             <ModalFooter>
               {status === "Pending" && (
-                <StatusButton onClick={() => handleStatusChange("In Transit")}>
-                  Mark as In Transit
+                <StatusButton onClick={() => handleStatusChange("Dispatched")}>
+                  Mark as Dispatched
                 </StatusButton>
               )}
-              {status === "In Transit" && (
+              {status === "Dispatched" && (
                 <>
                   <IssueButton onClick={handleIssueModalOpen}>
                     What's the issue?

@@ -13,7 +13,7 @@ import { fetchCustomerDelivery } from "../../../api/CustomerDeliveryApi";
 // Custom Status Order Mapping
 const customStatusOrder = {
   Delivered: 1,
-  "In Transit": 2,
+  Dispatched: 2,
   Pending: 3,
   Accepted: 4, // Ensuring "Accepted" is last
 };
@@ -37,7 +37,7 @@ const Status = styled.span`
   background-color: ${(props) =>
     props.status === "Delivered"
       ? "#1DBA0B"
-      : props.status === "In Transit"
+      : props.status === "Dispatched"
       ? "#f08400"
       : props.status === "Pending"
       ? "#ff5757"
