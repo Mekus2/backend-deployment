@@ -138,6 +138,8 @@ export const TotalRow = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
+  align-items: left;
+  margin-left: 650px;
 `;
 
 export const TotalLabel = styled.span`

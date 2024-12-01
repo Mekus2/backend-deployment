@@ -57,13 +57,13 @@ const SharedProductsPage = () => {
         const price = parseFloat(productDetail?.PROD_DETAILS_PRICE || 0);
 
         return [
-          <ImageContainer key={product.PROD_ID}>
-            <img
-              src={product.PROD_IMAGE}
-              alt={product.PROD_NAME}
-              style={{ width: "50px", height: "auto" }}
-            />
-          </ImageContainer>,
+          // <ImageContainer key={product.PROD_ID}>
+          //   <img
+          //     src={product.PROD_IMAGE}
+          //     alt={product.PROD_NAME}
+          //     style={{ width: "50px", height: "auto" }}
+          //   />
+          // </ImageContainer>,
           product.PROD_NAME,
           <TagList key={`tags-${product.PROD_ID}`}>
             {(productDetail?.TAGS || ["No Tags"]).map((tag, index) => (
@@ -132,7 +132,7 @@ const SharedProductsPage = () => {
   }
 
   const headers = [
-    "Image",
+    // "Image",
     "Product Name",
     "Tags",
     "Supplier",
@@ -204,12 +204,12 @@ const Tag = styled.div`
   text-overflow: ellipsis;
 `;
 
-const ImageContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-`;
+// const ImageContainer = styled.div`
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   height: 100%;
+// `;
 
 const Controls = styled.div`
   display: flex;
