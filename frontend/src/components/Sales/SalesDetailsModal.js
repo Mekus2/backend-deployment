@@ -13,10 +13,11 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
     }
   };
 
+  // Utility functions to calculate the totals and discounts
   const calculateSubTotal = () => {
     if (!sale.orderDetails) return 0;
     return sale.orderDetails.reduce(
-      (sum, item) => sum + item.price * item.quantity,
+      (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
       0
     );
   };
@@ -35,9 +36,20 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
   const calculateTotalQuantity = () => {
     if (!sale.orderDetails) return 0;
     return sale.orderDetails.reduce(
-      (total, item) => total + item.quantity,
+      (total, item) => total + (item.quantity || 0),
       0
     );
+  };
+
+  const calculateGrossProfit = () => {
+    if (!sale.orderDetails) return 0;
+
+    const totalRevenue = calculateTotalAfterDiscount();
+    const totalCost = sale.orderDetails.reduce(
+      (sum, item) => sum + (item.cost || 0) * (item.quantity || 0),
+      0
+    );
+    return totalRevenue - totalCost;
   };
 
   return (
@@ -53,72 +65,62 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
           <Column align="left">
             <FormGroup>
               <Label>Invoice ID:</Label>
-              <Value>{sale.SALES_INV_ID || ""}</Value>
+              <Value>{sale.SALES_INV_ID || "N/A"}</Value>
             </FormGroup>
             <FormGroup>
               <Label>Date/Time:</Label>
-              <Value>{sale.SALES_INV_DATETIME || ""}</Value>
+              <Value>{sale.SALES_INV_DATETIME || "N/A"}</Value>
             </FormGroup>
             <FormGroup>
               <Label>Client ID:</Label>
-              <Value>{sale.CLIENT_ID || ""}</Value>
-            </FormGroup>
-          </Column>
-
-          <Column align="right">
-            <FormGroup>
-              <Label>Status:</Label>
-              <Status status={sale.status || "Unknown"}>
-                {sale.status || "Unknown"}
-                <CompletedDate>{sale.completedDate || ""}</CompletedDate>
-              </Status>
+              <Value>{sale.CLIENT_ID || "N/A"}</Value>
             </FormGroup>
           </Column>
         </DetailsContainer>
 
-        <FormGroup>
-          <DescriptionBox>
-            <p>{sale.description || "No description available."}</p>
-          </DescriptionBox>
-        </FormGroup> 
-        
+        {/* Product Details Table */}
         <ProductTable>
           <thead>
             <tr>
-              <TableHeader>Product Name</TableHeader>
-              <TableHeader>Quantity</TableHeader>
-              <TableHeader>Price</TableHeader>
+              <TableHeader>Type</TableHeader>
+              <TableHeader>Date</TableHeader>
+              <TableHeader>Cost</TableHeader>
+              <TableHeader>Revenue</TableHeader>
+              <TableHeader>Gross Profit</TableHeader>
             </tr>
           </thead>
           <tbody>
             {(sale.orderDetails || []).map((item, index) => (
               <TableRow key={index}>
-                <TableCell>{item.productName || ""}</TableCell>
-                <TableCell>{item.quantity || 0}</TableCell>
-                <TableCell>{formatCurrency(item.price || 0)}</TableCell>
+                <TableCell>{item.type || "N/A"}</TableCell>
+                <TableCell>{item.date || "N/A"}</TableCell>
+                <TableCell>{formatCurrency(item.cost || 0)}</TableCell>
+                <TableCell>{formatCurrency(item.price * item.quantity || 0)}</TableCell>
+                <TableCell>{formatCurrency((item.price * item.quantity) - (item.cost * item.quantity) || 0)}</TableCell>
               </TableRow>
             ))}
           </tbody>
         </ProductTable>
 
-        <FormSection>
-          <FormGroup>
-            <Label>Order Sub Total:</Label>
-            <Value>{formatCurrency(calculateSubTotal())}</Value>
-          </FormGroup>
+        {/* Totals and Summary Section */}
+        <SummarySection>
           <FormGroup>
             <Label>Total Quantity:</Label>
             <Value>{calculateTotalQuantity()}</Value>
           </FormGroup>
           <FormGroup>
-            <Label>Discount:</Label>
-            <Discount>{sale.discount || ""}</Discount>
+            <Label>Order Sub Total:</Label>
+            <Value>{formatCurrency(calculateSubTotal())}</Value>
           </FormGroup>
           <FormGroup>
-            <Label>Order Total:</Label>
-            <Total>{formatCurrency(calculateTotalAfterDiscount())}</Total>
+            <Label>Order Total After Discount:</Label>
+            <Value>{formatCurrency(calculateTotalAfterDiscount())}</Value>
           </FormGroup>
-        </FormSection>
+          <FormGroup>
+            <Label>Gross Profit:</Label>
+            <Value>{formatCurrency(calculateGrossProfit())}</Value>
+          </FormGroup>
+        </SummarySection>
       </Modal>
     </Backdrop>
   );
@@ -190,41 +192,6 @@ const Value = styled.div`
   color: ${colors.text};
 `;
 
-const Discount = styled.div`
-  color: #ff5757;
-  font-weight: bold;
-`;
-
-const Total = styled.div`
-  font-size: 18px;
-  font-weight: bold;
-  color: #1dba0b;
-`;
-
-const Status = styled.span`
-  background-color: ${(props) =>
-    props.status === "Approved" ||
-    props.status === "Received" ||
-    props.status === "Delivered"
-      ? "#1DBA0B"
-      : props.status === "Shipped"
-      ? "#f08400"
-      : props.status === "Cancelled"
-      ? "#ff5757"
-      : "gray"};
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
-`;
-
-const CompletedDate = styled.div`
-  font-size: 11px;
-  opacity: 0.7;
-  text-align: right;
-`;
-
 const ProductTable = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -251,19 +218,8 @@ const TableCell = styled.td`
   border-bottom: 1px solid #ddd;
 `;
 
-const FormSection = styled.div`
+const SummarySection = styled.div`
   margin-top: 20px;
-`;
-
-const DescriptionBox = styled.div`
-  border: 1px solid #3b3b3bf7;
-  border-radius: 4px;
-  padding: 10px;
-  max-height: 100px;
-  overflow-y: auto;
-  width: 100%;
-  text-align: left;
-  background: #f9f9f9;
 `;
 
 export default SalesDetailsModal;

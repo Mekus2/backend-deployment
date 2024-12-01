@@ -8,6 +8,7 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   const [updatedOrderDetails, setUpdatedOrderDetails] = useState(orderDetails);
   const [remarks, setRemarks] = useState("");
   const [issueType, setIssueType] = useState(""); // State to track selected issue type
+  const [resolution, setResolution] = useState(""); // State to track selected resolution
 
   const handleQuantityChange = (index, value) => {
     const newOrderDetails = [...updatedOrderDetails];
@@ -44,7 +45,7 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
       return;
     }
 
-    onSubmit(updatedOrderDetails, remarks, issueType); // Pass issueType in onSubmit
+    onSubmit(updatedOrderDetails, remarks, issueType, resolution); // Pass resolution in onSubmit
   };
 
   return (
@@ -70,6 +71,30 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
         <option value="Defective Product">Defective Product</option>
         <option value="Wrong Quantity">Wrong Quantity</option>
         <option value="Packaging Issues">Packaging Issues</option>
+        <option value="Other">Other</option>
+      </Select>
+
+      {/* Resolution Dropdown (Independent of Issue Type) */}
+      <Label htmlFor="resolution">Resolution:</Label>
+      <Select
+        id="resolution"
+        value={resolution}
+        onChange={(e) => setResolution(e.target.value)}
+      >
+        <option value="" disabled>
+          Select a resolution
+        </option>
+        <option value="Reshipment">Reshipment</option>
+        <option value="Refund">Refund</option>
+        <option value="Delivery Rescheduled">Delivery Rescheduled</option>
+        <option value="Missing/Incorrect Address">
+          Missing/Incorrect Address
+        </option>
+        <option value="Damaged Goods">Damaged Goods</option>
+        <option value="Replaced/Exchanged Product">
+          Replaced/Exchanged Product
+        </option>
+        <option value="Offset Product">Offset Product</option>
         <option value="Other">Other</option>
       </Select>
 
