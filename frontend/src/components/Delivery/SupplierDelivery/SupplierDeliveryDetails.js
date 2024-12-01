@@ -4,6 +4,7 @@ import Modal from "../../Layout/Modal";
 import { fetchOrderDetails } from "../../../api/SupplierDeliveryApi";
 import { updateOrderStatus } from "../../../api/SupplierDeliveryApi";
 import { addNewInventory } from "../../../api/InventoryApi";
+import submitIssueTicket from "../../../api/addIssueAPI";
 import Button from "../../Layout/Button";
 // Import the styles
 import {
@@ -110,7 +111,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  const handleIssueModalSubmit = (
+  const handleIssueModalSubmit = async (
     updatedOrderDetails,
     remarks,
     issueType,
@@ -123,6 +124,45 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       issueType,
       resolution
     );
+
+    // Build the details array by iterating through updatedOrderDetails
+    const issueDetails = updatedOrderDetails
+      .filter((item) => item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT > 0) // Only include items with defective quantities
+      .map((item) => ({
+        ISSUE_PROD_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Use the correct key for product ID
+        ISSUE_PROD_NAME: item.INBOUND_DEL_DETAIL_PROD_NAME,
+        ISSUE_QTY_DEFECT: item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT, // Use the correct key for defective quantity
+        ISSUE_PROD_LINE_PRICE: item.INBOUND_DEL_DETAIL_LINE_PRICE,
+        ISSUE_LINE_TOTAL_PRICE:
+          item.INBOUND_DEL_DETAIL_LINE_PRICE *
+          item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT, // To be used to deduct total amount of inbound delivery if offset
+      }));
+
+    const issueData = {
+      ORDER_TYPE: "Supplier Delivery",
+      ISSUE_TYPE: issueType, // Use the selected issue type
+      RESOLUTION: resolution, // Use the selected resolution
+      REMARKS: remarks, // Use the remarks provided
+      SUPPLIER_DELIVERY_ID: delivery.INBOUND_DEL_ID,
+      SUPPLIER_ID: delivery.INBOUND_DEL_SUPPLIER_ID,
+      SUPPLIER_NAME: delivery.INBOUND_DEL_SUPP_NAME,
+      details: issueDetails, // Attach the dynamically built details array
+    };
+    console.log("Final issue data to submit:", issueData);
+
+    try {
+      // Call the submitIssueTicket API to send data to the backend
+      const response = await submitIssueTicket(issueData);
+      console.log("Issue successfully submitted:", response);
+
+      // Mark issue as reported after successful submission
+      setIssueReported(true);
+      setIsIssueModalOpen(false); // Close the modal
+    } catch (error) {
+      console.error("Failed to create issue:", error);
+      // Handle error appropriately (e.g., show error message)
+    }
+
     setIssueReported(true); // Mark issue as reported after submission
     setIsIssueModalOpen(false); // Close the modal
   };
@@ -298,7 +338,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     );
 
     const areAllItemsAccepted = orderDetails.every(
-      (item) => item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT == 0
+      (item) => item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT === 0
     );
 
     // Check if any of the required fields are missing or invalid

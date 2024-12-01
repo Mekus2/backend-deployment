@@ -32,6 +32,7 @@ urlpatterns = [
     path("items/", include("Admin.Product.urls")),
     path("supplier/", include("Admin.Supplier.urls")),
     path("api/delivery/", include("Admin.Delivery.urls")),
+    path("api/delivery/issue/", include("Admin.Issue.urls")),
     path("inventory/", include("Admin.Inventory.urls")),
     path("logs/", include("Admin.Logs.urls")),
 ]
