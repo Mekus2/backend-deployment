@@ -110,8 +110,19 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .padStart(2, "0")}/${date.getFullYear()}`;
   };
 
-  const handleIssueModalSubmit = (updatedOrderDetails, remarks) => {
-    console.log("Issue reported:", updatedOrderDetails, remarks);
+  const handleIssueModalSubmit = (
+    updatedOrderDetails,
+    remarks,
+    issueType,
+    resolution
+  ) => {
+    console.log(
+      "Issue reported:",
+      updatedOrderDetails,
+      remarks,
+      issueType,
+      resolution
+    );
     setIssueReported(true); // Mark issue as reported after submission
     setIsIssueModalOpen(false); // Close the modal
   };
@@ -203,6 +214,8 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT: newQtyAccepted[index],
       INBOUND_DEL_DETAIL_LINE_QTY_DEFECT: defectQty,
     };
+
+    console.log("Updated Qty Accepted:", updatedOrderDetails);
 
     // Set both states in one go
     setQtyAccepted(newQtyAccepted);
@@ -569,7 +582,9 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       {/* Issue Modal */}
       {isIssueModalOpen && (
         <SupplierCreateIssue
-          orderDetails={orderDetails}
+          orderDetails={orderDetails.filter(
+            (item) => item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT > 0
+          )}
           onClose={handleIssueModalClose}
           onSubmit={handleIssueModalSubmit} // Assuming this is defined somewhere in your code
         />

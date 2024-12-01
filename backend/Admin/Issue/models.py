@@ -34,6 +34,14 @@ class DeliveryIssue(models.Model):
             ("Wrong Item", "Wrong Item"),
         ],
     )
+    RESOLUTION = models.CharField(
+        max_length=15,
+        choices=[
+            ("Offset", "Offset"),
+            ("Replacement", "Replacement"),
+        ],
+        default="No Selected",
+    )
     PURCHASE_ORDER_ID = models.ForeignKey(
         PurchaseOrder, on_delete=models.CASCADE, blank=True, null=True
     )
@@ -58,5 +66,9 @@ class DeliveryItemIssue(models.Model):
     ISSUE_PROD_ID = models.PositiveIntegerField(null=True)
     ISSUE_PROD_NAME = models.CharField(null=True)
     ISSUE_QTY_DEFECT = models.PositiveIntegerField(null=True)
-    ISSUE_PROD_LINE_PRICE = models.DecimalField(max_digits=10, decimal_places=2)
-    ISSUE_LINE_TOTAL_PRICE = models.DecimalField(max_digits=10, decimal_places=2)
+    ISSUE_PROD_LINE_PRICE = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0
+    )
+    ISSUE_LINE_TOTAL_PRICE = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0
+    )

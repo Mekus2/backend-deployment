@@ -12,7 +12,8 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
 
   const handleQuantityChange = (index, value) => {
     const newOrderDetails = [...updatedOrderDetails];
-    const availableQuantity = newOrderDetails[index].OUTBOUND_DETAILS_PROD_QTY;
+    const availableQuantity =
+      newOrderDetails[index].INBOUND_DEL_DETAIL_ORDERED_QTY;
 
     if (value <= availableQuantity && value >= 0) {
       newOrderDetails[index].updatedQuantity = value;
@@ -35,15 +36,15 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
       return;
     }
 
-    const validQuantities = updatedOrderDetails.every(
-      (item) =>
-        item.updatedQuantity <= item.OUTBOUND_DETAILS_PROD_QTY &&
-        item.updatedQuantity >= 0
-    );
-    if (!validQuantities) {
-      alert("Some quantities are invalid. Please check and try again.");
-      return;
-    }
+    // const validQuantities = updatedOrderDetails.every(
+    //   (item) =>
+    //     item.updatedQuantity <= item.INBOUND_DEL_DETAIL_ORDERED_QTY &&
+    //     item.updatedQuantity >= 0
+    // );
+    // if (!validQuantities) {
+    //   alert("Some quantities are invalid. Please check and try again.");
+    //   return;
+    // }
 
     onSubmit(updatedOrderDetails, remarks, issueType, resolution); // Pass resolution in onSubmit
   };
@@ -51,7 +52,7 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   return (
     <Modal
       data-cy="customer-issue-modal"
-      title="Report a Customer Orders Issue"
+      title="Report Supplier Delivery Issue"
       onClose={onClose}
     >
       {/* Type of Issue Dropdown */}
@@ -121,9 +122,10 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
         <tbody>
           {updatedOrderDetails.map((item, index) => (
             <TableRow key={index}>
-              <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
-              <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
-              <TableCell>
+              <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
+              <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
+              <TableCell>{item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT}</TableCell>
+              {/* <TableCell>
                 <QuantityInput
                   type="number"
                   value={item.updatedQuantity || 0}
@@ -131,16 +133,16 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
                     handleQuantityChange(index, parseInt(e.target.value))
                   }
                   min="0"
-                  max={item.OUTBOUND_DETAILS_PROD_QTY}
+                  max={item.INBOUND_DEL_DETAIL_ORDERED_QTY}
                 />
-              </TableCell>
+              </TableCell> */}
               <TableCell>
-                ₱{(Number(item.OUTBOUND_DETAILS_SELL_PRICE) || 0).toFixed(2)}
+                ₱{(Number(item.INBOUND_DEL_DETAIL_LINE_PRICE) || 0).toFixed(2)}
               </TableCell>
               <TableCell>
                 ₱
-                {(item.updatedQuantity || 0) *
-                  Number(item.OUTBOUND_DETAILS_SELL_PRICE).toFixed(2)}
+                {(item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT || 0) *
+                  Number(item.INBOUND_DEL_DETAIL_LINE_PRICE).toFixed(2)}
               </TableCell>
             </TableRow>
           ))}
