@@ -55,7 +55,7 @@ export const superadminSidebarItems = [
         label: "Supplier",
         link: "/superadmin/supplier-delivery",
       },
-      { icon: TbChevronRight, label: "Issues", link: "/superadmin/returns" },
+      { icon: TbChevronRight, label: "Issues", link: "/superadmin/issues" },
     ],
   },
   {
@@ -149,7 +149,7 @@ export const adminSidebarItems = [
         label: "Supplier",
         link: "/admin/supplier-delivery",
       },
-      { icon: TbChevronRight, label: "Issues", link: "/admin/returns" },
+      { icon: TbChevronRight, label: "Issues", link: "/admin/issues" },
     ],
   },
   {
@@ -233,7 +233,7 @@ export const staffSidebarItems = [
         label: "Customer",
         link: "/staff/customer-delivery",
       },
-      { icon: TbChevronRight, label: "Issues", link: "/staff/returns" },
+      { icon: TbChevronRight, label: "Issues", link: "/staff/issues" },
     ],
   },
   {

@@ -38,7 +38,7 @@ const AdminDashboard = () => {
     CardTotalSuppliers: <CardTotalSuppliers />, // Add suppliers card
     CardTotalStaffs: <CardTotalStaffs />, // Add users card
     CardTotalSupplierOrder: <CardTotalSupplierOrder />, // Add purchase order card
-    // CardTotalNotification: <CardTotalNotification />, 
+    // CardTotalNotification: <CardTotalNotification />,
   };
 
   const tableComponents = {
@@ -75,7 +75,7 @@ const AdminDashboard = () => {
     CardTotalCustomerOrder: () => navigate("/admin/customer-order"),
     CardTotalCustomers: () => navigate("/admin/customers"),
     CardTotalDelivery: () => navigate("/admin/delivery"),
-    CardTotalReturns: () => navigate("/admin/returns"),
+    CardTotalReturns: () => navigate("/admin/issues"),
     CardTotalLogs: () => navigate("/admin/logs"), // Update as necessary
     CardTotalSuppliers: () => navigate("/admin/suppliers"), // Update as necessary
     CardTotalStaffs: () => navigate("/admin/users"), // Update as necessary

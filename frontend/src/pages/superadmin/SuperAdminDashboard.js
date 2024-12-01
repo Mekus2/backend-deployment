@@ -111,7 +111,7 @@ const SuperAdminDashboard = () => {
     CardTotalDelivery: () => navigate("/superadmin/delivery"),
     CardTotalLogs: () => navigate("/superadmin/logs"),
     CardTotalSupplierOrder: () => navigate("/superadmin/purchase-order"),
-    CardTotalReturns: () => navigate("/superadmin/returns"),
+    CardTotalReturns: () => navigate("/superadmin/issues"),
     CardTotalSuppliers: () => navigate("/superadmin/suppliers"),
     CardTotalTransactions: () => navigate("/superadmin/reports"),
     CardTotalUsers: () => navigate("/superadmin/users"),

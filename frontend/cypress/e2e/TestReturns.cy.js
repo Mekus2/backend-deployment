@@ -5,21 +5,21 @@ roles.forEach((role) => {
     role.charAt(0).toUpperCase() + role.slice(1)
   } Returns Tests`, () => {
     beforeEach(() => {
-      cy.visit(`http://localhost:3000/${role}/returns`);
+      cy.visit(`http://localhost:3000/${role}/issues`);
     });
 
     const searchTerms = ["John", "Supplier", "Completed"];
 
     describe("Search Bar Tests", () => {
       it("Should display the search bar", () => {
-        cy.get('input[placeholder="Search / Filter returns..."]').should(
+        cy.get('input[placeholder="Search / Filter issues..."]').should(
           "be.visible"
         );
       });
 
       searchTerms.forEach((term) => {
-        it(`Should filter returns based on search input for "${term}"`, () => {
-          cy.get('input[placeholder="Search / Filter returns..."]')
+        it(`Should filter issues based on search input for "${term}"`, () => {
+          cy.get('input[placeholder="Search / Filter issues..."]')
             .clear()
             .type(term);
 
@@ -34,7 +34,7 @@ roles.forEach((role) => {
       cy.get("div").contains("Issue Details").should("exist");
     });
 
-    it("Should display total returns", () => {
+    it("Should display total issues", () => {
       cy.get("div").contains("Returns").should("exist");
     });
   });

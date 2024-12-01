@@ -13,43 +13,12 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
     }
   };
 
-  // Utility functions to calculate the totals and discounts
-  const calculateSubTotal = () => {
+  const calculateGrandTotal = () => {
     if (!sale.orderDetails) return 0;
     return sale.orderDetails.reduce(
       (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
       0
     );
-  };
-
-  const calculateTotalAfterDiscount = () => {
-    const subTotal = calculateSubTotal();
-    if (!sale.discount) return subTotal;
-    if (typeof sale.discount === "string" && sale.discount.includes("%")) {
-      const discountPercentage = parseFloat(sale.discount) / 100;
-      return subTotal - subTotal * discountPercentage;
-    } else {
-      return subTotal - parseFloat(sale.discount);
-    }
-  };
-
-  const calculateTotalQuantity = () => {
-    if (!sale.orderDetails) return 0;
-    return sale.orderDetails.reduce(
-      (total, item) => total + (item.quantity || 0),
-      0
-    );
-  };
-
-  const calculateGrossProfit = () => {
-    if (!sale.orderDetails) return 0;
-
-    const totalRevenue = calculateTotalAfterDiscount();
-    const totalCost = sale.orderDetails.reduce(
-      (sum, item) => sum + (item.cost || 0) * (item.quantity || 0),
-      0
-    );
-    return totalRevenue - totalCost;
   };
 
   return (
@@ -59,67 +28,60 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
           <IoCloseCircle color="#ff5757" size={24} />
         </CloseButton>
 
-        <Title>Sales Details</Title>
+        <Title>Sales Invoice</Title>
 
+        {/* Invoice Details Section */}
         <DetailsContainer>
-          <Column align="left">
-            <FormGroup>
-              <Label>Invoice ID:</Label>
-              <Value>{sale.SALES_INV_ID || "N/A"}</Value>
-            </FormGroup>
-            <FormGroup>
-              <Label>Date/Time:</Label>
-              <Value>{sale.SALES_INV_DATETIME || "N/A"}</Value>
-            </FormGroup>
-            <FormGroup>
-              <Label>Client ID:</Label>
-              <Value>{sale.CLIENT_ID || "N/A"}</Value>
-            </FormGroup>
-          </Column>
+          <DetailsColumn>
+            <Detail><strong>Invoice ID:</strong> {sale.SALES_INV_ID || "N/A"}</Detail>
+            <Detail><strong>Delivery ID:</strong> {sale.DELIVERY_ID || "N/A"}</Detail>
+          </DetailsColumn>
+          <DetailsColumn>
+            <Detail><strong>Customer Name:</strong> {sale.CUSTOMER_NAME || "N/A"}</Detail>
+            <Detail><strong>Payment Terms:</strong> {sale.PAYMENT_TERMS || "N/A"}</Detail>
+          </DetailsColumn>
+          <DetailsColumn>
+            <Detail><strong>Payment Status:</strong> {sale.PAYMENT_STATUS || "N/A"}</Detail>
+            <Detail><strong>Amount Paid:</strong> {formatCurrency(sale.AMOUNT || 0)}</Detail>
+            <Detail><strong>Balance:</strong> {formatCurrency(sale.BALANCE || 0)}</Detail>
+          </DetailsColumn>
         </DetailsContainer>
 
         {/* Product Details Table */}
         <ProductTable>
           <thead>
             <tr>
-              <TableHeader>Type</TableHeader>
-              <TableHeader>Date</TableHeader>
-              <TableHeader>Cost</TableHeader>
-              <TableHeader>Revenue</TableHeader>
-              <TableHeader>Gross Profit</TableHeader>
+              <TableHeader>Product Name</TableHeader>
+              <TableHeader>Qty</TableHeader>
+              <TableHeader>Sell Price</TableHeader>
+              <TableHeader>Purchase Price</TableHeader>
+              <TableHeader>Total</TableHeader>
             </tr>
           </thead>
           <tbody>
-            {(sale.orderDetails || []).map((item, index) => (
-              <TableRow key={index}>
-                <TableCell>{item.type || "N/A"}</TableCell>
-                <TableCell>{item.date || "N/A"}</TableCell>
-                <TableCell>{formatCurrency(item.cost || 0)}</TableCell>
-                <TableCell>{formatCurrency(item.price * item.quantity || 0)}</TableCell>
-                <TableCell>{formatCurrency((item.price * item.quantity) - (item.cost * item.quantity) || 0)}</TableCell>
-              </TableRow>
-            ))}
+            {/* Static Table Data */}
+            <TableRow>
+              <TableCell>Product A</TableCell>
+              <TableCell>2</TableCell>
+              <TableCell>{formatCurrency(500)}</TableCell>
+              <TableCell>{formatCurrency(300)}</TableCell>
+              <TableCell>{formatCurrency(1000)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Product B</TableCell>
+              <TableCell>1</TableCell>
+              <TableCell>{formatCurrency(700)}</TableCell>
+              <TableCell>{formatCurrency(400)}</TableCell>
+              <TableCell>{formatCurrency(700)}</TableCell>
+            </TableRow>
           </tbody>
         </ProductTable>
 
-        {/* Totals and Summary Section */}
+        {/* Summary Section */}
         <SummarySection>
-          <FormGroup>
-            <Label>Total Quantity:</Label>
-            <Value>{calculateTotalQuantity()}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Order Sub Total:</Label>
-            <Value>{formatCurrency(calculateSubTotal())}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Order Total After Discount:</Label>
-            <Value>{formatCurrency(calculateTotalAfterDiscount())}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Gross Profit:</Label>
-            <Value>{formatCurrency(calculateGrossProfit())}</Value>
-          </FormGroup>
+          <GrandTotal>
+            <strong>Grand Total:</strong> {formatCurrency(1700)}
+          </GrandTotal>
         </SummarySection>
       </Modal>
     </Backdrop>
@@ -144,7 +106,7 @@ const Modal = styled.div`
   background: white;
   border-radius: 8px;
   width: 80%;
-  max-width: 600px;
+  max-width: 700px;
   padding: 20px;
   box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
   position: relative;
@@ -161,9 +123,11 @@ const CloseButton = styled.button`
   cursor: pointer;
 `;
 
-const Title = styled.h2`
-  text-align: center;
+const Title = styled.h1`
+  text-align: left;
   margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 1.8rem;
 `;
 
 const DetailsContainer = styled.div`
@@ -172,32 +136,22 @@ const DetailsContainer = styled.div`
   margin-bottom: 20px;
 `;
 
-const Column = styled.div`
-  width: 48%;
-  text-align: ${(props) => props.align || "left"};
+const DetailsColumn = styled.div`
+  flex: 1;
+  padding: 0 10px;
+  text-align: left;
 `;
 
-const FormGroup = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-`;
-
-const Label = styled.div`
-  font-weight: bold;
-  color: black;
-`;
-
-const Value = styled.div`
-  color: ${colors.text};
+const Detail = styled.div`
+  margin-bottom: 10px;
+  font-size: 0.9rem;
 `;
 
 const ProductTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   text-align: center;
-  margin-top: 15px;
-  margin-bottom: 20px;
+  margin: 15px 0;
 `;
 
 const TableHeader = styled.th`
@@ -219,7 +173,12 @@ const TableCell = styled.td`
 `;
 
 const SummarySection = styled.div`
+  text-align: right;
   margin-top: 20px;
+`;
+
+const GrandTotal = styled.div`
+  font-size: 1rem;
 `;
 
 export default SalesDetailsModal;

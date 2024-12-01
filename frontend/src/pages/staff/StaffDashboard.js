@@ -47,7 +47,7 @@ const StaffDashboard = () => {
     CardLowStocks: () => navigate("/staff/inventory"),
     CardTotalCustomers: () => navigate("/staff/customers"),
     CardTotalCustomerOrder: () => navigate("/staff/customer-order"),
-    CardTotalReturns: () => navigate("/staff/returns"),
+    CardTotalReturns: () => navigate("/staff/issues"),
     CardTotalDelivery: () => navigate("/staff/delivery"),
     CardTotalNotification: () => navigate("/staff/notifications"), // Update as necessary
     CardTotalCategories: () => navigate("/staff/categories"), // Update as necessary

@@ -14,7 +14,7 @@ const pageTitles = {
   "/admin/purchase-order": "Supplier Order",
   "/admin/customer-delivery": "Customer Delivery",
   "/admin/purchase-delivery": "Supplier Delivery",
-  "/admin/returns": "Issue",
+  "/admin/issues": "Issue",
   "/admin/products": "Product",
   "/admin/inventory": "Inventory",
   "/admin/price-history": "Price History",
@@ -33,7 +33,7 @@ const pageTitles = {
   "/superadmin/purchase-order": "Supplier Order",
   "/superadmin/customer-delivery": "Customer Delivery",
   "/superadmin/supplier-delivery": "Supplier Delivery",
-  "/superadmin/returns": "Issue",
+  "/superadmin/issues": "Issue",
   "/superadmin/products": "Product",
   "/superadmin/inventory": "Inventory",
   "/superadmin/price-history": "Price History",
@@ -50,7 +50,7 @@ const pageTitles = {
   "/staff/dashboard": "Dashboard",
   "/staff/customer-order": "Customer Order",
   "/staff/customer-delivery": "Customer Delivery",
-  "/staff/returns": "Issue",
+  "/staff/issues": "Issue",
   "/staff/products": "Product",
   "/staff/inventory": "Inventory",
   "/staff/customers": "Customers",
@@ -99,7 +99,7 @@ const Header = ({ toggleSidebar }) => {
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_id");
     localStorage.removeItem("user_first_name");
-    localStorage.removeItem("user_type"); 
+    localStorage.removeItem("user_type");
 
     console.log("User signed out. Tokens cleared.");
     navigate("/login");
@@ -257,4 +257,3 @@ const BellIcon = styled(FaRegBell)`
 `;
 
 export default Header;
-

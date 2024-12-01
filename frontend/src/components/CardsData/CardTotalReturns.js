@@ -7,14 +7,14 @@ import styled from "styled-components";
 import { FaUndoAlt } from "react-icons/fa"; // Import an icon from react-icons
 
 const CardTotalReturns = () => {
-  // Calculate the total number of returns
+  // Calculate the total number of issues
   const totalReturns = returnsData.length;
 
   return (
     <CardContainer>
       <Card
         label="Orders w/ Issues"
-        value={totalReturns} // Display the total number of returns
+        value={totalReturns} // Display the total number of issues
         icon={<FaUndoAlt />} // Add the icon here
       />
     </CardContainer>

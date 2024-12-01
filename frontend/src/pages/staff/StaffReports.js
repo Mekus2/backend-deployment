@@ -27,7 +27,7 @@ const StaffReports = () => {
         <div onClick={() => navigate("/staff/products")}>
           <CardTotalProducts />
         </div>
-        <div onClick={() => navigate("/staff/returns")}>
+        <div onClick={() => navigate("/staff/issues")}>
           <CardTotalReturns />
         </div>
         <div onClick={() => navigate("/staff/notifications")}>

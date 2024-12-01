@@ -98,7 +98,7 @@ roles.forEach((role) => {
 
     it("Should navigate to Returns page when Returns card is clicked", () => {
       cy.get("div").contains("Returns").click();
-      cy.url().should("include", `/${role}/returns`);
+      cy.url().should("include", `/${role}/issues`);
     });
 
     // Revenue and expense stats specific to admin
