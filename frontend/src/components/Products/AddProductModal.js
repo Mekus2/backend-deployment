@@ -46,13 +46,16 @@ const AddProductModal = ({ onClose, onSave }) => {
     if (!productName) newErrors.productName = "This field is required.";
     if (!roLevel || isNaN(roLevel) || roLevel < 1)
       newErrors.roLevel = "RO Level must be a positive number.";
-    if (!roQty || isNaN(roQty) || roQty < 0)
-      newErrors.roQty = "RO Quantity cannot be negative.";
+    if (!roQty || isNaN(roQty) || roQty <= 0)
+      // Disallow 0 or negative
+      newErrors.roQty = "RO Quantity must be a positive number.";
     if (!qoh || isNaN(qoh) || qoh < 0)
+      // Allow zero for QOH, but no negative values
       newErrors.qoh = "Quantity on Hand (QOH) cannot be negative.";
     if (!description) newErrors.description = "This field is required.";
     if (!price || isNaN(price) || price <= 0)
-      newErrors.price = "This field is required.";
+      // Ensure price is a positive number
+      newErrors.price = "This field is required and must be positive.";
     if (!purchasePrice || isNaN(purchasePrice) || purchasePrice <= 0)
       newErrors.purchasePrice =
         "Purchase price must be a valid number greater than 0.";
@@ -63,6 +66,17 @@ const AddProductModal = ({ onClose, onSave }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const handleNumberInput = (e, setter) => {
+    const value = e.target.value;
+  
+    // Allow empty input to clear the field
+    if (value === "" || (!isNaN(value) && parseFloat(value) >= 0)) {
+      setter(value);
+    }
+  };
+  
+  
 
   // Handle tag input and adding tags to the list
   const handleTagInputChange = (e) => {
@@ -134,60 +148,63 @@ const AddProductModal = ({ onClose, onSave }) => {
             />
             {errors.productName && <ErrorText>{errors.productName}</ErrorText>}
           </Field>
-          <Field>
-            <Label>Purchase Price</Label>
-            <Input
-              type="number"
-              value={purchasePrice}
-              onChange={(e) => setPurchasePrice(e.target.value)}
-              placeholder="Enter purchase price"
-              min="0.01"
-              step="0.01"
-            />
-            {errors.purchasePrice && (
-              <ErrorText>{errors.purchasePrice}</ErrorText>
-            )}
+          <Field style={{ display: "flex", gap: "20px" }}>
+            <div style={{ flex: 1 }}>
+              <Label>Price Details</Label>
+              <Input
+                type="number"
+                value={purchasePrice}
+                onChange={(e) => handleNumberInput(e, setPurchasePrice)}
+                placeholder="Enter purchase price"
+                min="0.01"
+                step="0.01"
+              />
+              {errors.purchasePrice && (
+                <ErrorText>{errors.purchasePrice}</ErrorText>
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <Label>&nbsp;</Label> {/* Empty label to maintain alignment */}
+              <Input
+                type="number"
+                value={price}
+                onChange={(e) => handleNumberInput(e, setPrice)}
+                placeholder="Enter product price"
+              />
+              {errors.price && <ErrorText>{errors.price}</ErrorText>}
+            </div>
           </Field>
 
-          <Field>
-            <Label>Price</Label>
-            <Input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Enter product price"
-              min="0.01"
-              step="0.01"
-            />
-            {errors.price && <ErrorText>{errors.price}</ErrorText>}
+          <Field style={{ display: "flex", gap: "20px" }}>
+            <div style={{ flex: 1 }}>
+              <Label>Reorder Details</Label>
+              <Input
+                type="number"
+                value={roLevel}
+                onChange={(e) => setRoLevel(e.target.value)}
+                placeholder="Enter RO level"
+                min="1"
+              />
+              {errors.roLevel && <ErrorText>{errors.roLevel}</ErrorText>}
+            </div>
+            <div style={{ flex: 1 }}>
+              <Label>&nbsp;</Label> {/* Empty label to maintain alignment */}
+              <Input
+                type="number"
+                value={roQty}
+                onChange={(e) => handleNumberInput(e, setRoQty)}
+                placeholder="Enter RO quantity"
+              />
+              {errors.roQty && <ErrorText>{errors.roQty}</ErrorText>}
+            </div>
           </Field>
-          <Field>
-            <Label>RO Level</Label>
-            <Input
-              type="number"
-              value={roLevel}
-              onChange={(e) => setRoLevel(e.target.value)}
-              placeholder="Enter RO level"
-              min="1"
-            />
-            {errors.roLevel && <ErrorText>{errors.roLevel}</ErrorText>}
-          </Field>
-          <Field>
-            <Label>RO Qty</Label>
-            <Input
-              type="number"
-              value={roQty}
-              onChange={(e) => setRoQty(e.target.value)}
-              placeholder="Enter RO quantity"
-            />
-            {errors.roQty && <ErrorText>{errors.roQty}</ErrorText>}
-          </Field>
+
           <Field>
             <Label>Quantity on Hand (QOH)</Label>
             <Input
               type="number"
               value={qoh}
-              onChange={(e) => setQoh(e.target.value)}
+              onChange={(e) => handleNumberInput(e, setQoh)}
               placeholder="Enter quantity on hand"
             />
             {errors.qoh && <ErrorText>{errors.qoh}</ErrorText>}

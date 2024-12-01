@@ -43,7 +43,12 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   const [expiryDates, setExpiryDates] = useState([]);
   const [qtyAccepted, setQtyAccepted] = useState([]);
   const [receivedClicked, setReceivedClicked] = useState(false);
+  const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
+  const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false); // State for IssueDetails modal
+  const [issueReported, setIssueReported] = useState(false); // Track if issue has been reported
+
   const today = new Date().toISOString().split("T")[0]; // Get today's date for validation
+
   useEffect(() => {
     const fetchDetails = async () => {
       if (abortControllerRef.current) {
@@ -100,6 +105,12 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       .getDate()
       .toString()
       .padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
+  const handleIssueModalSubmit = (updatedOrderDetails, remarks) => {
+    console.log("Issue reported:", updatedOrderDetails, remarks);
+    setIssueReported(true); // Mark issue as reported after submission
+    setIsIssueModalOpen(false); // Close the modal
   };
 
   const handleStatusChange = async (
@@ -210,6 +221,11 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         return 0; // Default progress if status is unknown
     }
   };
+  const handleIssueModalOpen = () => setIsIssueModalOpen(true);
+  const handleIssueModalClose = () => setIsIssueModalOpen(false); // This closes the initial modal
+
+  const handleIssueDetailsOpen = () => setIsIssueDetailsOpen(true); // Open IssueDetails modal
+  const handleIssueDetailsClose = () => setIsIssueDetailsOpen(false); // Close IssueDetails modal
 
   // Update expiry date for specific row
   const handleExpiryDateChange = (index, value) => {
@@ -375,8 +391,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           </FormGroup>
         </Column>
       </DetailsContainer>
-      {/* Product Table */}
-      {/* Product Table */}
       <ProductTable>
         <thead>
           <tr>
@@ -392,93 +406,84 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         <tbody>
           {orderDetails.map((item, index) => (
             <TableRow key={index}>
-              <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
-              <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
-              <TableCell>
-                <input
-                  type="number"
-                  min="0"
-                  max={item.INBOUND_DEL_DETAIL_LINE_QTY}
-                  value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
-                  onChange={(e) =>
-                    handleQtyAcceptedChange(index, e.target.value)
-                  }
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "5px",
-                    borderRadius: "4px",
-                    appearance: "none", // Remove the up/down arrows in the input field
-                    WebkitAppearance: "none", // Remove for Safari
-                    MozAppearance: "textfield", // Remove for Firefox
-                  }}
-                />
-              </TableCell>
-              <TableCell>
-                {/* Calculate the Qty Defect, show 0 if not accepted */}
-                {calculateQtyDefect(index)}
-              </TableCell>
-              <TableCell>
-                <InputContainer>
-                  <input
-                    type="date"
-                    min={today} // Set min date to today for future validation
-                    value={expiryDates[index] || ""} // Access individual expiry date
-                    onChange={(e) =>
-                      handleExpiryDateChange(index, e.target.value)
-                    } // Handle change for specific index
-                    style={{
-                      border: "1px solid #ccc",
-                      padding: "5px",
-                      borderRadius: "4px",
-                    }}
-                  />
-                  {receivedClicked && expiryDates[index] === "" && (
-                    <Asterisk>*</Asterisk>
-                  )}
-                </InputContainer>
-              </TableCell>
-              <TableCell>
-                <input
-                  type="number"
-                  value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""} // Allow customization of the price
-                  min="0" // Ensure price cannot be negative
-                  onChange={(e) => {
-                    // Validate price input
-                    const newPrice = parseFloat(e.target.value);
-                    if (isNaN(newPrice) || newPrice < 0) {
-                      // If invalid, keep the previous valid value
-                      return;
-                    }
-                    // Update the price for the product in the orderDetails array
-                    const updatedOrderDetails = [...orderDetails];
-                    updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
-                      newPrice;
-                    setOrderDetails(updatedOrderDetails);
-                  }}
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "5px",
-                    borderRadius: "4px",
-                    appearance: "none", // Remove the up/down arrows in the input field
-                    WebkitAppearance: "none", // Remove for Safari
-                    MozAppearance: "textfield", // Remove for Firefox
-                  }}
-                />
-              </TableCell>
+  <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
+  <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
+  <TableCell>
+    <input
+      type="number"
+      min="0"
+      max={item.INBOUND_DEL_DETAIL_LINE_QTY}
+      value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
+      onChange={(e) =>
+        handleQtyAcceptedChange(index, e.target.value)
+      }
+      disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
+      style={{
+        border: "1px solid #ccc",
+        padding: "5px",
+        borderRadius: "4px",
+        appearance: "none", // Remove the up/down arrows in the input field
+        WebkitAppearance: "none", // Remove for Safari
+        MozAppearance: "textfield", // Remove for Firefox
+      }}
+    />
+  </TableCell>
+  <TableCell>{calculateQtyDefect(index)}</TableCell>
+  <TableCell>
+    <InputContainer>
+      <input
+        type="date"
+        min={today}
+        value={expiryDates[index] || ""}
+        onChange={(e) =>
+          handleExpiryDateChange(index, e.target.value)
+        }
+        disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
+        style={{
+          border: "1px solid #ccc",
+          padding: "5px",
+          borderRadius: "4px",
+        }}
+      />
+    </InputContainer>
+  </TableCell>
+  <TableCell>
+    <input
+      type="number"
+      value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""}
+      min="0"
+      onChange={(e) => {
+        const newPrice = parseFloat(e.target.value);
+        if (isNaN(newPrice) || newPrice < 0) return;
+        const updatedOrderDetails = [...orderDetails];
+        updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
+          newPrice;
+        setOrderDetails(updatedOrderDetails);
+      }}
+      disabled={status !== "Dispatched"}  // Make editable only if status is "Dispatched"
+      style={{
+        border: "1px solid #ccc",
+        padding: "5px",
+        borderRadius: "4px",
+        appearance: "none",
+        WebkitAppearance: "none",
+        MozAppearance: "textfield",
+      }}
+    />
+  </TableCell>
+  <TableCell>
+    ₱
+    {calculateItemTotal(
+      qtyAccepted[index] ?? 0,
+      item.INBOUND_DEL_DETAIL_LINE_PRICE ?? 0
+    ).toFixed(2)}
+  </TableCell>
+</TableRow>
 
-              <TableCell>
-                ₱
-                {
-                  calculateItemTotal(
-                    qtyAccepted[index] ?? 0, // If qtyAccepted[index] is null or undefined, use 0
-                    item.INBOUND_DEL_DETAIL_LINE_PRICE ?? 0 // If price is null or undefined, use 0
-                  ).toFixed(2) // Format as two decimal places
-                }
-              </TableCell>
-            </TableRow>
           ))}
         </tbody>
       </ProductTable>
+
       {/* Summary Section */}
       <TotalSummary>
         <SummaryItem>
@@ -494,7 +499,6 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         </SummaryItem>
       </TotalSummary>
       {/* Progress Bar */}
-      {/* Progress Bar */}
       <ProgressSection>
         <ProgressBar>
           <ProgressFiller progress={getProgressPercentage()} />
@@ -504,23 +508,39 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       <ModalFooter>
         {/* Show the "What's the issue?" button only if the status is "Dispatched" */}
         {status === "Dispatched" && (
-          <IssueButton>What's the issue?</IssueButton>
+          <IssueButton onClick={handleIssueModalOpen}>
+            What's the issue?
+          </IssueButton>
         )}
 
         {/* General Status Button that adapts to the status */}
-        <StatusButton
-          onClick={() => {
-            if (status === "Pending") {
-              handleStatusChange(delivery.INBOUND_DEL_ID, status, "Dispatched");
-            } else if (status === "Dispatched") {
-              handleMarkAsReceivedClick();
-            }
-          }}
-        >
-          {status === "Pending" && "Mark as Dispatched"}
-          {status === "Dispatched" && "Mark as Received"}
-        </StatusButton>
+        {status !== "Delivered" && ( // Exclude the button for Delivered status
+          <StatusButton
+            onClick={() => {
+              if (status === "Pending") {
+                handleStatusChange(
+                  delivery.INBOUND_DEL_ID,
+                  status,
+                  "Dispatched"
+                );
+              } else if (status === "Dispatched") {
+                handleMarkAsReceivedClick();
+              }
+            }}
+          >
+            {status === "Pending" && "Mark as Dispatched"}
+            {status === "Dispatched" && "Mark as Received"}
+          </StatusButton>
+        )}
       </ModalFooter>
+      {/* Issue Modal */}
+      {isIssueModalOpen && (
+        <SupplierCreateIssue
+          orderDetails={orderDetails}
+          onClose={handleIssueModalClose}
+          onSubmit={handleIssueModalSubmit} // Assuming this is defined somewhere in your code
+        />
+      )}
     </Modal>
   );
 };
