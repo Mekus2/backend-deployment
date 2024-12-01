@@ -6,11 +6,15 @@ import ReportCard from "../Layout/ReportCard";
 import { FaShoppingCart, FaDollarSign } from "react-icons/fa";
 import { SALES_ORDR } from "../../data/CusOrderData"; // Import customer orders data
 import PURCHASE_ORDR from "../../data/SuppOrderData"; // Import purchase orders data
+import Button from "../Layout/Button"; // Import the Button component
+import SalesDetailsModal from "./SalesDetailsModal"; // Import SalesDetailsModal component
 
 const SharedSalesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for controlling modal visibility
+  const [selectedOrder, setSelectedOrder] = useState(null); // State to store selected order for details
 
   const combinedOrders = [];
 
@@ -23,6 +27,7 @@ const SharedSalesPage = () => {
       cost: order.SALES_ORDER_COST,
       revenue: order.SALES_ORDER_REVENUE,
       grossProfit,
+      orderDetails: order // Store full order details for modal use
     });
   });
 
@@ -36,6 +41,7 @@ const SharedSalesPage = () => {
       cost: order.PURCHASE_ORDER_COST,
       revenue: order.PURCHASE_ORDER_REVENUE,
       grossProfit,
+      orderDetails: order // Store full order details for modal use
     });
   });
 
@@ -72,16 +78,32 @@ const SharedSalesPage = () => {
     return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
 
-  // Prepare table data with required columns: TYPE, DATE, COST, REVENUE, GROSS PROFIT
+  // Prepare table data with required columns: TYPE, DATE, COST, REVENUE, GROSS PROFIT, ACTION (Details Button)
   const tableData = sortedOrders.map((order) => [
     order.type,
     order.date.toISOString().slice(0, 10), // Format date as YYYY-MM-DD
     formatCurrency(order.cost),
     formatCurrency(order.revenue),
     formatCurrency(order.grossProfit),
+    <Button
+      variant="primary"
+      onClick={() => handleOpenModal(order)} // Pass the corresponding order to the modal
+    >
+      Details
+    </Button>
   ]);
 
-  const header = ["Type", "Date", "Cost", "Revenue", "Gross Profit"];
+  const header = ["Type", "Date", "Cost", "Revenue", "Gross Profit", "Action"];
+
+  const handleOpenModal = (order) => {
+    setSelectedOrder(order); // Set the selected order to be shown in the modal
+    setIsModalOpen(true); // Open the modal
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false); // Close the modal
+    setSelectedOrder(null); // Clear selected order
+  };
 
   return (
     <>
@@ -132,6 +154,14 @@ const SharedSalesPage = () => {
           </label>
         </DateContainer>
       </Controls>
+
+      {/* Conditional rendering of SalesDetailsModal */}
+      {isModalOpen && (
+        <SalesDetailsModal
+          onClose={handleCloseModal}
+          order={selectedOrder} // Pass the selected order data to the modal
+        />
+      )}
 
       <ReportContent>
         <Table headers={header} rows={tableData} />

@@ -1,26 +1,27 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
-import Modal from "../../Layout/Modal";
-import Button from "../../Layout/Button";
+import Modal from "../../Layout/Modal"; // Import the existing Modal component
+import Button from "../../Layout/Button"; // Import the Button component
 import { colors } from "../../../colors";
 
-const SupplierCreateIssue = ({ orderDetails, onClose, onSubmit }) => {
+const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   const [updatedOrderDetails, setUpdatedOrderDetails] = useState(orderDetails);
   const [remarks, setRemarks] = useState("");
-  const [issueType, setIssueType] = useState("");
-  const [qtyAccepted, setQtyAccepted] = useState([]);
+  const [issueType, setIssueType] = useState(""); // State to track selected issue type
+  const [resolution, setResolution] = useState(""); // State to track selected resolution
 
-  // Initialize qtyAccepted state based on the orderDetails length
-  useEffect(() => {
-    if (orderDetails && orderDetails.length > 0) {
-      setQtyAccepted(orderDetails.map(() => 0)); // Initialize qtyAccepted with 0 for each item
+  const handleQuantityChange = (index, value) => {
+    const newOrderDetails = [...updatedOrderDetails];
+    const availableQuantity = newOrderDetails[index].OUTBOUND_DETAILS_PROD_QTY;
+
+    if (value <= availableQuantity && value >= 0) {
+      newOrderDetails[index].updatedQuantity = value;
+      setUpdatedOrderDetails(newOrderDetails);
+    } else {
+      alert(
+        "Quantity must not exceed the shipped quantity and cannot be negative."
+      );
     }
-  }, [orderDetails]); // Dependency on orderDetails
-
-  const handleQtyAcceptedChange = (index, value) => {
-    const newQtyAccepted = [...qtyAccepted];
-    newQtyAccepted[index] = value;
-    setQtyAccepted(newQtyAccepted);
   };
 
   const handleSubmit = () => {
@@ -35,50 +36,34 @@ const SupplierCreateIssue = ({ orderDetails, onClose, onSubmit }) => {
     }
 
     const validQuantities = updatedOrderDetails.every(
-      (item, index) =>
-        qtyAccepted[index] <= item.INBOUND_DEL_DETAIL_LINE_QTY &&
-        qtyAccepted[index] >= 0
+      (item) =>
+        item.updatedQuantity <= item.OUTBOUND_DETAILS_PROD_QTY &&
+        item.updatedQuantity >= 0
     );
     if (!validQuantities) {
       alert("Some quantities are invalid. Please check and try again.");
       return;
     }
 
-    onSubmit(updatedOrderDetails, remarks, issueType); // Pass issueType in onSubmit
-  };
-
-  const calculateItemTotal = (qty, price) => {
-    return qty * price;
-  };
-
-  // Calculate the total defect amount (accepted qty * price)
-  const calculateTotalDefectAmount = () => {
-    return updatedOrderDetails.reduce(
-      (sum, item, index) => sum + (qtyAccepted[index] * item.INBOUND_DEL_DETAIL_LINE_PRICE),
-      0
-    );
-  };
-
-  // Calculate the total order value (ordered qty * price)
-  const calculateTotalOrderValue = () => {
-    return updatedOrderDetails.reduce(
-      (sum, item) => sum + (item.INBOUND_DEL_DETAIL_ORDERED_QTY * item.INBOUND_DEL_DETAIL_LINE_PRICE),
-      0
-    );
+    onSubmit(updatedOrderDetails, remarks, issueType, resolution); // Pass resolution in onSubmit
   };
 
   return (
     <Modal
-      data-cy="supplier-create-issue-modal"
-      title="Report a Supplier Orders Issue"
+      data-cy="customer-issue-modal"
+      title="Report a Customer Orders Issue"
       onClose={onClose}
     >
+      {/* Type of Issue Dropdown */}
       <Label htmlFor="issue-type">Type of Issue:</Label>
       <Select
         id="issue-type"
         value={issueType}
         onChange={(e) => setIssueType(e.target.value)}
       >
+        <option value="" disabled>
+          Select an issue type
+        </option>
         <option value="Damaged Product">Damaged Product</option>
         <option value="Missing Items">Missing Items</option>
         <option value="Incorrect Product">Incorrect Product</option>
@@ -89,6 +74,31 @@ const SupplierCreateIssue = ({ orderDetails, onClose, onSubmit }) => {
         <option value="Other">Other</option>
       </Select>
 
+      {/* Resolution Dropdown (Independent of Issue Type) */}
+      <Label htmlFor="resolution">Resolution:</Label>
+      <Select
+        id="resolution"
+        value={resolution}
+        onChange={(e) => setResolution(e.target.value)}
+      >
+        <option value="" disabled>
+          Select a resolution
+        </option>
+        <option value="Reshipment">Reshipment</option>
+        <option value="Refund">Refund</option>
+        <option value="Delivery Rescheduled">Delivery Rescheduled</option>
+        <option value="Missing/Incorrect Address">
+          Missing/Incorrect Address
+        </option>
+        <option value="Damaged Goods">Damaged Goods</option>
+        <option value="Replaced/Exchanged Product">
+          Replaced/Exchanged Product
+        </option>
+        <option value="Offset Product">Offset Product</option>
+        <option value="Other">Other</option>
+      </Select>
+
+      {/* Remarks Section */}
       <RemarksLabel>Description of the Issue:</RemarksLabel>
       <RemarksTextArea
         value={remarks}
@@ -97,89 +107,47 @@ const SupplierCreateIssue = ({ orderDetails, onClose, onSubmit }) => {
         placeholder="Describe the issue with the product"
       />
 
+      {/* Product Table */}
       <ProductTable>
         <thead>
           <tr>
             <TableHeader>Product Name</TableHeader>
-            <TableHeader>Qty Ordered</TableHeader>
-            <TableHeader>Qty Accepted</TableHeader>
+            <TableHeader>Quantity Shipped</TableHeader>
+            <TableHeader>Affected Qty</TableHeader>
             <TableHeader>Price</TableHeader>
             <TableHeader>Total</TableHeader>
           </tr>
         </thead>
         <tbody>
-          {orderDetails.map((item, index) => (
+          {updatedOrderDetails.map((item, index) => (
             <TableRow key={index}>
-              <TableCell>{item.INBOUND_DEL_DETAIL_PROD_NAME}</TableCell>
-              <TableCell>{item.INBOUND_DEL_DETAIL_ORDERED_QTY}</TableCell>
+              <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
+              <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
               <TableCell>
-                <input
+                <QuantityInput
                   type="number"
-                  min="0"
-                  max={item.INBOUND_DEL_DETAIL_LINE_QTY}
-                  value={qtyAccepted[index] === 0 ? "" : qtyAccepted[index]} // Show 0 as empty string
+                  value={item.updatedQuantity || 0}
                   onChange={(e) =>
-                    handleQtyAcceptedChange(index, e.target.value)
+                    handleQuantityChange(index, parseInt(e.target.value))
                   }
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "5px",
-                    borderRadius: "4px",
-                    appearance: "none",
-                    WebkitAppearance: "none",
-                    MozAppearance: "textfield",
-                  }}
+                  min="0"
+                  max={item.OUTBOUND_DETAILS_PROD_QTY}
                 />
               </TableCell>
               <TableCell>
-                <input
-                  type="number"
-                  value={item.INBOUND_DEL_DETAIL_LINE_PRICE || ""}
-                  min="0"
-                  onChange={(e) => {
-                    const newPrice = parseFloat(e.target.value);
-                    if (isNaN(newPrice) || newPrice < 0) {
-                      return;
-                    }
-                    const updatedOrderDetails = [...orderDetails];
-                    updatedOrderDetails[index].INBOUND_DEL_DETAIL_LINE_PRICE =
-                      newPrice;
-                    setUpdatedOrderDetails(updatedOrderDetails);
-                  }}
-                  style={{
-                    border: "1px solid #ccc",
-                    padding: "5px",
-                    borderRadius: "4px",
-                    appearance: "none",
-                    WebkitAppearance: "none",
-                    MozAppearance: "textfield",
-                  }}
-                />
+                ₱{(Number(item.OUTBOUND_DETAILS_SELL_PRICE) || 0).toFixed(2)}
               </TableCell>
-
               <TableCell>
                 ₱
-                {calculateItemTotal(
-                  qtyAccepted[index] ?? 0,
-                  item.INBOUND_DEL_DETAIL_LINE_PRICE ?? 0
-                ).toFixed(2)}
+                {(item.updatedQuantity || 0) *
+                  Number(item.OUTBOUND_DETAILS_SELL_PRICE).toFixed(2)}
               </TableCell>
             </TableRow>
           ))}
         </tbody>
       </ProductTable>
 
-      <SummarySection>
-        <FormGroup>
-          <Label>Total Defect Amount:</Label>
-          <Value>{`₱${calculateTotalDefectAmount().toFixed(2)}`}</Value>
-        </FormGroup>
-        <FormGroup>
-          <Label>Total Order Value:</Label>
-          <Value>{`₱${calculateTotalOrderValue().toFixed(2)}`}</Value>
-        </FormGroup>
-      </SummarySection>
-
+      {/* Button Group for Cancel and Submit */}
       <ButtonGroup>
         <Button variant="red" onClick={onClose}>
           Cancel
@@ -245,7 +213,16 @@ const TableRow = styled.tr`
 const TableCell = styled.td`
   padding: 10px;
   border-bottom: 1px solid #ddd;
+  text-align: center; /* Centering content */
+`;
+
+const QuantityInput = styled.input`
+  width: 60px;
   text-align: center;
+  padding: 5px;
+  font-size: 14px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
 `;
 
 const ButtonGroup = styled.div`
@@ -254,24 +231,4 @@ const ButtonGroup = styled.div`
   margin-top: 20px;
 `;
 
-const SummarySection = styled.div`
-  margin-top: 20px;
-  padding-top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;  // Align all children to the right
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  margin-bottom: 5px;
-`;
-
-const Value = styled.div`
-  color: ${colors.text};
-  text-align: left;
-`;
-
-export default SupplierCreateIssue;
+export default CustomerCreateIssueModal;
