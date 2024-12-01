@@ -283,7 +283,8 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
 
     // Prepare inventory data to be posted
     const inventoryData = {
-      INBOUND_DEL_ID: delivery.INBOUND_DEL_ID,
+      INBOUND_DEL_ID: delivery.INBOUND_DEL_ID, // This will be the inbound delivery ID
+      status: "Delivered",
       details: orderDetails.map((item, index) => {
         const expiryDate = expiryDates[index];
         return {
@@ -299,23 +300,15 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
 
     try {
       // Try posting the inventory data and updating the status
-      for (const inventoryItem of inventoryData) {
-        const response = await addNewInventory(inventoryItem); // Posting inventory item
-        if (response) {
-          console.log("Inventory entry created successfully:", response);
-        } else {
-          console.error("Failed to create inventory entry for:", inventoryItem);
-        }
+      const response = await addNewInventory(inventoryData); // Posting all inventory items in one batch
+      if (response && response.status === 201) {
+        console.log(response.data.message); // Logs "Inventory added and status updated successfully."
+      } else {
+        console.error(
+          "Failed to create inventory entries. Status:",
+          response?.status
+        );
       }
-
-      // After all inventory data is posted, update the status
-      console.log("All inventory data posted successfully, updating status...");
-      await handleStatusChange(
-        delivery.INBOUND_DEL_ID,
-        status,
-        "Delivered",
-        expiryDates
-      );
     } catch (error) {
       console.error("Error posting to Inventory:", error);
       notify.error("Error posting to Inventory. Please try again.");
@@ -368,6 +361,10 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
           </FormGroup>
         </Column>
         <Column>
+          <FormGroup>
+            <Label>Order ID:</Label>
+            <Value>{delivery.PURCHASE_ORDER_ID}</Value>
+          </FormGroup>
           <FormGroup>
             <Label>Date Created:</Label>
             <Value>{formatDate(delivery.INBOUND_DEL_ORDER_DATE_CREATED)}</Value>

@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render
 from rest_framework import status, permissions
 from rest_framework.response import Response
@@ -7,6 +8,8 @@ from .models import Inventory
 from django.db import transaction
 
 from ..Delivery.models import InboundDelivery
+
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
@@ -28,69 +31,93 @@ class AddProductInventoryView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        # Deserialize incoming data
+        logger.info("Received request to add product inventory.")
+
+        # Deserialize incoming data (excluding status)
         serializer = AddProductInventorySerializer(data=request.data)
 
+        # Extract the status directly from the request data
+        new_status = request.data.get("status")
+        logger.info(f"Received status: {new_status}")
+
         if serializer.is_valid():
+            logger.info("Request data passed validation.")
+
             # Extract validated data
             inbound_delivery = serializer.validated_data["INBOUND_DEL_ID"]
             details = serializer.validated_data.get("details", [])
 
-            # Ensure `inbound_delivery_id` contains the ID
-            if isinstance(inbound_delivery, InboundDelivery):
-                inbound_delivery_id = (
-                    inbound_delivery.INBOUND_DEL_ID
-                )  # Extract the ID from the object
-            else:
-                inbound_delivery_id = inbound_delivery  # Assuming it's already an ID
+            # Ensure `inbound_delivery` contains the ID
+            inbound_delivery_id = (
+                inbound_delivery.INBOUND_DEL_ID
+                if isinstance(inbound_delivery, InboundDelivery)
+                else inbound_delivery  # Assume it's already an ID
+            )
 
-            # Use a transaction.atomic() block to ensure rollback on error
             try:
                 with transaction.atomic():
-                    # List to hold created inventory entries
-                    inventory_items = []
+                    logger.info(
+                        f"Retrieving Inbound Delivery with ID: {inbound_delivery_id}."
+                    )
+                    inbound_delivery_obj = InboundDelivery.objects.get(
+                        pk=inbound_delivery_id
+                    )
 
-                    # Loop through details to create inventory entries
+                    logger.info(f"Creating inventory entries for {len(details)} items.")
                     for detail in details:
-                        inventory_entry = Inventory.objects.create(
-                            INBOUND_DEL_ID_id=inbound_delivery_id,  # Pass the ID directly
+                        logger.debug(f"Processing detail: {detail}")
+                        Inventory.objects.create(
+                            INBOUND_DEL_ID_id=inbound_delivery_id,
                             PRODUCT_ID=detail["PRODUCT_ID"],
                             PRODUCT_NAME=detail["PRODUCT_NAME"],
                             QUANTITY_ON_HAND=detail["QUANTITY_ON_HAND"],
                             EXPIRY_DATE=detail.get("EXPIRY_DATE"),
                         )
-                        inventory_items.append(inventory_entry)
 
-                    # Construct the response data
-                    response_data = {
-                        "INBOUND_DEL_ID": inbound_delivery_id,  # Return the ID instead of the object
-                        "details": [
-                            {
-                                "PRODUCT_ID": (
-                                    item.PRODUCT_ID.id if item.PRODUCT_ID else None
-                                ),  # Use the ID of the related Product
-                                "PRODUCT_NAME": item.PRODUCT_NAME,
-                                "QUANTITY_ON_HAND": item.QUANTITY_ON_HAND,
-                                "EXPIRY_DATE": item.EXPIRY_DATE,
-                            }
-                            for item in inventory_items
-                        ],
-                    }
+                    # Update the status of the Inbound Delivery
+                    if new_status == "Delivered":
+                        logger.info("Updating Inbound Delivery status to 'Delivered'.")
+                        inbound_delivery_obj.INBOUND_DEL_STATUS = "Delivered"
+                    elif new_status == "Partially Delivered":
+                        logger.info(
+                            "Updating Inbound Delivery status to 'Partially Delivered'."
+                        )
+                        inbound_delivery_obj.INBOUND_DEL_STATUS = "Partially Delivered"
+                    elif new_status is not None:
+                        logger.error(f"Invalid status provided: {new_status}")
+                        return Response(
+                            {"error": "Invalid status provided."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
 
-                # If everything is successful, return the response
-                return Response(response_data, status=status.HTTP_201_CREATED)
+                    inbound_delivery_obj.save()
 
+                logger.info("Inventory entries added and status updated successfully.")
+                return Response(
+                    {"message": "Inventory added and status updated successfully."},
+                    status=status.HTTP_201_CREATED,
+                )
+
+            except InboundDelivery.DoesNotExist:
+                logger.error(
+                    f"Inbound Delivery with ID {inbound_delivery_id} not found."
+                )
+                return Response(
+                    {"error": "Inbound Delivery not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             except Exception as e:
-                # In case of any error, the transaction will be rolled back
+                logger.exception("An error occurred during processing.")
                 return Response(
                     {
-                        "error": "Failed to create inventory entries.",
+                        "error": "Failed to create inventory entries or update status.",
                         "details": str(e),
                     },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
-        # Return validation errors if serializer is invalid
+        # Log validation errors
+        logger.error(f"Validation failed with errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

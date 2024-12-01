@@ -316,6 +316,7 @@ class UpdatePurchaseOrderView(APIView):
             )
 
 
+# Function to accept Purchase Order
 class TransferToInboundDelivery(APIView):
     permission_classes = [permissions.AllowAny]
 

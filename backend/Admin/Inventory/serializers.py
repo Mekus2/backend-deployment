@@ -28,7 +28,13 @@ class InventorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Inventory
         fields = [
-            "INVENTORY_ID", "PRODUCT_ID", "PRODUCT_NAME", "INBOUND_DEL_ID", 
-            "BATCH_ID", "EXPIRY_DATE", "QUANTITY_ON_HAND", "LAST_UPDATED", 
-            "DATE_CREATED"
+            "INVENTORY_ID",
+            "PRODUCT_ID",
+            "PRODUCT_NAME",
+            "INBOUND_DEL_ID",
+            "BATCH_ID",
+            "EXPIRY_DATE",
+            "QUANTITY_ON_HAND",
+            "LAST_UPDATED",
+            "DATE_CREATED",
         ]
