@@ -3,6 +3,7 @@ import Modal from "../../Layout/Modal";
 // import INBOUND_DELIVERY from "../../../data/InboundData"; // Import the data
 import { fetchOrderDetails } from "../../../api/SupplierDeliveryApi";
 import { updateOrderStatus } from "../../../api/SupplierDeliveryApi";
+import { addNewInventory } from "../../../api/InventoryApi";
 import Button from "../../Layout/Button";
 // Import the styles
 import {
@@ -281,42 +282,44 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
     }
 
     // Prepare inventory data to be posted
-    const inventoryData = orderDetails.map((item, index) => {
-      const expiryDate = expiryDates[index];
-      return {
-        PRODUCT_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Assuming `PRODUCT_ID` is part of `orderDetails`
-        PRODUCT_NAME: item.INBOUND_DEL_DETAIL_PROD_NAME,
-        INBOUND_DEL_ID: delivery.INBOUND_DEL_ID,
-        EXPIRY_DATE: expiryDate,
-        QUANTITY: item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT, // Assuming `QUANTITY` is part of `orderDetails`
-      };
-    });
+    const inventoryData = {
+      INBOUND_DEL_ID: delivery.INBOUND_DEL_ID,
+      details: orderDetails.map((item, index) => {
+        const expiryDate = expiryDates[index];
+        return {
+          PRODUCT_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Assuming this field exists in `orderDetails`
+          PRODUCT_NAME: item.INBOUND_DEL_DETAIL_PROD_NAME,
+          QUANTITY_ON_HAND: item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT, // Assuming this is the correct field for accepted quantity
+          EXPIRY_DATE: expiryDate,
+        };
+      }),
+    };
 
     console.log("Inventory data prepared for posting:", inventoryData);
 
-    // try {
-    //   // Try posting the inventory data and updating the status
-    //   for (const inventoryItem of inventoryData) {
-    //     const response = await addNewInventory(inventoryItem); // Posting inventory item
-    //     if (response) {
-    //       console.log("Inventory entry created successfully:", response);
-    //     } else {
-    //       console.error("Failed to create inventory entry for:", inventoryItem);
-    //     }
-    //   }
+    try {
+      // Try posting the inventory data and updating the status
+      for (const inventoryItem of inventoryData) {
+        const response = await addNewInventory(inventoryItem); // Posting inventory item
+        if (response) {
+          console.log("Inventory entry created successfully:", response);
+        } else {
+          console.error("Failed to create inventory entry for:", inventoryItem);
+        }
+      }
 
-    //   // After all inventory data is posted, update the status
-    //   console.log("All inventory data posted successfully, updating status...");
-    //   await handleStatusChange(
-    //     delivery.INBOUND_DEL_ID,
-    //     status,
-    //     "Received",
-    //     expiryDates
-    //   );
-    // } catch (error) {
-    //   console.error("Error posting to Inventory:", error);
-    //   notify.error("Error posting to Inventory. Please try again.");
-    // }
+      // After all inventory data is posted, update the status
+      console.log("All inventory data posted successfully, updating status...");
+      await handleStatusChange(
+        delivery.INBOUND_DEL_ID,
+        status,
+        "Delivered",
+        expiryDates
+      );
+    } catch (error) {
+      console.error("Error posting to Inventory:", error);
+      notify.error("Error posting to Inventory. Please try again.");
+    }
   };
   // Calculate Qty Defect (Difference between Delivered Quantity and Accepted Quantity)
   const calculateQtyDefect = (index) => {
