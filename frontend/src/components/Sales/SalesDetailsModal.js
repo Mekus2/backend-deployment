@@ -10,6 +10,7 @@ const formatCurrency = (amount) => `₱${amount.toFixed(2)}`;
 const SalesDetailsModal = ({ sale = {}, onClose }) => {
   const [amountPaid, setAmountPaid] = useState(sale.AMOUNT || "");
   const [paymentTerms, setPaymentTerms] = useState(sale.PAYMENT_TERMS || "");
+  const [isEditMode, setIsEditMode] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   const handleBackdropClick = (e) => {
@@ -37,6 +38,11 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
 
     console.log("Saving changes:", { amountPaid, paymentTerms });
     // Save logic here, e.g., update the backend or state.
+    setHasChanges(false);
+  };
+
+  const handleEditModeToggle = () => {
+    setIsEditMode(!isEditMode);
     setHasChanges(false);
   };
 
@@ -70,6 +76,18 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
           <DetailsColumn>
             <Detail>
               <strong>Balance:</strong> {formatCurrency(sale.BALANCE || 0)}
+            </Detail>
+            <Detail>
+              <strong>Payment Terms (Days):</strong>
+            </Detail>
+            <Detail>
+              <StyledInput
+                type="number"
+                value={paymentTerms}
+                onChange={(e) => handlePaymentTermsChange(e.target.value)}
+                disabled={!isEditMode}
+              />
+              {isEditMode}
             </Detail>
           </DetailsColumn>
         </DetailsContainer>
@@ -119,32 +137,24 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
               type="number"
               value={amountPaid}
               onChange={(e) => handleAmountPaidChange(e.target.value)}
+              disabled={!isEditMode}
             />
           </AmountPaidContainer>
-
-          {/* Payment Terms Section */}
-          <PaymentTermsContainer>
-            <Label>
-              <strong>Payment Terms:</strong>
-            </Label>
-            <StyledSelect
-              value={paymentTerms}
-              onChange={(e) => handlePaymentTermsChange(e.target.value)}
-            >
-              <option value="">Select Payment Terms</option>
-              <option value="cod">Cash on Delivery (COD)</option>
-              <option value="gcash">GCash</option>
-              <option value="installment">Installment</option>
-            </StyledSelect>
-          </PaymentTermsContainer>
         </SummarySection>
 
-        {/* Save Button */}
-        {hasChanges && (
-          <SaveButtonContainer>
+        {/* Update Invoice Button */}
+        <SaveButtonContainer>
+          {isEditMode ? (
             <Button onClick={handleSaveChanges}>Save Changes</Button>
-          </SaveButtonContainer>
-        )}
+          ) : (
+            <Button
+              onClick={handleEditModeToggle}
+              style={{ backgroundColor: "#1DBA0B" }}
+            >
+              Update Invoice
+            </Button>
+          )}
+        </SaveButtonContainer>
       </Modal>
     </Backdrop>
   );
@@ -250,40 +260,16 @@ const AmountPaidContainer = styled.div`
   margin-top: 10px;
 `;
 
-const PaymentTermsContainer = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-top: 10px;
-`;
-
 const Label = styled.div`
   margin-right: 10px;
 `;
 
 const StyledInput = styled.input`
-  padding: 10px;
+  padding: 5px;
   border: 1px solid #ccc;
   border-radius: 8px;
   text-align: center;
-  width: 180px;
-  font-size: 14px;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-
-  &:focus {
-    outline: none;
-    border-color: #007bff;
-    box-shadow: 0px 0px 6px rgba(0, 123, 255, 0.5);
-  }
-`;
-
-const StyledSelect = styled.select`
-  padding: 10px;
-  width: 180px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  text-align: center;
-  background-color: #fdfdfd;
+  width: 150px;
   font-size: 14px;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 
