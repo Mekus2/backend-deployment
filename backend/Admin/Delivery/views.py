@@ -257,6 +257,7 @@ class AcceptOutboundDeliveryAPI(APIView):
 
                         # Update the delivery status
                         outbound_delivery.OUTBOUND_DEL_STATUS = "Dispatched"
+                        outbound_delivery.OUTBOUND_DEL_SHIPPED_DATE = timezone.now()
                         outbound_delivery.save()
                         logger.info(
                             f"Outbound Delivery {outbound_delivery.pk} marked as Dispatched."
@@ -321,6 +322,7 @@ class CompleteOutboundDeliveryAPI(APIView):
 
                 # Update the delivery status to "Delivered"
                 outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
+                outbound_delivery.OUTBOUND_DEL_CSTMR_RCVD_DATE = timezone.now()
                 outbound_delivery.save()
                 logger.info(
                     f"Outbound Delivery {outbound_delivery.pk} marked as Delivered."
