@@ -349,13 +349,16 @@ class LowStockProductsView(APIView):
     """
     API View to return products with QOH <= Reorder Level
     """
+
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         try:
             # Correct filter to use the model field `PROD_RO_LEVEL`
-            low_stock_products = Product.objects.filter(PROD_QOH__lte=F('PROD_RO_LEVEL'))
+            low_stock_products = Product.objects.filter(
+                PROD_QOH__lte=F("PROD_RO_LEVEL")
+            )
 
             # Serialize the filtered products
             serializer = ProductSerializer(low_stock_products, many=True)
