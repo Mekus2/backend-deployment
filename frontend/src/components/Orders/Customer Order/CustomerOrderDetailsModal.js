@@ -112,11 +112,14 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
       OUTBOUND_DEL_DLVRY_OPTION: order.SALES_ORDER_DLVRY_OPTION,
       OUTBOUND_DEL_CITY: order.SALES_ORDER_CLIENT_CITY,
       OUTBOUND_DEL_PROVINCE: order.SALES_ORDER_CLIENT_PROVINCE,
+      OUTBOUND_DEL_ACCPTD_BY_USERNAME: localStorage.getItem("user_first_name"),
       OUTBOUND_DEL_ACCPTD_BY_USER: userId,
       details: orderDetails.map((detail) => ({
         OUTBOUND_DETAILS_PROD_NAME: detail.SALES_ORDER_PROD_NAME,
-        OUTBOUND_DETAILS_PROD_QTY: detail.SALES_ORDER_LINE_QTY,
-        OUTBOUND_DETAILS_LINE_PRICE: detail.SALES_ORDER_LINE_PRICE,
+        OUTBOUND_DETAILS_PROD_QTY_ORDERED: detail.SALES_ORDER_LINE_QTY,
+        OUTBOUND_DETAILS_LINE_DISCOUNT: detail.SALES_ORDER_LINE_DISCOUNT,
+        OUTBOUND_DETAILS_SELL_PRICE: detail.SALES_ORDER_LINE_PRICE,
+        OUTBOUND_DETAIL_LINE_TOTAL: detail.SALES_ORDER_LINE_TOTAL,
       })),
     };
     try {
@@ -555,7 +558,6 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
                 .toFixed(2)}
             </HighlightedTotal>
           </TotalItem>
-
         </TotalSummary>
       </Section>
 
@@ -681,7 +683,7 @@ const TotalItem = styled.p`
 `;
 
 const HighlightedTotal = styled.span`
-  color: #1DBA0B;
+  color: #1dba0b;
   font-size: 16px;
 `;
 
