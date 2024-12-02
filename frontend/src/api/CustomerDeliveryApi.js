@@ -22,7 +22,9 @@ export const addNewCustomerDelivery = async (orderData) => {
 // Function to fetch the count of orders
 export const fetchCountOrders = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/api/delivery/customer/total-orders`);
+    const response = await axios.get(
+      `${BASE_URL}/api/delivery/customer/total-orders`
+    );
     return response.data || { pending_total: 0 }; // Default to 0 if data is not found
   } catch (error) {
     console.error("Failed to fetch order count:", error);
@@ -73,5 +75,44 @@ export const fetchCustomerDelDetails = async (orderId) => {
   } catch (error) {
     console.error(`Failed to fetch details for order ID ${orderId}:`, error);
     return {}; // Return empty object in case of failure
+  }
+};
+
+// Function to create a new sales invoice
+export const createSalesInvoice = async (outboundDeliveryId) => {
+  const url = `${BASE_URL}/api/delivery/customer/${outboundDeliveryId}/create-invoice/`; // Your API endpoint URL with pk
+
+  try {
+    // Send POST request to backend using axios without data in the body
+    const response = await axios.post(
+      url,
+      {},
+      {
+        // Sending an empty object in the body
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    // Return the response status
+    return response.status;
+  } catch (error) {
+    if (error.response) {
+      // Server responded with a status other than 2xx
+      console.error("Error:", error.response.data.error);
+      alert("Error creating Sales Invoice: " + error.response.data.error);
+      return error.response.status; // Return the error status
+    } else if (error.request) {
+      // Request was made but no response was received
+      console.error("Network Error:", error.request);
+      alert("Network Error: Unable to create Sales Invoice.");
+      return 500; // Return a 500 status for network errors
+    } else {
+      // Something else went wrong
+      console.error("Error:", error.message);
+      alert("Unexpected error: " + error.message);
+      return 500; // Return a 500 status for unexpected errors
+    }
   }
 };

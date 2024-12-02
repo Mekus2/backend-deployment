@@ -27,6 +27,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from Admin.Inventory.models import Inventory
+from Admin.Sales.models import SalesInvoice, SalesInvoiceItems
 
 
 import logging
@@ -148,10 +149,8 @@ class AcceptOutboundDeliveryAPI(APIView):
                 outbound_delivery = get_object_or_404(OutboundDelivery, pk=pk)
                 logger.info(f"Fetched OutboundDelivery: {outbound_delivery}")
 
-                # Get the status and received date from the request data
+                # Get the status from the request data
                 new_status = request.data.get("status")
-                received_date = request.data.get("receivedDate")
-
                 if not new_status:
                     logger.warning("Status is missing in the request data.")
                     return Response(
@@ -161,7 +160,6 @@ class AcceptOutboundDeliveryAPI(APIView):
 
                 logger.debug(f"New status received: {new_status}")
 
-                # Valid statuses and logic
                 if new_status == "Dispatched":
                     if outbound_delivery.OUTBOUND_DEL_STATUS == "Pending":
                         logger.info("Processing status transition to 'Dispatched'.")
@@ -275,69 +273,97 @@ class AcceptOutboundDeliveryAPI(APIView):
                             {"error": "Invalid status transition."},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
-                elif new_status == "Delivered":
-                    if outbound_delivery.OUTBOUND_DEL_STATUS == "Dispatched":
-                        logger.info("Processing status transition to 'Delivered'.")
-                        outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
-
-                        if received_date:
-                            try:
-                                received_date = datetime.strptime(
-                                    received_date, "%Y-%m-%d"
-                                )
-                                outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE = (
-                                    received_date
-                                )
-                                logger.debug(
-                                    f"Received date set to: {outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE}"
-                                )
-                            except ValueError:
-                                logger.error("Invalid date format for receivedDate.")
-                                return Response(
-                                    {
-                                        "error": "Invalid date format for receivedDate. Expected YYYY-MM-DD."
-                                    },
-                                    status=status.HTTP_400_BAD_REQUEST,
-                                )
-                        else:
-                            outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE = (
-                                timezone.now()
-                            )
-                            logger.debug("Received date defaulted to current time.")
-
-                        outbound_delivery.save()
-
-                        # Optionally update the related Sales Order to "Completed"
-                        sales_order = outbound_delivery.SALES_ORDER_ID
-                        if (
-                            sales_order
-                            and sales_order.SALES_ORDER_STATUS != "Completed"
-                        ):
-                            sales_order.SALES_ORDER_STATUS = "Completed"
-                            sales_order.save()
-                            logger.info(
-                                f"Sales Order {sales_order.pk} marked as Completed."
-                            )
-
-                        return Response(
-                            {
-                                "message": "Outbound Delivery and Sales Order marked as Delivered successfully."
-                            },
-                            status=status.HTTP_200_OK,
-                        )
-                    else:
-                        logger.warning("Invalid status transition to 'Delivered'.")
-                        return Response(
-                            {"error": "Invalid status transition."},
-                            status=status.HTTP_400_BAD_REQUEST,
-                        )
-
                 else:
                     logger.error(f"Invalid status provided: {new_status}")
                     return Response(
                         {"error": "Invalid status provided."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+
+        except Http404 as e:
+            logger.error(f"Http404 error: {str(e)}")
+            return Response(
+                {"error": f"Resource not found: {str(e)}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        except Exception as e:
+            logger.exception("Unexpected error occurred.")
+            return Response(
+                {"error": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class CompleteOutboundDeliveryAPI(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, pk):
+        try:
+            # Start a transaction to ensure atomicity
+            with transaction.atomic():
+                # Fetch the OutboundDelivery by pk
+                logger.debug(f"Attempting to fetch OutboundDelivery with pk: {pk}")
+                outbound_delivery = get_object_or_404(OutboundDelivery, pk=pk)
+                logger.info(f"Fetched OutboundDelivery: {outbound_delivery}")
+
+                # Ensure the current status is "Dispatched"
+                if outbound_delivery.OUTBOUND_DEL_STATUS != "Dispatched":
+                    logger.warning(
+                        "Only deliveries with status 'Dispatched' can be completed."
+                    )
+                    return Response(
+                        {
+                            "error": "Invalid status transition. Delivery must be 'Dispatched' to mark as 'Delivered'."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Update the delivery status to "Delivered"
+                outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
+                outbound_delivery.save()
+                logger.info(
+                    f"Outbound Delivery {outbound_delivery.pk} marked as Delivered."
+                )
+
+                # Create a Sales Invoice for the completed Outbound Delivery
+                sales_invoice = SalesInvoice.objects.create(
+                    SALES_INV_DATETIME=outbound_delivery.OUTBOUND_DEL_CREATED,  # Example: Assigning relevant datetime
+                    SALES_INV_TOTAL_PRICE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
+                    SALES_ORDER_DLVRY_OPTION=outbound_delivery.OUTBOUND_DEL_DLVRY_OPTION,
+                    CLIENT_ID=outbound_delivery.CLIENT_ID,
+                    CLIENT_NAME=outbound_delivery.OUTBOUND_DEL_CUSTOMER_NAME,
+                    SALES_INV_PYMNT_METHOD="Cash",  # Example: Set payment method
+                    OUTBOUND_DEL_ID=outbound_delivery,
+                )
+
+                # Create SalesInvoiceItems for each OutboundDeliveryDetail
+                for detail in outbound_delivery.outbound_details.all():
+                    SalesInvoiceItems.objects.create(
+                        SALES_INV_ID=sales_invoice,
+                        SALES_INV_ITEM_PROD_ID=detail.OUTBOUND_DETAILS_PROD_ID,
+                        SALES_INV_ITEM_PROD_NAME=detail.OUTBOUND_DETAILS_PROD_NAME,
+                        SALES_INV_item_PROD_DLVRD=detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
+                        SALES_INV_ITEM_PROD_SELL_PRICE=detail.OUTBOUND_DETAILS_SELL_PRICE,
+                        SALES_INV_ITEM_PROD_PURCH_PRICE=detail.OUTBOUND_DETAILS_PROD_QTY_DEFECT,  # Assuming the defect quantity isn't needed here
+                        SALES_INV_ITEM_LINE_GROSS_REVENUE=detail.OUTBOUND_DETAILS_SELL_PRICE
+                        * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
+                        SALES_INV_ITEM_LINE_GROSS_INCOME=(
+                            (
+                                detail.OUTBOUND_DETAILS_SELL_PRICE
+                                - detail.OUTBOUND_DETAILS_PROD_QTY_DEFECT
+                            )
+                            * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED
+                        ),
+                    )
+
+                # Return success response
+                return Response(
+                    {
+                        "message": "Outbound Delivery marked as Delivered and Sales Invoice created."
+                    },
+                    status=status.HTTP_200_OK,
+                )
 
         except Http404 as e:
             logger.error(f"Http404 error: {str(e)}")

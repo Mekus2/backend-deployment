@@ -4,6 +4,7 @@ import Loading from "../../Layout/Loading";
 import {
   fetchCustomerDelDetails,
   updateDeliveryStatus,
+  createSalesInvoice,
 } from "../../../api/CustomerDeliveryApi";
 import CustomerCreateIssueModal from "./CustomerCreateIssueModal"; // Import the Issue Modal
 import { notify } from "../../Layout/CustomToast";
@@ -131,14 +132,28 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       newStatus = "Dispatched";
       notify.info("Delivery status updated to Dispatched.");
     } else if (status === "Dispatched") {
-      newStatus = "Delivered";
-      const currentDate = new Date().toISOString().split("T")[0];
-      updatedReceivedDate = currentDate; // Set the received date when marking as Delivered
-      setReceivedDate(currentDate); // Update the local received date
-      notify.success("Delivery marked as Delivered.");
+      newStatus = "Delivered"; // Update the status to Delivered
+      // Call the createSalesInvoice function and store its response status in a new variable
+      const outboundDeliveryId = delivery.OUTBOUND_DEL_ID;
+      const invoiceStatus = await createSalesInvoice(outboundDeliveryId);
+
+      // Check the status returned from the API call
+      if (invoiceStatus === 200) {
+        // Only update status if invoice creation was successful
+        notify.success(
+          "Sales Invoice created successfully, Delivery marked as Delivered."
+        );
+        updatedReceivedDate = new Date().toISOString().split("T")[0]; // Set received date when marking as Delivered
+        setReceivedDate(updatedReceivedDate); // Update the local received date
+      } else {
+        notify.error(
+          "Failed to create Sales Invoice. Delivery status remains as Dispatched."
+        );
+        return; // Don't proceed if invoice creation failed
+      }
     } else if (status === "Delivered") {
-      newStatus = "Delivered with Issues";
-      notify.warning("Delivery marked as Delivered with Issues.");
+      newStatus = "Delivered"; // Status is already delivered, so just notify
+      notify.success("Delivery marked as Delivered.");
     } else if (status === "Delivered with Issues") {
       newStatus = "Pending";
       setReceivedDate("Not Received");
@@ -154,24 +169,27 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       receivedDate: updatedReceivedDate, // Send the updated received date if applicable
     };
 
-    // Sync the status with the backend using the API
-    try {
-      const response = await updateDeliveryStatus(
-        delivery.OUTBOUND_DEL_ID,
-        statusData
-      );
+    // Sync the status with the backend only if the status is "Pending"
+    if (newStatus === "Pending") {
+      try {
+        const response = await updateDeliveryStatus(
+          delivery.OUTBOUND_DEL_ID,
+          statusData
+        );
 
-      // Check if the status was successfully updated
-      if (response) {
-        console.log(`Delivery status successfully updated to ${newStatus}`);
-      } else {
-        notify.error("Failed to update delivery status on the backend.");
+        // Check if the status was successfully updated
+        if (response) {
+          console.log(`Delivery status successfully updated to ${newStatus}`);
+        } else {
+          notify.error("Failed to update delivery status on the backend.");
+        }
+      } catch (error) {
+        console.error("Error updating delivery status on the backend:", error);
+        notify.error("Failed to update delivery status.");
       }
-    } catch (error) {
-      console.error("Error updating delivery status on the backend:", error);
-      notify.error("Failed to update delivery status.");
     }
   };
+
   const handleIssueModalOpen = () => setIsIssueModalOpen(true); // This remains for opening the initial "What's the issue?" modal
   const handleIssueModalClose = () => setIsIssueModalOpen(false); // This closes the initial modal
 

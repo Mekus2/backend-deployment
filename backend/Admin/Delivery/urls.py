@@ -9,6 +9,7 @@ from .views import (
     GetTotalOutboundPendingCount,
     GetTotalInboundPendingCount,
     AcceptOutboundDeliveryAPI,
+    CompleteOutboundDeliveryAPI,
 )
 
 urlpatterns = [
@@ -27,6 +28,11 @@ urlpatterns = [
         "customer/<int:pk>/accept",
         AcceptOutboundDeliveryAPI.as_view(),
         name="dispatch-delivery",
+    ),
+    path(
+        "customer/<int:pk>/create-invoice/",
+        CompleteOutboundDeliveryAPI.as_view(),
+        name="complete-delivery-add-sales",
     ),
     # Supplier Delivery paths
     path(
