@@ -25,7 +25,6 @@ import {
 } from "../OrderStyles";
 import { FaPlus } from "react-icons/fa";
 import useAddCustomerOrderModal from "../../../hooks/useAddCustomerOrderModal";
-import { calculateLineTotal } from "../../../utils/CalculationUtils";
 import { notify } from "../../Layout/CustomToast"; // Import the toast notification utility
 import "../../../styles.css";
 
@@ -143,7 +142,17 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     setClientNumber(sanitizedValue);
     clearError("clientNumber");
   };
-
+  const calculateLineTotal = (orderDetail) => {
+    const price = parseFloat(orderDetail.price) || 0;
+    const quantity = parseInt(orderDetail.quantity, 10) || 0;
+    const discount = parseFloat(orderDetail.discount) || 0;
+  
+    const totalWithoutDiscount = price * quantity;
+    const discountValue = (totalWithoutDiscount * discount) / 100;
+  
+    return totalWithoutDiscount - discountValue;
+  };
+  
   return (
     <Modal title="Add Customer Order" onClose={onClose}>
       <Field>
