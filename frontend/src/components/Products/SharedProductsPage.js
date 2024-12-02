@@ -9,7 +9,7 @@ import AddProductModal from "./AddProductModal";
 import ProductDetailsModal from "./ProductDetailsModal";
 import { FaPlus } from "react-icons/fa";
 import { colors } from "../../colors";
-// import axios from "axios";
+ import axios from "axios";
 import Loading from "../Layout/Loading"; // Import the Loading component
 
 const SharedProductsPage = () => {
@@ -101,9 +101,16 @@ const SharedProductsPage = () => {
   const openAddProductModal = () => setIsAddProductModalOpen(true);
   const closeAddProductModal = () => setIsAddProductModalOpen(false);
 
-  const openProductDetailsModal = (product) => {
-    setSelectedProductId(product.PROD_ID);
-    setIsProductDetailsModalOpen(true);
+  const openProductDetailsModal = async (product) => {
+    try {
+      await axios.get(
+        `http://127.0.0.1:8000/items/productList/${product.id}`
+      );
+      setSelectedProductId(product.id);
+      setIsProductDetailsModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching product data:", error);
+    }
   };
 
   const closeProductDetailsModal = () => {

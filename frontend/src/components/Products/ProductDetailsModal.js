@@ -279,9 +279,9 @@ const ProductDetailsModal = ({ productId, onClose }) => {
           <Detail>
             <DetailLabel>Price:</DetailLabel> ₱
             {productDetail.PROD_DETAILS_PRICE}
-            <MoreInfoButton onClick={handleMoreInfoClick}>
+            {/* <MoreInfoButton onClick={handleMoreInfoClick}>
               More Info
-            </MoreInfoButton>
+            </MoreInfoButton> */}
           </Detail>
           <Detail>
             <DetailLabel>Description:</DetailLabel>{" "}

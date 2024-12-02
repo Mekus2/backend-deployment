@@ -8,6 +8,7 @@ from .views import (
     ProductSearchView,
     ProductCountView,
     CategoryCountView,
+    LowStockProductsView,
 )
 
 urlpatterns = [
@@ -57,4 +58,7 @@ urlpatterns = [
     path("total/", ProductCountView.as_view(), name="product-count"),
     # Path for Total Categories
     path("totalCategories/", CategoryCountView.as_view(), name="category-count"),
+
+    #PATH FOR LOWSTOCK
+    path("lowStock/", LowStockProductsView.as_view(), name="Low Stock"),
 ]

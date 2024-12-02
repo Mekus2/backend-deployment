@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions
 from Admin.authentication import CookieJWTAuthentication
 from django.db.models import Q
+from django.db.models import F
 from .models import ProductCategory, ProductDetails, Product
 from .serializers import (
     ProductCategorySerializer,
@@ -342,3 +343,26 @@ class CategoryCountView(APIView):
     def get(self, request):
         total_categories = ProductCategory.objects.count()
         return Response({total_categories})
+
+
+class LowStockProductsView(APIView):
+    """
+    API View to return products with QOH <= Reorder Level
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        try:
+            # Correct filter to use the model field `PROD_RO_LEVEL`
+            low_stock_products = Product.objects.filter(PROD_QOH__lte=F('PROD_RO_LEVEL'))
+
+            # Serialize the filtered products
+            serializer = ProductSerializer(low_stock_products, many=True)
+
+            # Return the serialized data
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
