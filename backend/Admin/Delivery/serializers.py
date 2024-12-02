@@ -15,6 +15,7 @@ class OutboundDeliveryDetailsSerializer(serializers.ModelSerializer):
             "OUTBOUND_DEL_ID",
             "OUTBOUND_DETAILS_PROD_NAME",
             "OUTBOUND_DETAILS_PROD_QTY_ORDERED",
+            "OUTBOUND_DETAILS_PROD_QTY_ACCEPTED",
             "OUTBOUND_DETAILS_SELL_PRICE",
             "OUTBOUND_DETAILS_LINE_DISCOUNT",
             "OUTBOUND_DETAIL_LINE_TOTAL",

@@ -100,7 +100,10 @@ class OutboundDeliveryDetails(models.Model):
         null=False, default=0
     )
     OUTBOUND_DETAILS_PROD_QTY_ACCEPTED = models.PositiveIntegerField(
-        null=False, default="0"
+        null=False, default=0
+    )
+    OUTBOUND_DETAILS_PROD_QTY_DEFECT = models.PositiveIntegerField(
+        null=False, default=0
     )
     OUTBOUND_DETAILS_LINE_DISCOUNT = models.FloatField(null=True, default=0)
     OUTBOUND_DETAILS_SELL_PRICE = models.DecimalField(

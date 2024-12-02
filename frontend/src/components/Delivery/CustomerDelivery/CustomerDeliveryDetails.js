@@ -82,6 +82,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
           delivery.OUTBOUND_DEL_ID,
           controller.signal
         );
+        console.log("Fetched Details:", details);
         setOrderDetails(details);
         setStatus(delivery.OUTBOUND_DEL_STATUS);
       } catch (error) {
@@ -234,10 +235,10 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       head: [["Product Name", "Quantity Shipped", "Price", "Total"]],
       body: orderDetails.map((item) => [
         item.OUTBOUND_DETAILS_PROD_NAME,
-        item.OUTBOUND_DETAILS_PROD_QTY,
+        item.OUTBOUND_DETAILS_PROD_QTY_ORDERED,
         Number(item.OUTBOUND_DETAILS_SELL_PRICE).toFixed(2), // Removed the peso sign
         calculateItemTotal(
-          item.OUTBOUND_DETAILS_PROD_QTY,
+          item.OUTBOUND_DETAILS_PROD_QTY_ORDERED,
           item.OUTBOUND_DETAILS_SELL_PRICE
         ).toFixed(2), // Removed the peso sign
       ]),
@@ -294,7 +295,9 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                 </FormGroup>
                 <FormGroup>
                   <Label>Shipped Date:</Label>
-                  <Value>{delivery.OUTBOUND_DEL_SHIPPED_DATE}</Value>
+                  <Value>
+                    {delivery.OUTBOUND_DEL_SHIPPED_DATE || "Not yet Shipped"}
+                  </Value>
                 </FormGroup>
                 <FormGroup>
                   <Label>Received Date:</Label>
@@ -304,7 +307,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
               <Column>
                 <FormGroup>
                   <Label>Delivery Option:</Label>
-                  <Value>{delivery.OUTBOUND_DEL_DLVRY_OPT}</Value>
+                  <Value>{delivery.OUTBOUND_DEL_DLVRY_OPTION}</Value>
                 </FormGroup>
                 <FormGroup>
                   <Label>City:</Label>
@@ -331,7 +334,9 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                 {orderDetails.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell>{item.OUTBOUND_DETAILS_PROD_NAME}</TableCell>
-                    <TableCell>{item.OUTBOUND_DETAILS_PROD_QTY}</TableCell>
+                    <TableCell>
+                      {item.OUTBOUND_DETAILS_PROD_QTY_ORDERED}
+                    </TableCell>
                     <TableCell>
                       {status === "Dispatched" ? (
                         <input
@@ -357,7 +362,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                             const newQtyDefect =
                               newQtyAccepted === 0
                                 ? 0
-                                : item.OUTBOUND_DETAILS_PROD_QTY -
+                                : item.OUTBOUND_DETAILS_PROD_QTY_ORDERED -
                                   newQtyAccepted;
 
                             // Update the order details state
@@ -388,8 +393,8 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                     <TableCell>{item.QTY_DEFECT || 0}</TableCell>
 
                     <TableCell>
-                      {item.OUTBOUND_DETAILS_DISCOUNT
-                        ? `${item.OUTBOUND_DETAILS_DISCOUNT}%`
+                      {item.OUTBOUND_DETAILS_LINE_DISCOUNT
+                        ? `${item.OUTBOUND_DETAILS_LINE_DISCOUNT}%`
                         : "No Discount"}
                     </TableCell>
                     <TableCell>
