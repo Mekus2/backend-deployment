@@ -80,20 +80,19 @@ const SharedSalesPage = () => {
 
   // Prepare table data with required columns: TYPE, DATE, COST, REVENUE, GROSS PROFIT, ACTION (Details Button)
   const tableData = sortedOrders.map((order) => [
-    order.type,
+    order.orderDetails?.INVOICE_ID || "N/A", // Assuming order has an INVOICE_ID property
     order.date.toISOString().slice(0, 10), // Format date as YYYY-MM-DD
-    formatCurrency(order.cost),
-    formatCurrency(order.revenue),
-    formatCurrency(order.grossProfit),
+    order.orderDetails?.CLIENT_NAME || "Unknown", // Assuming order has a CLIENT_NAME property
+    formatCurrency(order.orderDetails?.BALANCE || 0), // Assuming order has a BALANCE property
+    order.orderDetails?.STATUS || "Pending", // Assuming order has a STATUS property
     <Button
       variant="primary"
       onClick={() => handleOpenModal(order)} // Pass the corresponding order to the modal
     >
       Details
-    </Button>
+    </Button>,
   ]);
-
-  const header = ["Type", "Date", "Cost", "Revenue", "Gross Profit", "Action"];
+  const header = ["Invoice ID", "Date", "Client Name", "Balance", "Status", "Action"];
 
   const handleOpenModal = (order) => {
     setSelectedOrder(order); // Set the selected order to be shown in the modal

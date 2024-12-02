@@ -46,15 +46,13 @@ const SharedSuppliersPage = () => {
     setSearchTerm(value);
     const filtered = suppliers.filter((supplier) => {
       if (!value) return true;
-      return (
-        supplier.SUPP_COMPANY_NAME?.toLowerCase().includes(value) ||
-        supplier.SUPP_COMPANY_NUM.includes(value) ||
-        supplier.SUPP_CONTACT_NAME?.toLowerCase().includes(value) ||
-        supplier.SUPP_CONTACT_PHNUM.includes(value)
+      return Object.values(supplier).some(
+        (field) => field && field.toString().toLowerCase().includes(value)
       );
     });
     setFilteredSuppliers(filtered);
   };
+  
 
   const openAddSupplierModal = () => {
     setShowAddModal(true);
