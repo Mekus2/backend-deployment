@@ -1,126 +1,147 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import styled from "styled-components";
+import { useNavigate, useLocation } from "react-router-dom";
 import { fetchProductList } from "../../api/ProductApi";
-import SearchBar from "../Layout/SearchBar_Modified";
-import Table from "../Layout/Table_Pagination";
+import SearchBar from "../Layout/SearchBar";
+import Table from "../Layout/Table";
 import CardTotalProducts from "../CardsData/CardTotalProducts";
+//import CardTotalCategories from "../CardsData/CardTotalCategories";
 import Button from "../Layout/Button";
 import AddProductModal from "./AddProductModal";
 import ProductDetailsModal from "./ProductDetailsModal";
 import { FaPlus } from "react-icons/fa";
 import { colors } from "../../colors";
-import axios from "axios";
-import Loading from "../Layout/Loading"; // Import the Loading component
+import { fetchCategory } from "../../api/CategoryApi";
+import axios from 'axios';
+
 
 const SharedProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
-  const [isProductDetailsModalOpen, setIsProductDetailsModalOpen] =
-    useState(false);
+  const [isProductDetailsModalOpen, setIsProductDetailsModalOpen] = useState(false);
+  const [product, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rows, setRows] = useState([]);
-  const [totalRows, setTotalRows] = useState(0); // Track total rows
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Debounce hook for search term
-  const useDebounce = (value, delay) => {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-
-    useEffect(() => {
-      const handler = setTimeout(() => {
-        setDebouncedValue(value);
-      }, delay);
-
-      return () => {
-        clearTimeout(handler);
-      };
-    }, [value, delay]);
-
-    return debouncedValue;
-  };
-
-  const debouncedSearchTerm = useDebounce(searchTerm, 800);
-  const loadProducts = async (page = 1) => {
-    try {
-      setLoading(true); // Start loading before fetching
-      const data = await fetchProductList(page, 10, debouncedSearchTerm);
-      const { results, count } = data;
-      console.log("Search Results:", results);
   
-      const rowsData = results.map((product) => {
-        const productDetail = product.PROD_DETAILS;
-        const brand = productDetail?.PROD_DETAILS_SUPPLIER || "N/A";
-        const price = parseFloat(productDetail?.PROD_DETAILS_PRICE || 0);
-        const category = productDetail?.CATEGORY || "No Category";
-  
-        return [
-          product.PROD_NAME,
-          category, // Simplified category as plain text
-          brand,
-          price && !isNaN(price) ? `₱${price.toFixed(2)}` : "₱0.00",
-          <ActionButton
-            key="action"
-            fontSize="14px"
-            onClick={() => openProductDetailsModal(product)}
-          >
-            Details
-          </ActionButton>,
-        ];
-      });
-  
-      setRows(rowsData);
-      setTotalRows(count); // Set the total rows count for pagination
-      setLoading(false);
-    } catch (err) {
-      setError("Error fetching products. Please try again later.");
-      setLoading(false);
-      console.error("Error fetching products:", err);
-    }
-  };
-  
-
-  // Effect for loading products
+  const navigate = useNavigate();
+  const location = useLocation();
   useEffect(() => {
-    loadProducts(currentPage); // Pass currentPage to load products
-  }, [debouncedSearchTerm, currentPage]); // Add currentPage to the effect's dependency
+    const loadProductsAndCategories = async () => {
+      try {
+        // Fetch products
+        const fetchedProducts = (await fetchProductList()).results;
+        console.log('fetchedProducts:', fetchedProducts);
+        setProducts(fetchedProducts);
+        
+        // Filter products based on search term
+        const filteredProducts = fetchedProducts.filter((products) =>
+          products.PROD_NAME.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
-  // Open/close modals
+        // Get unique category codes
+        const uncachedCategoryCodes = [...new Set(
+          filteredProducts.map((product) => product.PROD_DETAILS["PROD_CAT_CODE"])
+        )];
+        
+        console.log("uncachedCategoryCodes:", uncachedCategoryCodes);
+        
+        // Fetch categories if uncached codes are found
+        const uncachedCategories = uncachedCategoryCodes.length > 0 
+          ? await Promise.all(uncachedCategoryCodes.map(fetchCategory)) 
+          : [];
+        
+        // Map products to rows
+        const rowsData = filteredProducts.map((product) => {
+          console.log('Product ID:', product.id); // Log product IDs for debugging
+          console.log('Product Object:', product);  // To verify that the correct product is passed
+          const prodId = product.id;
+          console.log('prod IDDD:',prodId);
+          const productDetail = product.PROD_DETAILS;
+          const category = uncachedCategories.find(
+            (cat) => cat.PROD_CAT_CODE === productDetail.PROD_CAT_CODE
+          );
+
+          const unit = productDetail.PROD_DETAILS_UNIT || "N/A";
+          const brand = productDetail.PROD_DETAILS_BRAND || "N/A";
+          const price = parseFloat(productDetail.PROD_DETAILS_PRICE);
+
+          return [
+            // <img
+            //   src={product.PROD_IMAGE}
+            //   alt={product.PROD_NAME}
+            //   style={{ width: "50px", height: "auto" }}
+            // />,
+            product.PROD_NAME,
+            category ? category.PROD_CAT_NAME : "N/A",
+            unit,
+            brand,
+            price && !isNaN(price) ? `₱${price.toFixed(2)}` : "₱0.00",
+            <ActionButton
+              key="action"
+              fontSize="14px"
+              onClick={() => openProductDetailsModal(product)}
+            >
+              Details
+            </ActionButton>,
+          ];
+        });
+
+        setRows(rowsData);
+        setLoading(false);
+        console.log('rowsData:', rowsData);
+      } catch (err) {
+        setError("Error fetching products or categories");
+        setLoading(false);
+      }
+    };
+
+    loadProductsAndCategories();
+  }, [searchTerm]); // Re-run if searchTerm changes
+
   const openAddProductModal = () => setIsAddProductModalOpen(true);
   const closeAddProductModal = () => setIsAddProductModalOpen(false);
 
   const openProductDetailsModal = async (product) => {
     try {
-      await axios.get(
-        `http://127.0.0.1:8000/items/productList/${product.id}`
-      );
+      // Ensure product.id is a valid number or string
+      const productResponse = await axios.get(`http://127.0.0.1:8000/items/productList/${product.id}`);
+      console.log('Product API Response:', productResponse.data); // Log the product data
+  
+      // Set only the product ID into state
       setSelectedProductId(product.id);
+  
+      // Open the modal with the selected product ID
       setIsProductDetailsModalOpen(true);
     } catch (error) {
       console.error("Error fetching product data:", error);
-    }
+    } 
   };
+  
 
   const closeProductDetailsModal = () => {
     setSelectedProductId(null);
     setIsProductDetailsModalOpen(false);
   };
-
-  // Search bar change handler
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-  };
-  // Trigger search when Enter key is pressed
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault(); // Prevent page refresh
-      loadProducts(currentPage); // Trigger search when Enter is pressed
+  
+  const handleCardClick = () => {
+    let path;
+    if (location.pathname.includes("/superadmin")) {
+      path = "/superadmin/categories";
+    } else if (location.pathname.includes("/admin")) {
+      path = "/admin/categories";
+    } else if (location.pathname.includes("/staff")) {
+      path = "/staff/categories";
+    } else {
+      alert("Access denied");
+      return;
     }
+    navigate(path);
   };
 
   if (loading) {
-    return <Loading />;
+    return <div>Loading products...</div>;
   }
 
   if (error) {
@@ -128,39 +149,38 @@ const SharedProductsPage = () => {
   }
 
   const headers = [
+   // "Image",
     "Product Name",
     "Category",
-    "Supplier",
+    "Unit",
+    "Brand",
     "Price",
     "Actions",
   ];
 
   return (
     <>
-      <AnalyticsContainer>
-        <CardTotalProducts />
-      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter product..."
           value={searchTerm}
-          onChange={handleSearchChange}
-          onKeyDown={handleKeyPress}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
         <ButtonGroup>
           <StyledButton onClick={openAddProductModal}>
             <FaPlus className="icon" /> Product
+            <p value={product}></p>
           </StyledButton>
         </ButtonGroup>
       </Controls>
-      <Table
-        headers={headers}
-        rows={rows}
-        rowsPerPage={10}
-        currentPage={currentPage}
-        totalRows={totalRows}
-        onPageChange={setCurrentPage} // Set page number via prop
-      />
+      <AnalyticsContainer>
+        <CardTotalProducts />
+        <ClickableCard onClick={handleCardClick}>
+          
+          {/* <CardTotalCategories /> */}
+        </ClickableCard>
+      </AnalyticsContainer>
+      <Table headers={headers} rows={rows} />
       {isAddProductModalOpen && (
         <AddProductModal onClose={closeAddProductModal} />
       )}
@@ -175,30 +195,6 @@ const SharedProductsPage = () => {
 };
 
 // Styled components
-const CategoryList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  width: 100%;
-  max-height: 120px;
-  overflow-y: auto;
-  justify-content: center;
-`;
-
-const Category = styled.div`
-  background-color: ${colors.primary};
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: nowrap;
-  text-align: center;
-  min-width: 50px;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-`;
-
 const Controls = styled.div`
   display: flex;
   justify-content: space-between;
@@ -227,6 +223,10 @@ const AnalyticsContainer = styled.div`
   gap: 16px;
   margin-bottom: 16px;
   padding: 0 1px;
+`;
+
+const ClickableCard = styled.div`
+  cursor: pointer;
 `;
 
 const ActionButton = styled(Button)`
