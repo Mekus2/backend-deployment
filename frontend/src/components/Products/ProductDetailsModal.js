@@ -59,7 +59,6 @@ const ProductDetailsModal = ({ productId, onClose }) => {
       const updatedProduct = {
         ...product,
         PROD_NAME: editFields.PROD_NAME,
-        PROD_IMG: editFields.PROD_IMG,
         PROD_DETAILS: { ...editFields },
         PROD_RO_LEVEL: editFields.PROD_RO_LEVEL,
         PROD_RO_QTY: editFields.PROD_RO_QTY,
@@ -173,13 +172,6 @@ const ProductDetailsModal = ({ productId, onClose }) => {
       {isEditing ? (
         <Details>
           <DetailItem>
-            <Label>Image:</Label>
-            {editFields.PROD_IMG && (
-              <ImagePreview src={editFields.PROD_IMG} alt="Preview" />
-            )}
-            <Input type="file" accept="image/*" onChange={handleImageChange} />
-          </DetailItem>
-          <DetailItem>
             <Label>Name:</Label>
             <Input
               value={editFields.PROD_NAME || ""}
@@ -202,9 +194,9 @@ const ProductDetailsModal = ({ productId, onClose }) => {
           <DetailItem>
             <Label>Brand:</Label>
             <Input
-              value={editFields.PROD_DETAILS_SUPPLIER || ""}
+              value={editFields.PROD_DETAILS_BRAND || ""}
               onChange={(e) =>
-                handleInputChange("PROD_DETAILS_SUPPLIER", e.target.value)
+                handleInputChange("PROD_DETAILS_BRAND", e.target.value)
               }
             />
           </DetailItem>
@@ -256,12 +248,12 @@ const ProductDetailsModal = ({ productId, onClose }) => {
         </Details>
       ) : (
         <Details>
-          <Detail>
+          {/* <Detail>
             <DetailLabel>Image:</DetailLabel>
             {product.PROD_IMG && (
               <ImagePreview src={product.PROD_IMG} alt="Product Image" />
             )}
-          </Detail>
+          </Detail> */}
           <Detail>
             <DetailLabel>Name:</DetailLabel> {product.PROD_NAME}
           </Detail>
