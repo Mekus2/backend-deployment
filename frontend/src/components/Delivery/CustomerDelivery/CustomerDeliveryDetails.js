@@ -326,7 +326,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                   <TableHeader>Qty Ordered</TableHeader>
                   <TableHeader>Qty Accepted</TableHeader>
                   <TableHeader>Qty Defect</TableHeader>
-                  <TableHeader>Discount</TableHeader>
+                  <TableHeader>Price</TableHeader>
                   <TableHeader>Total</TableHeader>
                 </tr>
               </thead>
@@ -393,10 +393,13 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                     <TableCell>{item.QTY_DEFECT || 0}</TableCell>
 
                     <TableCell>
-                      {item.OUTBOUND_DETAILS_LINE_DISCOUNT
-                        ? `${item.OUTBOUND_DETAILS_LINE_DISCOUNT}%`
-                        : "No Discount"}
+                      ₱
+                      {(isNaN(Number(item.OUTBOUND_DETAILS_SELL_PRICE))
+                        ? 0
+                        : Number(item.OUTBOUND_DETAILS_SELL_PRICE)
+                      ).toFixed(2)}
                     </TableCell>
+
                     <TableCell>
                       ₱
                       {(
