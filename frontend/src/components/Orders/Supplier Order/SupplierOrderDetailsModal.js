@@ -209,7 +209,7 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
               Cancel Order
             </Button>
             <Button variant="green" onClick={toggleEditMode}>
-              {isEditMode ? "Save Changes" : "Edit Mode"}
+              {isEditMode ? "Save Changes" : "Update Order"}
             </Button>
             <Button variant="primary" onClick={handleAcceptOrder}>
               Accept Order

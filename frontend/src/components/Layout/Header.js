@@ -129,7 +129,7 @@ const Header = ({ toggleSidebar }) => {
                 ? "Admin"
                 : location.pathname.startsWith("/superadmin")
                 ? "SuperAdmin"
-                : "User"}
+                : "Staff"}
             </span>
             <TbUserCircle className="h-5 w-5 ml-1" />
           </ProfileButton>
