@@ -24,12 +24,8 @@ class OutboundDelivery(models.Model):
 
     OUTBOUND_DEL_ID = models.AutoField(primary_key=True)
     SALES_ORDER_ID = models.ForeignKey(SalesOrder, on_delete=models.CASCADE)
-    OUTBOUND_DEL_SHIPPED_DATE = models.DateTimeField(
-        auto_now=True, null=True, blank=True
-    )
-    OUTBOUND_DEL_CSTMR_RCVD_DATE = models.DateTimeField(
-        auto_now=True, null=True, blank=True
-    )
+    OUTBOUND_DEL_SHIPPED_DATE = models.DateTimeField(null=True, blank=True)
+    OUTBOUND_DEL_CSTMR_RCVD_DATE = models.DateTimeField(null=True, blank=True)
     CLIENT_ID = models.ForeignKey(
         Clients, on_delete=models.SET_NULL, null=True
     )  # Customer ID
@@ -37,7 +33,7 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_TOTAL_PRICE = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
-    OUTBOUNND_DEL_DISCOUNT = models.DecimalField(
+    OUTBOUND_DEL_DISCOUNT = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
     OUTBOUND_DEL_STATUS = models.CharField(
@@ -56,19 +52,14 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_PROVINCE = models.CharField(max_length=30, null=True, blank=False)
     OUTBOUND_DEL_CREATED = models.DateTimeField(auto_now_add=True)
     OUTBOUND_DEL_DATEUPDATED = models.DateTimeField(auto_now=True)
-    OUTBOUND_DEL_ACCPTD_BY_USER = models.CharField(
+    OUTBOUND_DEL_ACCPTD_BY_USERNAME = models.CharField(
         max_length=60, null=False, default="Admin"
     )
-    OUTBOUND_DEL_RECEIVED_DATE = models.DateTimeField(
-        null=True, blank=True
-    )  # New field for received date
-
-    # OUTBOUND_DEL_CREATEDBY_USER_ID = models.ForeignKey(
-    #     settings.AUTH_USER_MODEL,
-    #     on_delete=models.CASCADE,
-    #     null=True,
-    #     related_name="customer_deliveries_created",
-    # )
+    OUTBOUND_DEL_ACCPTD_BY_USER = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        null=True,
+    )
 
     def __str__(self):
         return f"Customer Delivery #{self.OUTBOUND_DEL_ID} for {self.OUTBOUND_DEL_CUSTOMER_NAME}"
@@ -98,12 +89,20 @@ def update_status(self, new_status):
 
 class OutboundDeliveryDetails(models.Model):
     OUTBOUND_DEL_DETAIL_ID = models.AutoField(primary_key=True)
-    OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
+    OUTBOUND_DEL_ID = models.ForeignKey(
+        OutboundDelivery, on_delete=models.CASCADE, related_name="outbound_details"
+    )
     OUTBOUND_DETAILS_PROD_ID = models.ForeignKey(
         Product, on_delete=models.CASCADE, null=True
     )
     OUTBOUND_DETAILS_PROD_NAME = models.CharField(max_length=100, null=False)
-    OUTBOUND_DETAILS_PROD_QTY = models.PositiveIntegerField(null=False, default="0")
+    OUTBOUND_DETAILS_PROD_QTY_ORDERED = models.PositiveIntegerField(
+        null=False, default=0
+    )
+    OUTBOUND_DETAILS_PROD_QTY_ACCEPTED = models.PositiveIntegerField(
+        null=False, default="0"
+    )
+    OUTBOUND_DETAILS_LINE_DISCOUNT = models.FloatField(null=True, default=0)
     OUTBOUND_DETAILS_SELL_PRICE = models.DecimalField(
         null=False, max_digits=10, decimal_places=2, default=0
     )

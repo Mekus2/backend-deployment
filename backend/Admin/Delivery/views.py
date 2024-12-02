@@ -21,11 +21,13 @@ from .serializers import (
     CreateOutboundDeliverySerializer,
     UpdateInboundStatus,
 )
+from datetime import datetime
 from django.utils import timezone
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.http import Http404
-from Admin.Order.Purchase.models import PurchaseOrder
+from Admin.Inventory.models import Inventory
+
 
 import logging
 
@@ -130,6 +132,10 @@ class OutboundDeliveryDetailsAPIView(APIView):
         )
 
 
+class DeductProductInventory(APIView):
+    permission_classes = [permissions.AllowAny]
+
+
 class AcceptOutboundDeliveryAPI(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -158,12 +164,85 @@ class AcceptOutboundDeliveryAPI(APIView):
                 if new_status == "Dispatched":
                     # Check if it's a valid transition from Pending to Dispatched
                     if outbound_delivery.OUTBOUND_DEL_STATUS == "Pending":
+                        # Deduct inventory for all products in the delivery
+                        outbound_delivery_details = (
+                            outbound_delivery.outbound_details.all()
+                        )
+
+                        for detail in outbound_delivery_details:
+                            product_id = detail.OUTBOUND_DETAILS_PROD_ID
+                            quantity_to_deduct = (
+                                detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED
+                            )
+
+                            if not product_id:
+                                return Response(
+                                    {
+                                        "error": f"Product not found for delivery detail ID {detail.OUTBOUND_DEL_DETAIL_ID}."
+                                    },
+                                    status=status.HTTP_400_BAD_REQUEST,
+                                )
+
+                            if quantity_to_deduct <= 0:
+                                return Response(
+                                    {
+                                        "error": f"Invalid quantity to deduct for product {product_id}. Must be greater than zero."
+                                    },
+                                    status=status.HTTP_400_BAD_REQUEST,
+                                )
+
+                            # Fetch inventory batches for the product
+                            inventory_batches = Inventory.objects.filter(
+                                PRODUCT_ID=product_id
+                            ).order_by(
+                                "EXPIRY_DATE"
+                            )  # Deduct from the earliest expiry batch first
+
+                            if not inventory_batches.exists():
+                                return Response(
+                                    {
+                                        "error": f"No inventory available for product {product_id}."
+                                    },
+                                    status=status.HTTP_400_BAD_REQUEST,
+                                )
+
+                            total_deducted = 0
+
+                            for batch in inventory_batches:
+                                if total_deducted >= quantity_to_deduct:
+                                    break
+
+                                # Determine the amount to deduct from this batch
+                                deduct_from_batch = min(
+                                    batch.QUANTITY_ON_HAND,
+                                    quantity_to_deduct - total_deducted,
+                                )
+                                batch.QUANTITY_ON_HAND -= deduct_from_batch
+                                total_deducted += deduct_from_batch
+                                batch.save()
+
+                                logger.debug(
+                                    f"Deducted {deduct_from_batch} from batch {batch.BATCH_ID} "
+                                    f"for product {batch.PRODUCT_NAME}. Remaining in batch: {batch.QUANTITY_ON_HAND}"
+                                )
+
+                            # If total deducted is less than required, raise an error
+                            if total_deducted < quantity_to_deduct:
+                                return Response(
+                                    {
+                                        "error": f"Insufficient inventory for product {product_id}. "
+                                        f"Needed: {quantity_to_deduct}, Available: {total_deducted}."
+                                    },
+                                    status=status.HTTP_400_BAD_REQUEST,
+                                )
+
+                        # Update the delivery status
                         outbound_delivery.OUTBOUND_DEL_STATUS = "Dispatched"
                         outbound_delivery.save()
 
                         return Response(
                             {
-                                "message": "Outbound Delivery marked as Dispatched successfully."
+                                "message": "Outbound Delivery marked as Dispatched and inventory updated successfully."
                             },
                             status=status.HTTP_200_OK,
                         )
@@ -172,7 +251,6 @@ class AcceptOutboundDeliveryAPI(APIView):
                             {"error": "Invalid status transition."},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
-
                 elif new_status == "Delivered":
                     # Check if it's a valid transition from Dispatched to Delivered
                     if outbound_delivery.OUTBOUND_DEL_STATUS == "Dispatched":
@@ -180,7 +258,20 @@ class AcceptOutboundDeliveryAPI(APIView):
 
                         # If receivedDate is provided, use it
                         if received_date:
-                            outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE = received_date
+                            try:
+                                received_date = datetime.strptime(
+                                    received_date, "%Y-%m-%d"
+                                )
+                                outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE = (
+                                    received_date
+                                )
+                            except ValueError:
+                                return Response(
+                                    {
+                                        "error": "Invalid date format for receivedDate. Expected YYYY-MM-DD."
+                                    },
+                                    status=status.HTTP_400_BAD_REQUEST,
+                                )
                         else:
                             # Default to the current time if receivedDate is not provided
                             outbound_delivery.OUTBOUND_DEL_RECEIVED_DATE = (
@@ -224,7 +315,7 @@ class AcceptOutboundDeliveryAPI(APIView):
             )
 
         except Exception as e:
-            logger.error(f"Unexpected error: {str(e)}")
+            logger.exception("Unexpected error occurred")
             return Response(
                 {"error": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -14,8 +14,10 @@ class OutboundDeliveryDetailsSerializer(serializers.ModelSerializer):
             "OUTBOUND_DEL_DETAIL_ID",
             "OUTBOUND_DEL_ID",
             "OUTBOUND_DETAILS_PROD_NAME",
-            "OUTBOUND_DETAILS_PROD_QTY",
+            "OUTBOUND_DETAILS_PROD_QTY_ORDERED",
             "OUTBOUND_DETAILS_SELL_PRICE",
+            "OUTBOUND_DETAILS_LINE_DISCOUNT",
+            "OUTBOUND_DETAIL_LINE_TOTAL",
         ]
         extra_kwargs = {"OUTBOUND_DEL_ID": {"required": False}}
 
@@ -28,8 +30,6 @@ class OutboundDeliverySerializer(serializers.ModelSerializer):
         fields = [
             "OUTBOUND_DEL_ID",
             "SALES_ORDER_ID",
-            # "OUTBOUND_DEL_SHIPPED_DATE",
-            # "OUTBOUND_DEL_CSTMR_RCVD_DATE",
             "OUTBOUND_DEL_CUSTOMER_NAME",
             "OUTBOUND_DEL_TOTAL_PRICE",
             "OUTBOUNND_DEL_DISCOUNT",
@@ -39,7 +39,7 @@ class OutboundDeliverySerializer(serializers.ModelSerializer):
             "OUTBOUND_DEL_CITY",
             "OUTBOUND_DEL_PROVINCE",
             "OUTBOUND_DEL_CREATED",
-            # "OUTBOUND_DEL_DATEUPDATED",
+            "OUTBOUND_DEL_ACCPTD_BY_USERNAME",
             "OUTBOUND_DEL_ACCPTD_BY_USER",
             "details",
         ]
@@ -66,8 +66,10 @@ class CreateOutboundDeliveryDetailsSerializer(serializers.ModelSerializer):
         fields = [
             "OUTBOUND_DEL_ID",
             "OUTBOUND_DETAILS_PROD_NAME",
-            "OUTBOUND_DETAILS_PROD_QTY",
+            "OUTBOUND_DETAILS_PROD_QTY_ORDERED",
+            "OUTBOUND_DETAILS_LINE_DISCOUNT",
             "OUTBOUND_DETAILS_SELL_PRICE",
+            "OUTBOUND_DETAIL_LINE_TOTAL",
         ]
 
         extra_kwargs = {"OUTBOUND_DEL_ID": {"required": False}}
@@ -84,6 +86,7 @@ class CreateOutboundDeliverySerializer(serializers.ModelSerializer):
             "OUTBOUND_DEL_DLVRY_OPTION",
             "OUTBOUND_DEL_CITY",
             "OUTBOUND_DEL_PROVINCE",
+            "OUTBOUND_DEL_ACCPTD_BY_USERNAME",
             "OUTBOUND_DEL_ACCPTD_BY_USER",
             "details",
         ]

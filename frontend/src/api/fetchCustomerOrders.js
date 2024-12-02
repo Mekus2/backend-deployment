@@ -68,3 +68,32 @@ export const addNewCustomerOrder = async (orderData) => {
     throw error;
   }
 };
+
+export const acceptCustomerOrder = async (sales_order_id, username) => {
+  const apiUrl = `${BASE_URL}/api/sales-order/${sales_order_id}/accept/`; // Adjust the URL to your actual endpoint
+
+  const requestBody = {
+    SALES_ORDER_STATUS: "Accepted",
+    USERNAME: username,
+  };
+
+  try {
+    const response = await axios.post(apiUrl, requestBody, {
+      headers: {
+        "Content-Type": "application/json",
+        // Include authorization if needed, e.g., Bearer token
+        // 'Authorization': 'Bearer YOUR_TOKEN_HERE'
+      },
+    });
+
+    console.log("Success:", response.data);
+    return response.data; // Handle the success response here
+  } catch (error) {
+    console.error(
+      "Error:",
+      error.response ? error.response.data : error.message
+    );
+    // Handle error, show user-friendly message
+    throw error;
+  }
+};
