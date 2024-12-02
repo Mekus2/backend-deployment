@@ -9,7 +9,7 @@ const AddProductModal = ({ onClose, onSave }) => {
   const [roLevel, setRoLevel] = useState("");
   const [roQty, setRoQty] = useState("");
   const [qoh, setQoh] = useState("");
-  const [tags, setTags] = useState([]);
+  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [supplier, setSupplier] = useState("");
@@ -69,32 +69,13 @@ const AddProductModal = ({ onClose, onSave }) => {
 
   const handleNumberInput = (e, setter) => {
     const value = e.target.value;
-  
+
     // Allow empty input to clear the field
     if (value === "" || (!isNaN(value) && parseFloat(value) >= 0)) {
       setter(value);
     }
   };
-  
-  
 
-  // Handle tag input and adding tags to the list
-  const handleTagInputChange = (e) => {
-    const value = e.target.value;
-    if (value.includes(",")) {
-      const newTags = value
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter((tag) => tag && !tags.includes(tag)); // Filter out empty or duplicate tags
-      setTags((prevTags) => [...prevTags, ...newTags]); // Update with previous tags
-      e.target.value = ""; // Clear input after processing
-    }
-  };
-
-  // Handle removing tags
-  const handleRemoveTag = (tagToRemove) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
   // Modify handleSave function to include purchasePrice
   const handleSave = () => {
     if (!validate()) return;
@@ -108,7 +89,7 @@ const AddProductModal = ({ onClose, onSave }) => {
       // PROD_IMG: image || "https://via.placeholder.com/50", // Use default image if none uploaded
       PROD_DATECREATED: new Date().toISOString().split("T")[0],
       PROD_DATEUPDATED: new Date().toISOString().split("T")[0],
-      PROD_TAGS: tags, // Save the tags instead of category
+      PROD_CATEGORY: category,
     };
 
     const newProductDetails = {
@@ -118,7 +99,7 @@ const AddProductModal = ({ onClose, onSave }) => {
       PROD_DETAILS_SUPPLIER: supplier,
       PROD_DETAILS_UNITS: size,
       PROD_DETAILS_MEASUREMENT: measurement,
-      PROD_TAGS: tags, // Save the tags instead of category
+      PROD_CATEGORY: category,
     };
 
     onSave(newProduct, newProductDetails);
@@ -147,6 +128,15 @@ const AddProductModal = ({ onClose, onSave }) => {
               placeholder="Enter product name"
             />
             {errors.productName && <ErrorText>{errors.productName}</ErrorText>}
+          </Field>
+          <Field>
+            <Label>Category</Label>
+            <Input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Enter category"
+            />
+            {errors.category && <ErrorText>{errors.category}</ErrorText>}
           </Field>
           <Field style={{ display: "flex", gap: "20px" }}>
             <div style={{ flex: 1 }}>
@@ -209,25 +199,6 @@ const AddProductModal = ({ onClose, onSave }) => {
             />
             {errors.qoh && <ErrorText>{errors.qoh}</ErrorText>}
           </Field>
-          <Field>
-            <Label>Tags</Label>
-            <div>
-              <Input
-                type="text"
-                onChange={handleTagInputChange}
-                placeholder="Enter tags, separated by commas"
-              />
-              <TagList>
-                {tags.map((tag, index) => (
-                  <Tag key={index}>
-                    {tag}
-                    <CloseIcon onClick={() => handleRemoveTag(tag)} />
-                  </Tag>
-                ))}
-              </TagList>
-            </div>
-          </Field>
-
           <Field>
             <Label>Description</Label>
             <TextArea
@@ -293,34 +264,6 @@ const AddProductModal = ({ onClose, onSave }) => {
 };
 
 // Styled Components
-const TagList = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  margin-top: 10px;
-`;
-
-const Tag = styled.span`
-  background-color: ${colors.primary}; /* Replace with desired color */
-  color: white;
-  padding: 5px 10px;
-  border-radius: 15px;
-  margin: 5px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.875rem;
-  font-weight: bold;
-`;
-
-const CloseIcon = styled(FaTimes)`
-  margin-left: 8px;
-  cursor: pointer;
-  font-size: 1rem;
-  color: ${colors.red};
-  &:hover {
-    color: ${colors.darkRed};
-  }
-`;
-
 const ErrorText = styled.span`
   color: red;
   font-size: 0.75rem;

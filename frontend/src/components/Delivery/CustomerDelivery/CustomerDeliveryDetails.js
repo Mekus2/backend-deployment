@@ -170,7 +170,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     };
 
     // Sync the status with the backend only if the status is "Pending"
-    if (newStatus === "Pending") {
+    if (newStatus === "Dispatched") {
       try {
         const response = await updateDeliveryStatus(
           delivery.OUTBOUND_DEL_ID,
@@ -361,36 +361,36 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                           type="text"
                           value={item.QTY_ACCEPTED || ""}
                           onChange={(e) => {
-                            // Allow only numeric input (including leading zeros, but no negative sign or other characters)
                             const value = e.target.value;
-                            const numericValue = value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
+                            const numericValue =
+                              value === "" ? "" : value.replace(/[^0-9]/g, ""); // Allow empty string for direct "0" input
 
-                            // If the value is empty after cleaning, set to 0, otherwise parse the value
                             let newQtyAccepted =
                               numericValue === ""
-                                ? 0
+                                ? ""
                                 : parseInt(numericValue, 10);
+                            // Ensure the new quantity is within the valid range (not greater than Qty Ordered)
+                            if (
+                              newQtyAccepted !== "" &&
+                              newQtyAccepted >
+                                item.OUTBOUND_DETAILS_PROD_QTY_ORDERED
+                            )
+                              newQtyAccepted =
+                                item.OUTBOUND_DETAILS_PROD_QTY_ORDERED;
 
-                            // Ensure the new quantity is within the valid range
-                            if (newQtyAccepted < 0) newQtyAccepted = 0;
-                            if (newQtyAccepted > item.OUTBOUND_DETAILS_PROD_QTY)
-                              newQtyAccepted = item.OUTBOUND_DETAILS_PROD_QTY;
-
-                            // Calculate Qty Defect
                             const newQtyDefect =
-                              newQtyAccepted === 0
+                              newQtyAccepted === "" || newQtyAccepted === 0
                                 ? 0
                                 : item.OUTBOUND_DETAILS_PROD_QTY_ORDERED -
                                   newQtyAccepted;
 
-                            // Update the order details state
                             setOrderDetails((prevDetails) =>
                               prevDetails.map((detail, detailIndex) =>
                                 detailIndex === index
                                   ? {
                                       ...detail,
                                       QTY_ACCEPTED: newQtyAccepted,
-                                      QTY_DEFECT: newQtyDefect, // Set to 0 if Qty Accepted is 0
+                                      QTY_DEFECT: newQtyDefect, // Update Qty Defect based on Qty Accepted
                                     }
                                   : detail
                               )

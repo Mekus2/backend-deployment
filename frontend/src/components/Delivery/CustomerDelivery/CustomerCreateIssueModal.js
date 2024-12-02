@@ -51,7 +51,7 @@ const CustomerCreateIssueModal = ({ orderDetails, onClose, onSubmit }) => {
   return (
     <Modal
       data-cy="customer-issue-modal"
-      title="Report a Customer Orders Issue"
+      title="Customer Order Issue"
       onClose={onClose}
     >
       {/* Type of Issue Dropdown */}

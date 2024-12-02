@@ -13,7 +13,7 @@ const pageTitles = {
   "/admin/customer-order": "Customer Order",
   "/admin/purchase-order": "Supplier Order",
   "/admin/customer-delivery": "Customer Delivery",
-  "/admin/purchase-delivery": "Supplier Delivery",
+  "/admin/supplier-delivery": "Supplier Delivery",
   "/admin/issues": "Issue",
   "/admin/products": "Product",
   "/admin/inventory": "Inventory",

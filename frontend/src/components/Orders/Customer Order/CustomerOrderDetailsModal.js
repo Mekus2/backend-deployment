@@ -108,6 +108,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const handleAcceptOrder = async () => {
     const newDelivery = {
       SALES_ORDER_ID: order.SALES_ORDER_ID,
+      CLIENT_ID: order.CLIENT_ID,
       OUTBOUND_DEL_CUSTOMER_NAME: order.SALES_ORDER_CLIENT_NAME,
       OUTBOUND_DEL_DLVRY_OPTION: order.SALES_ORDER_DLVRY_OPTION,
       OUTBOUND_DEL_TOTAL_PRICE: order.SALES_ORDER_TOTAL_PRICE,
