@@ -84,6 +84,7 @@ class CreateOutboundDeliverySerializer(serializers.ModelSerializer):
         model = OutboundDelivery
         fields = [
             "SALES_ORDER_ID",
+            "CLIENT_ID",
             "OUTBOUND_DEL_CUSTOMER_NAME",
             "OUTBOUND_DEL_DLVRY_OPTION",
             "OUTBOUND_DEL_TOTAL_PRICE",

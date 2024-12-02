@@ -30,10 +30,10 @@ class SalesInvoice(models.Model):
     )
     SALES_INV_PYMNT_DATE = models.DateField(null=True, blank=True)
     SALES_INV_AMOUNT_PAID = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.0
+        max_digits=10, decimal_places=2, default=0
     )
     SALES_INV_AMOUNT_BALANCE = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.0
+        max_digits=10, decimal_places=2, default=0
     )
     SALES_INV_CREATED_AT = models.DateTimeField(auto_now_add=True)
     SALES_INV_UPDATED_AT = models.DateTimeField(auto_now=True)

@@ -170,7 +170,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     };
 
     // Sync the status with the backend only if the status is "Pending"
-    if (newStatus === "Pending") {
+    if (newStatus === "Dispatched") {
       try {
         const response = await updateDeliveryStatus(
           delivery.OUTBOUND_DEL_ID,
