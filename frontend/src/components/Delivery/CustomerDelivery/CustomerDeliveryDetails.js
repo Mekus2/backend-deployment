@@ -362,20 +362,28 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                           value={item.QTY_ACCEPTED || ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            const numericValue = value.replace(/[^0-9]/g, ""); // Remove non-numeric characters
-                          
-                            let newQtyAccepted = numericValue === "" ? 0 : parseInt(numericValue, 10);
-                          
+                            const numericValue =
+                              value === "" ? "" : value.replace(/[^0-9]/g, ""); // Allow empty string for direct "0" input
+
+                            let newQtyAccepted =
+                              numericValue === ""
+                                ? ""
+                                : parseInt(numericValue, 10);
                             // Ensure the new quantity is within the valid range (not greater than Qty Ordered)
-                            if (newQtyAccepted < 0) newQtyAccepted = 0;
-                            if (newQtyAccepted > item.OUTBOUND_DETAILS_PROD_QTY_ORDERED)
-                              newQtyAccepted = item.OUTBOUND_DETAILS_PROD_QTY_ORDERED;
-                          
+                            if (
+                              newQtyAccepted !== "" &&
+                              newQtyAccepted >
+                                item.OUTBOUND_DETAILS_PROD_QTY_ORDERED
+                            )
+                              newQtyAccepted =
+                                item.OUTBOUND_DETAILS_PROD_QTY_ORDERED;
+
                             const newQtyDefect =
-                              newQtyAccepted === 0
+                              newQtyAccepted === "" || newQtyAccepted === 0
                                 ? 0
-                                : item.OUTBOUND_DETAILS_PROD_QTY_ORDERED - newQtyAccepted;
-                          
+                                : item.OUTBOUND_DETAILS_PROD_QTY_ORDERED -
+                                  newQtyAccepted;
+
                             setOrderDetails((prevDetails) =>
                               prevDetails.map((detail, detailIndex) =>
                                 detailIndex === index
@@ -388,7 +396,6 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                               )
                             );
                           }}
-                          
                           style={{
                             border: "1px solid #ccc",
                             padding: "5px",
