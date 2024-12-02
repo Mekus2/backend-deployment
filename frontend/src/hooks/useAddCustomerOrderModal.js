@@ -53,7 +53,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       try {
         const response = await axios.get(
           "http://127.0.0.1:8000/customer/clients/"
-      );
+        );
         setClientsData(response.data); // Store fetched clients
         console.log("Clients Data:", response.data); // Debug line to check if data is properly set
         setFilteredClients(response.data); // Initialize filteredClients with fetched data
@@ -231,6 +231,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
         updatedOrderDetails[index]
       );
 
+      console.log("updated order details:", updatedOrderDetails);
       return updatedOrderDetails;
     });
   };
@@ -293,7 +294,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
         SALES_ORDER_PROD_NAME: item.productName,
         SALES_ORDER_LINE_PRICE: parseFloat(item.price) || 0, // Ensure this is a number
         SALES_ORDER_LINE_QTY: item.quantity,
-        SALES_ORDER_LINE_DISCOUNT: item.discountValue || 0,
+        SALES_ORDER_LINE_DISCOUNT: item.discount || 0,
         SALES_ORDER_LINE_TOTAL: item.lineTotal,
       })),
     };
@@ -315,7 +316,7 @@ const useAddCustomerOrderModal = (onSave, onClose) => {
       console.error("Error saving order:", error);
     }
   };
-  
+
   const logAddCustomerOrder = async (createdOrder) => {
     // Retrieve the userId from localStorage
     const userId = localStorage.getItem("user_id");
