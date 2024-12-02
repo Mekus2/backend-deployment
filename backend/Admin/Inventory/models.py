@@ -55,7 +55,9 @@ class Inventory(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.PRODUCT_ID} - Batch {self.BATCH_ID} - Qty: {self.QUANTITY}"
+        return (
+            f"{self.PRODUCT_ID} - Batch {self.BATCH_ID} - Qty: {self.QUANTITY_ON_HAND}"
+        )
 
     class Meta:
         db_table = "PRODUCT_INVENTORY"

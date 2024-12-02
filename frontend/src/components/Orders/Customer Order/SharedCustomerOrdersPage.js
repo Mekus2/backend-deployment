@@ -32,6 +32,7 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
     try {
       setLoading(true);
       const data = await fetchCustomerOrders();
+      console.log("Fetched Customer Orders:", data);
       setCustomer(data);
       setLoading(false);
     } catch (error) {
@@ -65,7 +66,10 @@ const SharedCustomerOrdersPage = ({ userRole }) => {
   const sortedSales = filteredSales.sort((a, b) => {
     if (sortConfig.key === "SALES_ORDER_DATE_CREATED") {
       // Always sort in descending order by date
-      return new Date(b.SALES_ORDER_DATE_CREATED) - new Date(a.SALES_ORDER_DATE_CREATED);
+      return (
+        new Date(b.SALES_ORDER_DATE_CREATED) -
+        new Date(a.SALES_ORDER_DATE_CREATED)
+      );
     }
     return (
       a.SALES_ORDER_CLIENT_NAME.localeCompare(b.SALES_ORDER_CLIENT_NAME) *
