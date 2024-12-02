@@ -622,3 +622,16 @@ class UpdateInboundDelStatus(APIView):
 
         # Return validation errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeliveredOutboundDeliveryView(APIView):
+    """
+    API View to fetch all OutboundDeliveries with status 'Delivered'.
+    """
+    def get(self, request, *args, **kwargs):
+        # Query OutboundDelivery objects with status 'Delivered'
+        delivered_deliveries = OutboundDelivery.objects.filter(OUTBOUND_DEL_STATUS="Delivered")
+        
+        # Serialize the data
+        serializer = OutboundDeliverySerializer(delivered_deliveries, many=True)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)

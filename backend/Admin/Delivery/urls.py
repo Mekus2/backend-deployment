@@ -10,6 +10,7 @@ from .views import (
     GetTotalInboundPendingCount,
     AcceptOutboundDeliveryAPI,
     CompleteOutboundDeliveryAPI,
+    DeliveredOutboundDeliveryView,
 )
 
 urlpatterns = [
@@ -65,5 +66,12 @@ urlpatterns = [
         "supplier/total-orders",
         GetTotalInboundPendingCount.as_view(),
         name="total-supplier-pending",
+    ),
+
+    #Path for all delivered
+    path(
+        "customer/delivered",
+        DeliveredOutboundDeliveryView.as_view(),
+        name="Delivered",
     ),
 ]
