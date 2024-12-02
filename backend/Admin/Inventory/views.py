@@ -1,5 +1,7 @@
 import logging
 from django.shortcuts import render
+from datetime import timedelta
+from django.utils import timezone
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -295,3 +297,19 @@ class InventorySearchView(APIView):
         )
 
         return Response(inventory_data, status=status.HTTP_200_OK)
+
+class ExpiringProductsView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def get(self, request):
+        today = timezone.now().date()
+        one_month_from_today = today + timedelta(days=30)
+        
+        # Fetch inventory items whose expiry date is between today and 1 month from now
+        expiring_inventory = Inventory.objects.filter(
+            EXPIRY_DATE__gte=today,
+            EXPIRY_DATE__lte=one_month_from_today
+        )
+        
+        # Serialize the inventory items
+        serializer = InventorySerializer(expiring_inventory, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

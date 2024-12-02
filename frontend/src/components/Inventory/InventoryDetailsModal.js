@@ -1,16 +1,34 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Modal from "../Layout/Modal"; // Ensure the path to Modal is correct
 import styled from "styled-components";
 import Button from "../Layout/Button"; // Import the Button component
-import productData from "../../data/ProductData"; // Ensure the path is correct
 
 const InventoryDetailsModal = ({ item, onClose }) => {
-  if (!item) return null;
+  const [reorderLevel, setReorderLevel] = useState(null);
 
-  // const product = productData.PRODUCT.find((p) => p.PROD_ID === item.PROD_ID);
-  // const productDetails = productData.PRODUCT_DETAILS.find(
-  //   (pd) => pd.PROD_DETAILS_CODE === product.PROD_DETAILS_CODE
-  // );
+  const prodId = item.PRODUCT_ID;
+
+  // Fetch the reorder level for the specific product ID
+  // Fetch the reorder level for the specific product ID
+  useEffect(() => {
+    if (prodId) {
+      fetch(`http://127.0.0.1:8000/items/productList/${prodId}/`)
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Failed to fetch product data");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          setReorderLevel(data.PROD_RO_LEVEL);
+          console.log('RO LEVEL:', data.PROD_RO_LEVEL)
+        })
+        .catch((error) => {
+          console.error("Error fetching product data:", error);
+          setReorderLevel("Error fetching data");
+        });
+    }
+  }, [prodId]);
 
   const handleRemove = () => {
     const confirmRemoval = window.confirm(
@@ -26,27 +44,33 @@ const InventoryDetailsModal = ({ item, onClose }) => {
   return (
     <Modal
       title={`${item.PRODUCT_NAME} Details`}
-      status={item.PROD_INV_QTY_ON_HAND > 0 ? "Available" : "Out of Stock"}
+      status={item.QUANTITY_ON_HAND > 0 ? "Available" : "Out of Stock"}
       onClose={onClose}
     >
       <Section>
-      <Detail>
+        <Detail>
           <DetailLabel>Inventory Id:</DetailLabel> {item.INVENTORY_ID}
         </Detail>
         <Detail>
           <DetailLabel>Batch Id:</DetailLabel> {item.BATCH_ID}
         </Detail>
         <Detail>
-      </Detail>
-        <Detail>
-        <DetailLabel>Expiry Date:</DetailLabel>{" "}
-        {new Date(item.EXPIRY_DATE).toLocaleDateString()}
+          <DetailLabel>Expiry Date:</DetailLabel>{" "}
+          {new Date(item.EXPIRY_DATE).toLocaleDateString()}
         </Detail>
         <Detail>
-        <DetailLabel>Inbound Delivery Id:</DetailLabel> {item.INBOUND_DEL_ID}
+          <DetailLabel>Inbound Delivery Id:</DetailLabel>{" "}
+          {item.INBOUND_DEL_ID}
         </Detail>
         <Detail>
           <DetailLabel>Quantity on Hand:</DetailLabel> {item.QUANTITY_ON_HAND}
+        </Detail>
+        <Detail>
+          <DetailLabel>PRODUCT ID:</DetailLabel> {item.PRODUCT_ID}
+        </Detail>
+        <Detail>
+          <DetailLabel>Reorder Level:</DetailLabel>{" "}
+          {reorderLevel !== null ? reorderLevel : "Loading..."}
         </Detail>
       </Section>
       <ButtonGroup>
@@ -64,12 +88,6 @@ const Section = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-start; /* Align to the left */
-`;
-
-const Image = styled.img`
-  width: 100px;
-  height: 100px;
-  margin-bottom: 20px;
 `;
 
 const Detail = styled.div`

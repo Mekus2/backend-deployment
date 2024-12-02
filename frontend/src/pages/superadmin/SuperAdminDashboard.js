@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import HighestSellingProducts from "../../components/Dashboard/HighestSellingProducts";
-import RecentlyAddedProducts from "../../components/Dashboard/RecentlyAddedProducts";
+//import HighestSellingProducts from "../../components/Dashboard/HighestSellingProducts";
+//import RecentlyAddedProducts from "../../components/Dashboard/RecentlyAddedProducts";
 import LowestStocks from "../../components/Dashboard/LowestStocks";
-import CardLowStocks from "../../components/CardsData/CardLowStocks";
+//import CardLowStocks from "../../components/CardsData/CardLowStocks";
 import CardTotalProducts from "../../components/CardsData/CardTotalProducts";
 import CardTotalSales from "../../components/CardsData/CardTotalSales";
 import CardTotalInventoryValue from "../../components/CardsData/CardTotalInventoryValue";
@@ -32,7 +32,7 @@ const SuperAdminDashboard = () => {
   const navigate = useNavigate();
   const [currentCardOrder, setCurrentCardOrder] = useState([
     "CardTotalProducts",
-    "CardLowStocks",
+   // "CardLowStocks",
     "CardTotalInventoryValue",
     "CardTotalCustomerOrder",
     "CardTotalCustomers",
@@ -104,7 +104,7 @@ const SuperAdminDashboard = () => {
   // Custom onClick handlers for cards (with superadmin role)
   const cardOnClickHandlers = {
     CardTotalProducts: () => navigate("/superadmin/products"),
-    CardLowStocks: () => navigate("/superadmin/inventory"),
+    //CardLowStocks: () => navigate("/superadmin/inventory"),
     CardTotalInventoryValue: () => navigate("/superadmin/inventory"),
     CardTotalCustomerOrder: () => navigate("/superadmin/customer-order"),
     CardTotalCustomers: () => navigate("/superadmin/customers"),
@@ -129,7 +129,7 @@ const SuperAdminDashboard = () => {
   const cardComponents = {
     CardTotalSales: <CardTotalSales />,
     CardTotalProducts: <CardTotalProducts />,
-    CardLowStocks: <CardLowStocks />,
+  //  CardLowStocks: <CardLowStocks />,
     CardTotalInventoryValue: <CardTotalInventoryValue />,
     CardTotalCustomerOrder: <CardTotalCustomerOrder />,
     CardTotalCustomers: <CardTotalCustomers />,
@@ -144,8 +144,8 @@ const SuperAdminDashboard = () => {
 
   const tableComponents = {
     ExpiredItemsAlert: <ExpiredItemsAlert />,
-    HighestSellingProducts: <HighestSellingProducts />,
-    RecentlyAddedProducts: <RecentlyAddedProducts />,
+    //HighestSellingProducts: <HighestSellingProducts />,
+   // RecentlyAddedProducts: <RecentlyAddedProducts />,
     LowestStocks: <LowestStocks />,
   };
 

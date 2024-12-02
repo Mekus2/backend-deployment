@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import HighestSellingProducts from "../../components/Dashboard/HighestSellingProducts";
-import RecentlyAddedProducts from "../../components/Dashboard/RecentlyAddedProducts";
+//import HighestSellingProducts from "../../components/Dashboard/HighestSellingProducts";
+//import RecentlyAddedProducts from "../../components/Dashboard/RecentlyAddedProducts";
 import LowestStocks from "../../components/Dashboard/LowestStocks";
-import CardLowStocks from "../../components/CardsData/CardLowStocks";
+//import CardLowStocks from "../../components/CardsData/CardLowStocks";
 import CardTotalProducts from "../../components/CardsData/CardTotalProducts";
 import CardTotalCustomerOrder from "../../components/CardsData/CardTotalCustomerOrder";
 import CardTotalCustomers from "../../components/CardsData/CardTotalCustomers";
@@ -29,7 +29,7 @@ const AdminDashboard = () => {
 
   const cardComponents = {
     CardTotalProducts: <CardTotalProducts />,
-    CardLowStocks: <CardLowStocks />,
+   // CardLowStocks: <CardLowStocks />,
     CardTotalCustomerOrder: <CardTotalCustomerOrder />,
     CardTotalCustomers: <CardTotalCustomers />,
     CardTotalDelivery: <CardTotalDelivery />,
@@ -42,8 +42,8 @@ const AdminDashboard = () => {
   };
 
   const tableComponents = {
-    HighestSellingProducts: <HighestSellingProducts />,
-    RecentlyAddedProducts: <RecentlyAddedProducts />,
+   // HighestSellingProducts: <HighestSellingProducts />,
+  //  RecentlyAddedProducts: <RecentlyAddedProducts />,
     LowestStocks: <LowestStocks />,
   };
 

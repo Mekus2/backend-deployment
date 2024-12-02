@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
+import { notify } from "../Layout/CustomToast";
 
 const SupplierDetailsModal = ({ supplier, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -52,6 +53,7 @@ const SupplierDetailsModal = ({ supplier, onClose }) => {
             }
           );
           console.log('updated:', updatedSupplier);
+          notify.success("Customer details updated succesfully!");
 
           if (!response.ok) {
             const errorData = await response.json();
