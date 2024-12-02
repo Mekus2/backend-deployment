@@ -302,7 +302,7 @@ class ExpiringProductsView(APIView):
     permission_classes = [permissions.AllowAny]
     def get(self, request):
         today = timezone.now().date()
-        one_month_from_today = today + timedelta(days=30)
+        one_month_from_today = today + timedelta(days=15)
         
         # Fetch inventory items whose expiry date is between today and 1 month from now
         expiring_inventory = Inventory.objects.filter(
