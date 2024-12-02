@@ -205,11 +205,11 @@ const AnalyticsContainer = styled.div`
 
 const Status = styled.span`
   background-color: ${(props) =>
-    props.status === "Accepted"
+    props.status === "Completed"
       ? "#1DBA0B"
       : props.status === "Pending"
       ? "#f08400"
-      : "#ff5757"};
+      : "#00C4FF"};
   color: white;
   padding: 4px 8px;
   border-radius: 4px;
