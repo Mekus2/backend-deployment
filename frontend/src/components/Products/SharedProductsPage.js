@@ -9,7 +9,7 @@ import AddProductModal from "./AddProductModal";
 import ProductDetailsModal from "./ProductDetailsModal";
 import { FaPlus } from "react-icons/fa";
 import { colors } from "../../colors";
- import axios from "axios";
+import axios from "axios";
 import Loading from "../Layout/Loading"; // Import the Loading component
 
 const SharedProductsPage = () => {
@@ -42,34 +42,22 @@ const SharedProductsPage = () => {
   };
 
   const debouncedSearchTerm = useDebounce(searchTerm, 800);
-
-  // Function to load products
   const loadProducts = async (page = 1) => {
     try {
       setLoading(true); // Start loading before fetching
       const data = await fetchProductList(page, 10, debouncedSearchTerm);
       const { results, count } = data;
       console.log("Search Results:", results);
-
+  
       const rowsData = results.map((product) => {
         const productDetail = product.PROD_DETAILS;
         const brand = productDetail?.PROD_DETAILS_SUPPLIER || "N/A";
         const price = parseFloat(productDetail?.PROD_DETAILS_PRICE || 0);
-
+        const category = productDetail?.CATEGORY || "No Category";
+  
         return [
-          // <ImageContainer key={product.PROD_ID}>
-          //   <img
-          //     src={product.PROD_IMAGE}
-          //     alt={product.PROD_NAME}
-          //     style={{ width: "50px", height: "auto" }}
-          //   />
-          // </ImageContainer>,
           product.PROD_NAME,
-          <TagList key={`tags-${product.PROD_ID}`}>
-            {(productDetail?.TAGS || ["No Tags"]).map((tag, index) => (
-              <Tag key={index}>{tag}</Tag>
-            ))}
-          </TagList>,
+          category, // Simplified category as plain text
           brand,
           price && !isNaN(price) ? `₱${price.toFixed(2)}` : "₱0.00",
           <ActionButton
@@ -81,7 +69,7 @@ const SharedProductsPage = () => {
           </ActionButton>,
         ];
       });
-
+  
       setRows(rowsData);
       setTotalRows(count); // Set the total rows count for pagination
       setLoading(false);
@@ -91,6 +79,7 @@ const SharedProductsPage = () => {
       console.error("Error fetching products:", err);
     }
   };
+  
 
   // Effect for loading products
   useEffect(() => {
@@ -139,9 +128,8 @@ const SharedProductsPage = () => {
   }
 
   const headers = [
-    // "Image",
     "Product Name",
-    "Tags",
+    "Category",
     "Supplier",
     "Price",
     "Actions",
@@ -187,7 +175,7 @@ const SharedProductsPage = () => {
 };
 
 // Styled components
-const TagList = styled.div`
+const CategoryList = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -197,7 +185,7 @@ const TagList = styled.div`
   justify-content: center;
 `;
 
-const Tag = styled.div`
+const Category = styled.div`
   background-color: ${colors.primary};
   color: white;
   padding: 4px 8px;
@@ -210,13 +198,6 @@ const Tag = styled.div`
   overflow: hidden;
   text-overflow: ellipsis;
 `;
-
-// const ImageContainer = styled.div`
-//   display: flex;
-//   justify-content: center;
-//   align-items: center;
-//   height: 100%;
-// `;
 
 const Controls = styled.div`
   display: flex;
