@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
 import ReportCard from "../Layout/ReportCard";
 import { FaShoppingCart, FaDollarSign } from "react-icons/fa";
-import { SALES_ORDR } from "../../data/CusOrderData"; // Import customer orders data
-import PURCHASE_ORDR from "../../data/SuppOrderData"; // Import purchase orders data
+// import { SALES_ORDR } from "../../data/CusOrderData"; // Import customer orders data
+// import PURCHASE_ORDR from "../../data/SuppOrderData"; // Import purchase orders data
 import Button from "../Layout/Button"; // Import the Button component
 import SalesDetailsModal from "./SalesDetailsModal"; // Import SalesDetailsModal component
 
@@ -15,84 +15,65 @@ const SharedSalesPage = () => {
   const [endDate, setEndDate] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false); // State for controlling modal visibility
   const [selectedOrder, setSelectedOrder] = useState(null); // State to store selected order for details
+  const [salesInvoice, setSalesInvoices] = useState([]);
 
   const combinedOrders = [];
 
-  // Process sales orders
-  SALES_ORDR.forEach((order) => {
-    const grossProfit = order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST;
-    combinedOrders.push({
-      type: "Sales",
-      date: new Date(order.SALES_ORDER_DATE),
-      cost: order.SALES_ORDER_COST,
-      revenue: order.SALES_ORDER_REVENUE,
-      grossProfit,
-      orderDetails: order // Store full order details for modal use
-    });
-  });
+  useEffect(() => {
+    const fetchSalesInvoices = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/sales/list/"); // Your API endpoint for sales invoices
+        const data = await response.json();
 
-  // Process purchase orders
-  PURCHASE_ORDR.forEach((order) => {
-    const grossProfit =
-      order.PURCHASE_ORDER_REVENUE - order.PURCHASE_ORDER_COST;
-    combinedOrders.push({
-      type: "Purchase",
-      date: new Date(order.PURCHASE_ORDER_DATE),
-      cost: order.PURCHASE_ORDER_COST,
-      revenue: order.PURCHASE_ORDER_REVENUE,
-      grossProfit,
-      orderDetails: order // Store full order details for modal use
-    });
-  });
+        // Assuming the fetched data is an array of sales invoices, set it to the state
+        setSalesInvoices(data.results);
+        console.log("Received Invoice list:", data.results);
 
-  const filteredOrders = combinedOrders.filter((order) => {
-    const matchesSearchTerm =
-      order.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.cost.toString().includes(searchTerm.toLowerCase()) ||
-      order.revenue.toString().includes(searchTerm.toLowerCase()) ||
-      order.grossProfit.toString().includes(searchTerm.toLowerCase()) ||
-      order.date.toISOString().slice(0, 10).includes(searchTerm.toLowerCase()); // Include date search
+        // setCombinedOrders(allOrders);
+      } catch (error) {
+        console.error("Error fetching sales invoices:", error);
+      }
+    };
 
-    const matchesDateRange =
-      (!startDate || order.date >= new Date(startDate)) &&
-      (!endDate || order.date <= new Date(endDate));
+    fetchSalesInvoices();
+  }, []);
 
-    return matchesSearchTerm && matchesDateRange;
-  });
-
-  // Sort orders by date descending
-  const sortedOrders = filteredOrders.sort((a, b) => b.date - a.date);
-
-  const totalOrders = sortedOrders.length;
-  const totalSales = sortedOrders.reduce(
+  const totalOrders = salesInvoice.length;
+  const totalSales = salesInvoice.reduce(
     (acc, order) => acc + (order.revenue > 0 ? order.revenue : 0),
     0
   );
-  const totalExpenses = sortedOrders.reduce(
-    (acc, order) => acc + (order.cost > 0 ? order.cost : 0),
-    0
-  );
-  const netProfit = totalSales - totalExpenses;
 
   const formatCurrency = (value) => {
-    return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+    // Ensure the value is a number and fallback to 0 if it's not a valid number
+    const numberValue = isNaN(value) ? 0 : Number(value);
+    return `₱${numberValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
-
   // Prepare table data with required columns: TYPE, DATE, COST, REVENUE, GROSS PROFIT, ACTION (Details Button)
-  const tableData = sortedOrders.map((order) => [
-    order.orderDetails?.INVOICE_ID || "N/A", // Assuming order has an INVOICE_ID property
-    order.date.toISOString().slice(0, 10), // Format date as YYYY-MM-DD
-    order.orderDetails?.CLIENT_NAME || "Unknown", // Assuming order has a CLIENT_NAME property
-    formatCurrency(order.orderDetails?.BALANCE || 0), // Assuming order has a BALANCE property
-    order.orderDetails?.STATUS || "Pending", // Assuming order has a STATUS property
+  const tableData = salesInvoice.map((order) => [
+    order.SALES_INV_ID || "N/A", // Sales Invoice ID
+    order.SALES_INV_DATETIME
+      ? new Date(order.SALES_INV_DATETIME).toISOString().slice(0, 10) // Convert to Date if necessary
+      : "N/A", // Format date as YYYY-MM-DD
+    order.CLIENT_NAME || "Unknown", // Client Name
+    formatCurrency(order.SALES_INV_AMOUNT_BALANCE || 0), // Balance (Total Amount Balance)
+    order.SALES_INV_PYMNT_STATUS || "Pending", // Payment Status
     <Button
       variant="primary"
       onClick={() => handleOpenModal(order)} // Pass the corresponding order to the modal
     >
+      {console.log("Sent Invoice list:", order)}
       Details
     </Button>,
   ]);
-  const header = ["Invoice ID", "Date", "Client Name", "Balance", "Status", "Action"];
+  const header = [
+    "Invoice ID",
+    "Date",
+    "Client Name",
+    "Balance",
+    "Status",
+    "Action",
+  ];
 
   const handleOpenModal = (order) => {
     setSelectedOrder(order); // Set the selected order to be shown in the modal
@@ -119,12 +100,12 @@ const SharedSalesPage = () => {
         />
         <ReportCard
           label="Cost"
-          value={formatCurrency(-totalExpenses)} // Negative value for cost
+          value={formatCurrency(0)} // totalExpense Here
           icon={<FaDollarSign />}
         />
         <ReportCard
           label="Gross Profit"
-          value={formatCurrency(netProfit)}
+          value={formatCurrency()} // Net Profit here
           icon={<FaDollarSign />}
         />
       </CardsContainer>
@@ -155,12 +136,13 @@ const SharedSalesPage = () => {
       </Controls>
 
       {/* Conditional rendering of SalesDetailsModal */}
-      {isModalOpen && (
+      {isModalOpen && selectedOrder && (
         <SalesDetailsModal
           onClose={handleCloseModal}
-          order={selectedOrder} // Pass the selected order data to the modal
+          sale={selectedOrder} // Ensure the sale data is passed to the modal
         />
       )}
+      {console.log("Selected Order:", selectedOrder)}
 
       <ReportContent>
         <Table headers={header} rows={tableData} />

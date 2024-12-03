@@ -16,6 +16,9 @@ class ProductDetails(models.Model):
         max_length=255, default="No Description"
     )
     PROD_DETAILS_PRICE = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    PROD_DETAILS_PURCHASE_PRICE = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0
+    )
     PROD_DETAILS_SUPPLIER = models.CharField(max_length=255, null=True)
     PROD_DETAILS_QUANTITY = models.IntegerField(default=0)
     PROD_DETAILS_UNIT = models.CharField(max_length=255, null=True)
