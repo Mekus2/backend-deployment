@@ -28,6 +28,7 @@ from django.shortcuts import get_object_or_404
 from django.http import Http404
 from Admin.Inventory.models import Inventory
 from Admin.Sales.models import SalesInvoice, SalesInvoiceItems
+from Admin.Product.models import Product, ProductDetails
 
 
 import logging
@@ -329,7 +330,7 @@ class CompleteOutboundDeliveryAPI(APIView):
                 )
 
                 # Create a Sales Invoice for the completed Outbound Delivery
-                sales_invoice = SalesInvoice.objects.create(
+                sales_invoice = SalesInvoice(
                     SALES_INV_DATETIME=outbound_delivery.OUTBOUND_DEL_CREATED,  # Example: Assigning relevant datetime
                     SALES_INV_TOTAL_PRICE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
                     SALES_ORDER_DLVRY_OPTION=outbound_delivery.OUTBOUND_DEL_DLVRY_OPTION,
@@ -339,26 +340,43 @@ class CompleteOutboundDeliveryAPI(APIView):
                     OUTBOUND_DEL_ID=outbound_delivery,
                 )
 
-                # Create SalesInvoiceItems for each OutboundDeliveryDetail
+                # Save the sales invoice to generate a primary key
+                sales_invoice.save()
+
                 for detail in outbound_delivery.outbound_details.all():
+                    # Check if OUTBOUND_DETAILS_PROD_ID is already a Product instance or just the ID
+                    if isinstance(detail.OUTBOUND_DETAILS_PROD_ID, Product):
+                        product = detail.OUTBOUND_DETAILS_PROD_ID
+                    else:
+                        product = Product.objects.get(
+                            id=detail.OUTBOUND_DETAILS_PROD_ID
+                        )  # Assuming Product model has an id field
+
+                    # Retrieve the associated ProductDetails instance
+                    product_details = (
+                        product.PROD_DETAILS_CODE
+                    )  # Accessing the related ProductDetails through the ForeignKey
+
+                    # Create a SalesInvoiceItems record
                     SalesInvoiceItems.objects.create(
                         SALES_INV_ID=sales_invoice,
-                        SALES_INV_ITEM_PROD_ID=detail.OUTBOUND_DETAILS_PROD_ID,
+                        SALES_INV_ITEM_PROD_ID=product,  # Pass the actual Product instance, not just its id
                         SALES_INV_ITEM_PROD_NAME=detail.OUTBOUND_DETAILS_PROD_NAME,
                         SALES_INV_item_PROD_DLVRD=detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
                         SALES_INV_ITEM_PROD_SELL_PRICE=detail.OUTBOUND_DETAILS_SELL_PRICE,
-                        SALES_INV_ITEM_PROD_PURCH_PRICE=detail.OUTBOUND_DETAILS_PROD_QTY_DEFECT,  # Assuming the defect quantity isn't needed here
+                        # Set the purchase price from the ProductDetails model
+                        SALES_INV_ITEM_PROD_PURCH_PRICE=product_details.PROD_DETAILS_PURCHASE_PRICE,  # Using PROD_DETAILS_PRICE from ProductDetails
                         SALES_INV_ITEM_LINE_GROSS_REVENUE=detail.OUTBOUND_DETAILS_SELL_PRICE
                         * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
+                        # Calculate Gross Income: adjusted to use the product's purchase price from ProductDetails
                         SALES_INV_ITEM_LINE_GROSS_INCOME=(
                             (
                                 detail.OUTBOUND_DETAILS_SELL_PRICE
-                                - detail.OUTBOUND_DETAILS_PROD_QTY_DEFECT
-                            )
+                                - product_details.PROD_DETAILS_PRICE
+                            )  # Using the product's purchase price
                             * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED
                         ),
                     )
-
                 # Return success response
                 return Response(
                     {
@@ -623,15 +641,19 @@ class UpdateInboundDelStatus(APIView):
         # Return validation errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class DeliveredOutboundDeliveryView(APIView):
     """
     API View to fetch all OutboundDeliveries with status 'Delivered'.
     """
+
     def get(self, request, *args, **kwargs):
         # Query OutboundDelivery objects with status 'Delivered'
-        delivered_deliveries = OutboundDelivery.objects.filter(OUTBOUND_DEL_STATUS="Delivered")
-        
+        delivered_deliveries = OutboundDelivery.objects.filter(
+            OUTBOUND_DEL_STATUS="Delivered"
+        )
+
         # Serialize the data
         serializer = OutboundDeliverySerializer(delivered_deliveries, many=True)
-        
+
         return Response(serializer.data, status=status.HTTP_200_OK)

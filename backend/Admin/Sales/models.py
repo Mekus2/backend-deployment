@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import Sum
+
 
 from Admin.Delivery.models import OutboundDelivery
 from django.conf import settings
@@ -19,6 +21,7 @@ class SalesInvoice(models.Model):
     CLIENT_NAME = models.CharField(max_length=255)
     CLIENT_PHONENUM = models.CharField(max_length=20)
     SALES_INV_PYMNT_METHOD = models.CharField(max_length=50, null=True, blank=True)
+    SALES_INV_PYMNT_TERMS = models.PositiveIntegerField(null=True, default=0)
     SALES_INV_PYMNT_STATUS = models.CharField(
         max_length=20,
         choices=[
@@ -42,7 +45,27 @@ class SalesInvoice(models.Model):
     )
     OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
 
+    # New fields for total gross revenue and total gross income
+    SALES_INV_TOTAL_GROSS_REVENUE = models.DecimalField(
+        max_digits=15, decimal_places=2, default=0.0
+    )
+    SALES_INV_TOTAL_GROSS_INCOME = models.DecimalField(
+        max_digits=15, decimal_places=2, default=0.0
+    )
+
     def save(self, *args, **kwargs):
+        # Automatically generate the sales invoice ID (starts with INV01)
+        if not self.SALES_INV_ID:
+            last_invoice = SalesInvoice.objects.all().order_by("SALES_INV_ID").last()
+            if last_invoice:
+                last_inv_num = int(last_invoice.SALES_INV_ID[3:]) + 1
+                self.SALES_INV_ID = f"INV{last_inv_num:03d}"
+            else:
+                self.SALES_INV_ID = "INV001"
+
+        # Save the SalesInvoice first to generate a primary key
+        super().save(*args, **kwargs)
+
         # Automatically calculate balance
         self.SALES_INV_AMOUNT_BALANCE = (
             self.SALES_INV_TOTAL_PRICE - self.SALES_INV_AMOUNT_PAID
@@ -56,17 +79,25 @@ class SalesInvoice(models.Model):
         else:
             self.SALES_INV_PYMNT_STATUS = "Partially Paid"
 
-        # Automatically generate the sales invoice ID (starts with INV01)
-        if not self.SALES_INV_ID:
-            last_invoice = SalesInvoice.objects.all().order_by("SALES_INV_ID").last()
-            if last_invoice:
-                # Increment the last invoice ID (e.g., INV001 -> INV002)
-                last_inv_num = int(last_invoice.SALES_INV_ID[3:]) + 1
-                self.SALES_INV_ID = f"INV{last_inv_num:03d}"
-            else:
-                # If it's the first invoice, start with INV01
-                self.SALES_INV_ID = "INV001"
+        # Calculate total gross revenue and total gross income from related SalesInvoiceItems
+        total_revenue = (
+            self.sales_items.aggregate(
+                total_revenue=Sum("SALES_INV_ITEM_LINE_GROSS_REVENUE")
+            )["total_revenue"]
+            or 0
+        )
 
+        total_income = (
+            self.sales_items.aggregate(
+                total_income=Sum("SALES_INV_ITEM_LINE_GROSS_INCOME")
+            )["total_income"]
+            or 0
+        )
+
+        self.SALES_INV_TOTAL_GROSS_REVENUE = total_revenue
+        self.SALES_INV_TOTAL_GROSS_INCOME = total_income
+
+        # Save again to update the gross revenue and income values
         super().save(*args, **kwargs)
 
     class Meta:
@@ -77,7 +108,11 @@ class SalesInvoice(models.Model):
 
 class SalesInvoiceItems(models.Model):
     SALES_INV_ITEM_ID = models.AutoField(primary_key=True)
-    SALES_INV_ID = models.ForeignKey(SalesInvoice, on_delete=models.CASCADE)
+    SALES_INV_ID = models.ForeignKey(
+        SalesInvoice,
+        on_delete=models.CASCADE,
+        related_name="sales_items",
+    )
     SALES_INV_ITEM_PROD_ID = models.ForeignKey(Product, on_delete=models.CASCADE)
     SALES_INV_ITEM_PROD_NAME = models.CharField(null=True, blank=True)
     SALES_INV_item_PROD_DLVRD = models.PositiveIntegerField(default=0)

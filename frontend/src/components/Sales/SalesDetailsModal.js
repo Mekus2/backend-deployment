@@ -5,11 +5,20 @@ import { IoCloseCircle } from "react-icons/io5";
 import Button from "../Layout/Button"; // Assuming Button is located at this path
 
 // Utility function to format numbers as currency
-const formatCurrency = (amount) => `₱${amount.toFixed(2)}`;
+const formatCurrency = (value) => {
+  // Ensure the value is a valid number
+  const numberValue = typeof value === "number" && !isNaN(value) ? value : 0;
+  return `₱${numberValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+};
 
-const SalesDetailsModal = ({ sale = {}, onClose }) => {
-  const [amountPaid, setAmountPaid] = useState(sale.AMOUNT || "");
-  const [paymentTerms, setPaymentTerms] = useState(sale.PAYMENT_TERMS || "");
+const SalesDetailsModal = ({ sale, onClose }) => {
+  console.log("Received Sales detail:", sale);
+  const [amountPaid, setAmountPaid] = useState(
+    sale.SALES_INV_AMOUNT_PAID || ""
+  );
+  const [paymentTerms, setPaymentTerms] = useState(
+    sale.SALES_INV_PYMNT_TERMS || ""
+  );
   const [isEditMode, setIsEditMode] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -30,14 +39,46 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
     setHasChanges(true);
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     if (!amountPaid || isNaN(amountPaid)) {
       alert("Please enter a valid amount paid.");
       return;
     }
 
-    console.log("Saving changes:", { amountPaid, paymentTerms });
-    // Save logic here, e.g., update the backend or state.
+    const updatedInvoiceData = {
+      SALES_INV_AMOUNT_PAID: amountPaid,
+      SALES_INV_PYMNT_TERMS: paymentTerms,
+    };
+
+    try {
+      let invoice_Id = sale.SALES_INV_ID;
+      // Send a PATCH request to update the sales invoice on the server
+      const response = await fetch(
+        `http://localhost:8000/sales/${invoice_Id}/payment`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedInvoiceData),
+        }
+      );
+
+      if (response.ok) {
+        const updatedSale = await response.json();
+        console.log("Invoice updated:", updatedSale);
+
+        // Optionally update local state or notify the user
+        alert("Invoice successfully updated.");
+        onClose(); // Close the modal after saving
+      } else {
+        alert("Failed to update the invoice.");
+      }
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      alert("An error occurred while updating the invoice.");
+    }
+
     setHasChanges(false);
   };
 
@@ -62,20 +103,22 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
               <strong>Invoice ID:</strong> {sale.SALES_INV_ID || "N/A"}
             </Detail>
             <Detail>
-              <strong>Delivery ID:</strong> {sale.DELIVERY_ID || "N/A"}
+              <strong>Delivery ID:</strong> {sale.OUTBOUND_DEL_ID || "N/A"}
             </Detail>
           </DetailsColumn>
           <DetailsColumn>
             <Detail>
-              <strong>Customer Name:</strong> {sale.CUSTOMER_NAME || "N/A"}
+              <strong>Customer Name:</strong> {sale.CLIENT_NAME || "N/A"}
             </Detail>
             <Detail>
-              <strong>Payment Status:</strong> {sale.PAYMENT_STATUS || "N/A"}
+              <strong>Payment Status:</strong>{" "}
+              {sale.SALES_INV_PYMNT_STATUS || "N/A"}
             </Detail>
           </DetailsColumn>
           <DetailsColumn>
             <Detail>
-              <strong>Balance:</strong> {formatCurrency(sale.BALANCE || 0)}
+              <strong>Balance:</strong>{" "}
+              {formatCurrency(sale.SALES_INV_AMOUNT_BALANCE || 0)}
             </Detail>
             <Detail>
               <strong>Payment Terms (Days):</strong>
