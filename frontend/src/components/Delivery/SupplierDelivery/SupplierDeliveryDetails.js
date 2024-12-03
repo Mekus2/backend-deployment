@@ -322,84 +322,114 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   );
 
   // Handle the Mark as Received button click
-  const handleMarkAsReceivedClick = async () => {
-    setReceivedClicked(true); // Custom behavior (if needed)
+  // Handle the Mark as Received button click
+const handleMarkAsReceivedClick = async () => {
+  setReceivedClicked(true); // Custom behavior (if needed)
 
-    // Check if all expiry dates are filled
-    const areExpiryDatesFilled = expiryDates.every(
-      (date) => date && date.trim() !== ""
-    );
+  // Check if all expiry dates are filled
+  const areExpiryDatesFilled = expiryDates.every(
+    (date) => date && date.trim() !== ""
+  );
 
-    // Check if all quantities are filled
-    const areQuantitiesFilled = orderDetails.every(
-      (item) =>
-        item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT &&
-        item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT > 0
-    );
+  // Check if all quantities are filled
+  const areQuantitiesFilled = orderDetails.every(
+    (item) =>
+      item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT &&
+      item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT > 0
+  );
 
-    const areAllItemsAccepted = orderDetails.every(
-      (item) => item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT === 0
-    );
+  const areAllItemsAccepted = orderDetails.every(
+    (item) => item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT === 0
+  );
 
-    // Check if any of the required fields are missing or invalid
-    if (!areExpiryDatesFilled || !areQuantitiesFilled || !areAllItemsAccepted) {
-      if (!areExpiryDatesFilled) {
-        console.log("Some expiry dates are missing.");
-        notify.warning("Please fill in all expiry dates before proceeding.");
-      }
-      if (!areQuantitiesFilled) {
-        console.log("Some quantities are missing or invalid.");
-        notify.warning(
-          "Please ensure all accepted quantities are filled and greater than 0."
-        );
-      }
-      if (!areAllItemsAccepted) {
-        console.log("Some items are not accepted due to defects.");
-        notify.warning("Has defective items. Submit Issue ticket?");
-      }
-      return; // Early exit if validation fails
+  // Check if any of the required fields are missing or invalid
+  if (!areExpiryDatesFilled || !areQuantitiesFilled || !areAllItemsAccepted) {
+    if (!areExpiryDatesFilled) {
+      console.log("Some expiry dates are missing.");
+      notify.warning("Please fill in all expiry dates before proceeding.");
     }
+    if (!areQuantitiesFilled) {
+      console.log("Some quantities are missing or invalid.");
+      notify.warning(
+        "Please ensure all accepted quantities are filled and greater than 0."
+      );
+    }
+    if (!areAllItemsAccepted) {
+      console.log("Some items are not accepted due to defects.");
+      notify.warning("Has defective items. Submit Issue ticket?");
+    }
+    return; // Early exit if validation fails
+  }
 
-    // Prepare inventory data to be posted
-    const inventoryData = {
-      INBOUND_DEL_ID: delivery.INBOUND_DEL_ID, // This will be the inbound delivery ID
-      status: "Delivered",
-      user: localStorage.getItem("user_first_name"),
-      details: orderDetails.map((item, index) => {
-        const expiryDate = expiryDates[index];
-        return {
-          PRODUCT_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Assuming this field exists in `orderDetails`
-          PRODUCT_NAME: item.INBOUND_DEL_DETAIL_PROD_NAME,
-          QUANTITY_ON_HAND: item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT, // Assuming this is the correct field for accepted quantity
-          PRICE: item.INBOUND_DEL_DETAIL_LINE_PRICE,
-          EXPIRY_DATE: expiryDate,
-        };
-      }),
-    };
+  // Prepare the logPayload for the report
+  const logPayload = {
+    REPORT_TYPE: "Purchase", // Example: this could be dynamic based on your app
+    
+    // Get the current date and time
+    REPORT_DATETIME: new Date().toISOString(), // This will format the date and time as ISO 8601 (e.g., "2024-12-03T10:15:00.000Z")
+    
+    REPORT_TITLE: "Received Items Report", // Modify this as needed
+    REPORT_DESCRIPTION: "Report for the items received in the current purchase order.", // Modify based on your context
+    REPORT_CREATED_USER_ID: localStorage.getItem("user_id"), // Assuming the user ID is stored in local storage
+  };
 
-    console.log("Inventory data prepared for posting:", inventoryData);
+  // Prepare inventory data to be posted for report creation
+  const inventoryData = {
+    INBOUND_DEL_ID: delivery.INBOUND_DEL_ID, // This will be the inbound delivery ID
+    status: "Delivered",
+    user: localStorage.getItem("user_first_name"),
+    details: orderDetails.map((item, index) => {
+      const expiryDate = expiryDates[index];
+      return {
+        PRODUCT_ID: item.INBOUND_DEL_DETAIL_PROD_ID, // Assuming this field exists in `orderDetails`
+        PRODUCT_NAME: item.INBOUND_DEL_DETAIL_PROD_NAME,
+        ACCEPTED_QTY: item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT,
+        DEFECT_QTY: item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT,
+        EXPIRY_DATE: expiryDate,
+      };
+    }),
+  };
 
-    try {
-      // Try posting the inventory data and updating the status
-      const response = await addNewInventory(inventoryData); // Posting all inventory items in one batch
-      if ((response && response.status === 200) || 201) {
-        console.log(response.data.message); // Logs "Inventory added and status updated successfully."
-        notify.success("Delivery successful");
-        window.location.reload();
-      } else {
-        console.error(
-          "Failed to create inventory entries. Status:",
-          response?.status
-        );
-        notify.error("Delivery Failed");
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error("Error posting to Inventory:", error);
-      notify.error("Error posting to Inventory. Please try again.");
+  try {
+    // Make an API request to create the report after marking as received
+    const response = await fetch("http://127.0.0.1:8000/report/report/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("jwt_token")}`, // Add JWT token for authentication
+      },
+      body: JSON.stringify(logPayload), // Send logPayload for report creation
+    });
+
+    if (response.ok) {
+      const report = await response.json();
+      console.log("Report created successfully:", report);
+      notify.success("Report created successfully!");
+      // Optionally: redirect or show report details
+    } else {
+      const error = await response.json();
+      console.error("Failed to create report:", error);
+      notify.error("Failed to create report. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error while creating the report:", error);
+    notify.error("An error occurred while creating the report.");
+  }
+
+  // After marking as received, update order status
+  try {
+    const updatedOrder = await updateOrderStatus(delivery.INBOUND_DEL_ID, "Delivered");
+    if (updatedOrder) {
+      console.log(`Order status updated to "Delivered":`, updatedOrder);
+      notify.success("Order status updated to 'Delivered'.");
       window.location.reload();
     }
-  };
+  } catch (error) {
+    console.error("Error updating order status:", error);
+    notify.error("Failed to update the order status. Please try again.");
+  }
+};
+
   // Calculate Qty Defect (Difference between Delivered Quantity and Accepted Quantity)
   const calculateQtyDefect = (index) => {
     const qtyDelivered = orderDetails[index].INBOUND_DEL_DETAIL_ORDERED_QTY;
