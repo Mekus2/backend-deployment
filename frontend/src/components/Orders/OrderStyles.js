@@ -253,3 +253,83 @@ export const SIconButton = styled(Button)`
     font-size: 15px;
   }
 `;
+export const ButtonWrapper = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+  width: 100%;
+`;
+
+export const InputField = styled.input`
+  width: 100%;
+  max-width: 300px;
+  text-align: center;
+  border: 1px solid #ddd;
+  padding: 8px;
+  margin-top: 5px;
+  font-size: 14px;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: #f9f9f9;
+`;
+
+export const Section = styled.div`
+  margin-bottom: 20px;
+`;
+
+export const TableWrapper = styled.div`
+  overflow-x: auto;
+`;
+
+export const TableHeader = styled.th`
+  background-color: ${colors.primary};
+  color: white;
+  padding: 12px;
+  text-align: center;
+  font-size: 16px;
+`;
+
+export const TableRow = styled.tr`
+  &:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+`;
+
+export const TableCell = styled.td`
+  text-align: center;
+  padding: 8px;
+  font-size: 14px;
+  border-bottom: 1px solid #ddd;
+
+  input {
+    width: 80%; /* Adjust the width to fit nicely in the cell */
+    padding: 5px;
+    font-size: 14px;
+    border: 1px solid #ccc; /* Add border */
+    border-radius: 4px; /* Optional: for rounded corners */
+    box-sizing: border-box;
+  }
+`;
+
+export const TotalSummary = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 20px;
+  font-weight: bold;
+`;
+
+export const TotalItem = styled.p`
+  margin: 5px 0;
+  font-size: 14px;
+`;
+
+export const HighlightedTotal = styled.span`
+  color: #1dba0b;
+  font-size: 16px;
+`;
+
+export const HighlightedDiscount = styled.span`
+  color: red;
+  font-size: 16px;
+`;
