@@ -4,7 +4,7 @@ import Modal from "../../Layout/Modal";
 import Button from "../../Layout/Button"; // Ensure you import the Button component
 import EditCustomerOrderModal from "./EditCustomerOrderModal"; // Import the Edit Modal
 import { fetchOrderDetailsById } from "../../../api/fetchCustomerOrders";
-import { addNewCustomerDelivery } from "../../../api/CustomerDeliveryApi"; 
+import { addNewCustomerDelivery } from "../../../api/CustomerDeliveryApi";
 import {
   Table,
   TableWrapper,
@@ -23,7 +23,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); 
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const userId = localStorage.getItem("user_id");
 
   const handleUpdateOrder = () => {
@@ -165,7 +165,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
             <strong>Order ID: </strong> {order.SALES_ORDER_ID}
           </p>
           <p>
-            <strong>Order Created Date:</strong> {" "}
+            <strong>Order Created Date:</strong>{" "}
             {(() => {
               const date = new Date(order.SALES_ORDER_DATE_CREATED);
               if (!isNaN(date)) {
@@ -177,10 +177,18 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
               return "Invalid Date";
             })()}
           </p>
-          <p><strong>Delivery Option:</strong> {order.SALES_ORDER_DLVRY_OPTION}</p>
-          <p><strong>Client:</strong> {order.SALES_ORDER_CLIENT_NAME}</p>
-          <p><strong>City:</strong> {order.SALES_ORDER_CLIENT_CITY}</p>
-          <p><strong>Province:</strong> {order.SALES_ORDER_CLIENT_PROVINCE}</p>
+          <p>
+            <strong>Delivery Option:</strong> {order.SALES_ORDER_DLVRY_OPTION}
+          </p>
+          <p>
+            <strong>Client:</strong> {order.SALES_ORDER_CLIENT_NAME}
+          </p>
+          <p>
+            <strong>City:</strong> {order.SALES_ORDER_CLIENT_CITY}
+          </p>
+          <p>
+            <strong>Province:</strong> {order.SALES_ORDER_CLIENT_PROVINCE}
+          </p>
         </Section>
 
         <Section>
@@ -200,17 +208,31 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
                 {orderDetails.length > 0 ? (
                   orderDetails.map((detail, index) => (
                     <TableRow key={index}>
-                      <TableCell>{detail.SALES_ORDER_PROD_NAME || "Unknown Product"}</TableCell>
+                      <TableCell>
+                        {detail.SALES_ORDER_PROD_NAME || "Unknown Product"}
+                      </TableCell>
                       <TableCell>{detail.SALES_ORDER_LINE_QTY || 0}</TableCell>
-                      <TableCell>{formatCurrency(detail.SALES_ORDER_LINE_PURCHASE_PRICE || 0)}</TableCell>
-                      <TableCell>{formatCurrency(detail.SALES_ORDER_LINE_PRICE || 0)}</TableCell>
-                      <TableCell>{`${detail.SALES_ORDER_LINE_DISCOUNT || "0"}%`}</TableCell>
-                      <TableCell>{formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)}</TableCell>
+                      <TableCell>
+                        {formatCurrency(
+                          detail.SALES_ORDER_LINE_PURCHASE_PRICE || 0
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrency(detail.SALES_ORDER_LINE_PRICE || 0)}
+                      </TableCell>
+                      <TableCell>{`${
+                        detail.SALES_ORDER_LINE_DISCOUNT || "0"
+                      }%`}</TableCell>
+                      <TableCell>
+                        {formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6}>No order details available.</TableCell>
+                    <TableCell colSpan={6}>
+                      No order details available.
+                    </TableCell>
                   </TableRow>
                 )}
               </tbody>
@@ -231,17 +253,22 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
         </TotalSummary>
 
         <ButtonGroup>
-          <Button variant="red" onClick={handleCancelOrder}>Cancel Order</Button>
-          <Button variant="green" onClick={handleUpdateOrder}>Update Order</Button>
-          <Button variant="primary" onClick={handleAcceptOrder}>Accept Order</Button>
+          <Button variant="red" onClick={handleCancelOrder}>
+            Cancel Order
+          </Button>
+          {userRole !== "staff" && (
+            <Button variant="green" onClick={handleUpdateOrder}>
+              Update Order
+            </Button>
+          )}
+          <Button variant="primary" onClick={handleAcceptOrder}>
+            Accept Order
+          </Button>
         </ButtonGroup>
       </Modal>
 
       {isEditModalOpen && (
-        <EditCustomerOrderModal
-          order={order}
-          onClose={handleCloseEditModal}
-        />
+        <EditCustomerOrderModal order={order} onClose={handleCloseEditModal} />
       )}
     </>
   );

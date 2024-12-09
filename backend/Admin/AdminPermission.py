@@ -7,5 +7,5 @@ class IsAdminUser(BasePermission):
             print(
                 f"User: {request.user.username}, accType: {request.user.accType}"
             )  # Debug output
-            return request.user.accType == "admin" or request.user.accType == "Admin"
+            return request.user.accType == "staff" or request.user.accType == "Staff"
         return False

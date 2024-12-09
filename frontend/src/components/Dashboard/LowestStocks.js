@@ -11,7 +11,9 @@ const LowestStocks = () => {
   useEffect(() => {
     const fetchLowStockProducts = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/items/lowStock/"); // API URL for low stock products
+        const response = await axios.get(
+          "http://127.0.0.1:8000/items/lowStock/"
+        ); // API URL for low stock products
         setLowStockProducts(response.data); // Set the fetched data to state
       } catch (err) {
         setError("Error fetching low stock products."); // Handle errors
@@ -33,14 +35,17 @@ const LowestStocks = () => {
   }
 
   const headers = ["Product Name", "Quantity on Hand"]; // Table headers
-  const data = lowStockProducts.map(({ PROD_NAME, PROD_QOH }) => [PROD_NAME, PROD_QOH]); // Format data for the table
+  const data = lowStockProducts.map(({ PROD_NAME, PROD_QOH }) => [
+    PROD_NAME,
+    PROD_QOH,
+  ]); // Format data for the table
 
   return (
     <DashboardTable
       title="Lowest Stocks"
       headers={headers}
       data={data}
-      onRowClick={(id) => (window.location.href = `/admin/inventory/${id}`)} // Navigate to specific product's inventory page
+      onRowClick={(id) => (window.location.href = `/staff/inventory/${id}`)} // Navigate to specific product's inventory page
     />
   );
 };

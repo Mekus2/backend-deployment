@@ -64,7 +64,10 @@ const SharedSupplierOrderPage = () => {
   const sortedOrders = filteredOrders.sort((a, b) => {
     if (sortConfig.key === "PURCHASE_ORDER_DATE_CREATED") {
       // Always sort in descending order by date
-      return new Date(b.PURCHASE_ORDER_DATE_CREATED) - new Date(a.PURCHASE_ORDER_DATE_CREATED);
+      return (
+        new Date(b.PURCHASE_ORDER_DATE_CREATED) -
+        new Date(a.PURCHASE_ORDER_DATE_CREATED)
+      );
     }
     if (sortConfig.key === "PURCHASE_ORDER_ID") {
       // Always sort in descending order by ID
@@ -118,7 +121,7 @@ const SharedSupplierOrderPage = () => {
   return (
     <>
       <AnalyticsContainer>
-        <div onClick={() => navigate("/admin/orders/purchase-order")}>
+        <div onClick={() => navigate("/staff/orders/purchase-order")}>
           <CardTotalSupplierOrder />
         </div>
       </AnalyticsContainer>

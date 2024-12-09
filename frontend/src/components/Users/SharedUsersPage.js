@@ -103,7 +103,7 @@ const SharedUsersPage = () => {
 
     // If the user is admin, show only staff
     if (userType === "admin") {
-      return matchesSearchTerm && member.accType.toLowerCase() === "staff";
+      return matchesSearchTerm && member.accType.toLowerCase() === "prevstaff";
     }
 
     // If the user is superadmin, show both staff and admin
@@ -112,7 +112,7 @@ const SharedUsersPage = () => {
     }
 
     // Default case (for staff or any other case)
-    return matchesSearchTerm && member.accType.toLowerCase() === "staff";
+    return matchesSearchTerm && member.accType.toLowerCase() === "prevstaff";
   });
 
   const rows = filteredStaff.map((member) => [
@@ -137,10 +137,10 @@ const SharedUsersPage = () => {
 
   // Count the number of admins and staff if the user is a superadmin
   const adminCount = staffData.filter(
-    (member) => member.accType.toLowerCase() === "admin"
+    (member) => member.accType.toLowerCase() === "staff"
   ).length;
   const staffCount = staffData.filter(
-    (member) => member.accType.toLowerCase() === "staff"
+    (member) => member.accType.toLowerCase() === "prevstaff"
   ).length;
 
   if (loading) {
@@ -151,9 +151,9 @@ const SharedUsersPage = () => {
     <>
       <AnalyticsContainer>
         {/* Show Staff card for both admin and superadmin */}
-        {(userType === "admin" || userType === "superadmin") && (
+        {(userType === "staff" || userType === "superadmin") && (
           <Card
-            label="Staff"
+            label="PrevStaff"
             value={`${staffCount}`}
             bgColor={colors.primary}
             icon={<FaUsers />}
@@ -162,7 +162,7 @@ const SharedUsersPage = () => {
         {/* Show Admin card only for superadmin */}
         {userType === "superadmin" && (
           <Card
-            label="Admin"
+            label="Staff"
             value={`${adminCount}`}
             bgColor={colors.primary}
             icon={<FaUsers />}
@@ -172,7 +172,7 @@ const SharedUsersPage = () => {
       <Controls>
         <SearchBar
           placeholder={`Search / Filter ${
-            userType === "admin" ? "staff..." : "users..."
+            userType === "staff" ? "staff..." : "users..."
           }`}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}

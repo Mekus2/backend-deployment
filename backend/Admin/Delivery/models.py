@@ -53,7 +53,7 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_CREATED = models.DateTimeField(auto_now_add=True)
     OUTBOUND_DEL_DATEUPDATED = models.DateTimeField(auto_now=True)
     OUTBOUND_DEL_ACCPTD_BY_USERNAME = models.CharField(
-        max_length=60, null=False, default="Admin"
+        max_length=60, null=False, default="Staff"
     )
     OUTBOUND_DEL_ACCPTD_BY_USER = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -151,7 +151,7 @@ class InboundDelivery(models.Model):
     )
     INBOUND_DEL_RCVD_BY_USER_NAME = models.CharField(max_length=60, null=True)
     INBOUND_DEL_ORDER_APPRVDBY_USER = models.CharField(
-        max_length=60, null=False, default="Admin"
+        max_length=60, null=False, default="Staff"
     )
 
     def __str__(self):

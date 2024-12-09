@@ -7,7 +7,8 @@ import SharedUsersPage from "../../components/Users/SharedUsersPage"; // Ensure 
 const AdminUsers = () => {
   return (
     <MainLayout>
-      <SharedUsersPage userType="admin" /> {/* Pass userType to differentiate */}
+      <SharedUsersPage userType="staff" />{" "}
+      {/* Pass userType to differentiate */}
     </MainLayout>
   );
 };

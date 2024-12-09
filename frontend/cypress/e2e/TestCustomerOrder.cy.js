@@ -1,4 +1,4 @@
-const roles = ["admin", "staff", "superadmin"]; // Add superadmin role
+const roles = ["staff", "prevstaff", "superadmin"]; // Add superadmin role
 
 roles.forEach((role) => {
   describe(`${
@@ -43,7 +43,7 @@ roles.forEach((role) => {
 
     // General stats tests for all roles
     describe(`${role} Stats Card Tests`, () => {
-      if (role === "staff") {
+      if (role === "prevstaff") {
         it("Should display stats cards for staff", () => {
           cy.get("div").contains("Low Stocks").should("be.visible");
           cy.get("div").contains("Customers").should("be.visible");
@@ -102,7 +102,7 @@ roles.forEach((role) => {
     });
 
     // Revenue and expense stats specific to admin
-    if (role === "admin" || role === "superadmin") {
+    if (role === "staff" || role === "superadmin") {
       it("Should display revenue and expense stats correctly", () => {
         cy.get("p").contains("₱ 107,000").should("be.visible");
         cy.get("p").contains("₱ 620,000").should("be.visible");

@@ -1,5 +1,5 @@
 // cypress/e2e/TestNotifications.cy.js
-const roles = ["admin", "staff", "superadmin"]; // Include both roles for testing
+const roles = ["staff", "prevstaff", "superadmin"]; // Include both roles for testing
 
 roles.forEach((role) => {
   describe(`${

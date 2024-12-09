@@ -16,7 +16,7 @@ const AddUserModal = ({ onClose, onSave }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
-  const [acctype, setAcctype] = useState("staff");
+  const [acctype, setAcctype] = useState("prevstaff");
   const [errors, setErrors] = useState({});
   const modalRef = useRef();
 
@@ -169,9 +169,8 @@ const AddUserModal = ({ onClose, onSave }) => {
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
-  const isSuperadminPage =
-    window.location.pathname.includes("/superadmin/users");
-  const isAdminPage = window.location.pathname.includes("/admin/users");
+  const isSuperadminPage = window.location.pathname.includes("/admin/users");
+  const isAdminPage = window.location.pathname.includes("/staff/users");
 
   return (
     <ModalOverlay>
@@ -270,8 +269,8 @@ const AddUserModal = ({ onClose, onSave }) => {
                 value={acctype}
                 onChange={(e) => setAcctype(e.target.value)}
               >
-                <option value="staff">Staff</option>
-                <option value="admin">Admin</option>
+                <option value="prevstaff">Staff</option>
+                <option value="staff">Admin</option>
               </Select>
             </Field>
           )}
@@ -282,7 +281,7 @@ const AddUserModal = ({ onClose, onSave }) => {
                 value={acctype}
                 onChange={(e) => setAcctype(e.target.value)}
               >
-                <option value="staff">Staff</option>
+                <option value="prevstaff">Staff</option>
               </Select>
             </Field>
           )}

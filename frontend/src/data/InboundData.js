@@ -52,7 +52,7 @@ const INBOUND_DELIVERY = {
         USER_EMAIL: "alice.williams@gmail.com",
         USER_PHONENUMBER: "678-901-2345",
         USER_ADDRESS: "321 Birch St, Springfield, USA",
-        USER_ACCTTYPE: "Admin",
+        USER_ACCTTYPE: "Staff",
         USER_ISACTIVE: true,
         USER_AGE: 31,
       },

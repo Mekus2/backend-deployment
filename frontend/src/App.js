@@ -12,61 +12,61 @@ import ForgotPassword from "./pages/ForgotPasswordPage";
 import NewUserChangePass from "./pages/NewUserChangePass";
 
 // Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminCustomers from "./pages/admin/AdminCustomers";
-import AdminInventory from "./pages/admin/AdminInventory";
-import AdminReports from "./pages/admin/AdminReports";
-import AdminSuppliers from "./pages/admin/AdminSuppliers";
-import AdminRequestOrder from "./pages/admin/AdminRequestOrder";
-import AdminCustomerOrder from "./pages/admin/AdminCustomerOrder";
-import AdminSupplierOrder from "./pages/admin/AdminSupplierOrder";
-import AdminCustomerDelivery from "./pages/admin/AdminCustomerDelivery";
-import AdminSupplierDelivery from "./pages/admin/AdminSupplierDelivery";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminPriceHistory from "./pages/admin/AdminPriceHistory";
-import AdminSales from "./pages/admin/AdminSales";
-import AdminReturns from "./pages/admin/AdminReturns";
-import AdminLogs from "./pages/admin/AdminLogs";
-import AdminCategories from "./pages/admin/AdminCategories";
-import AdminProfile from "./pages/admin/AdminProfile";
-import AdminNotification from "./pages/admin/AdminNotification";
+import AdminDashboard from "./pages/staff/AdminDashboard";
+import AdminUsers from "./pages/staff/AdminUsers";
+import AdminCustomers from "./pages/staff/AdminCustomers";
+import AdminInventory from "./pages/staff/AdminInventory";
+import AdminReports from "./pages/staff/AdminReports";
+import AdminSuppliers from "./pages/staff/AdminSuppliers";
+import AdminRequestOrder from "./pages/staff/AdminRequestOrder";
+import AdminCustomerOrder from "./pages/staff/AdminCustomerOrder";
+import AdminSupplierOrder from "./pages/staff/AdminSupplierOrder";
+import AdminCustomerDelivery from "./pages/staff/AdminCustomerDelivery";
+import AdminSupplierDelivery from "./pages/staff/AdminSupplierDelivery";
+import AdminProducts from "./pages/staff/AdminProducts";
+import AdminPriceHistory from "./pages/staff/AdminPriceHistory";
+import AdminSales from "./pages/staff/AdminSales";
+import AdminReturns from "./pages/staff/AdminReturns";
+import AdminLogs from "./pages/staff/AdminLogs";
+import AdminCategories from "./pages/staff/AdminCategories";
+import AdminProfile from "./pages/staff/AdminProfile";
+import AdminNotification from "./pages/staff/AdminNotification";
 
 // SuperAdmin Pages
-import SuperAdminDashboard from "./pages/superadmin/SuperAdminDashboard";
-import SuperAdminUsers from "./pages/superadmin/SuperAdminUsers";
-import SuperAdminCustomers from "./pages/superadmin/SuperAdminCustomers";
-import SuperAdminInventory from "./pages/superadmin/SuperAdminInventory";
-import SuperAdminReports from "./pages/superadmin/SuperAdminReports";
-import SuperAdminSuppliers from "./pages/superadmin/SuperAdminSuppliers";
-import SuperAdminRequestOrder from "./pages/superadmin/SuperAdminRequestOrder";
-import SuperAdminCustomerOrder from "./pages/superadmin/SuperAdminCustomerOrder";
-import SuperAdminSupplierOrder from "./pages/superadmin/SuperAdminSupplierOrder";
-import SuperAdminCustomerDelivery from "./pages/superadmin/SuperAdminCustomerDelivery";
-import SuperAdminSupplierDelivery from "./pages/superadmin/SuperAdminSupplierDelivery";
-import SuperAdminProducts from "./pages/superadmin/SuperAdminProducts";
-import SuperAdminPriceHistory from "./pages/superadmin/SuperAdminPriceHistory";
-import SuperAdminSales from "./pages/superadmin/SuperAdminSales";
-import SuperAdminReturns from "./pages/superadmin/SuperAdminReturns";
-import SuperAdminLogs from "./pages/superadmin/SuperAdminLogs";
-import SuperAdminCategories from "./pages/superadmin/SuperAdminCategories";
-import SuperAdminProfile from "./pages/superadmin/SuperAdminProfile";
-import SuperAdminNotification from "./pages/superadmin/SuperAdminNotification";
+import SuperAdminDashboard from "./pages/admin/SuperAdminDashboard";
+import SuperAdminUsers from "./pages/admin/SuperAdminUsers";
+import SuperAdminCustomers from "./pages/admin/SuperAdminCustomers";
+import SuperAdminInventory from "./pages/admin/SuperAdminInventory";
+import SuperAdminReports from "./pages/admin/SuperAdminReports";
+import SuperAdminSuppliers from "./pages/admin/SuperAdminSuppliers";
+import SuperAdminRequestOrder from "./pages/admin/SuperAdminRequestOrder";
+import SuperAdminCustomerOrder from "./pages/admin/SuperAdminCustomerOrder";
+import SuperAdminSupplierOrder from "./pages/admin/SuperAdminSupplierOrder";
+import SuperAdminCustomerDelivery from "./pages/admin/SuperAdminCustomerDelivery";
+import SuperAdminSupplierDelivery from "./pages/admin/SuperAdminSupplierDelivery";
+import SuperAdminProducts from "./pages/admin/SuperAdminProducts";
+import SuperAdminPriceHistory from "./pages/admin/SuperAdminPriceHistory";
+import SuperAdminSales from "./pages/admin/SuperAdminSales";
+import SuperAdminReturns from "./pages/admin/SuperAdminReturns";
+import SuperAdminLogs from "./pages/admin/SuperAdminLogs";
+import SuperAdminCategories from "./pages/admin/SuperAdminCategories";
+import SuperAdminProfile from "./pages/admin/SuperAdminProfile";
+import SuperAdminNotification from "./pages/admin/SuperAdminNotification";
 
 // Staff Pages
-import StaffDashboard from "./pages/staff/StaffDashboard";
-import StaffProfile from "./pages/staff/StaffProfile";
-import StaffRequestOrder from "./pages/staff/StaffRequestOrder";
-import StaffCustomerOrder from "./pages/staff/StaffCustomerOrder";
-import StaffCustomerDelivery from "./pages/staff/StaffCustomerDelivery";
-import StaffSupplierDelivery from "./pages/staff/StaffSupplierDelivery";
-import StaffProducts from "./pages/staff/StaffProducts";
-import StaffInventory from "./pages/staff/StaffInventory";
-import StaffCustomers from "./pages/staff/StaffCustomers";
-import StaffReturns from "./pages/staff/StaffReturns";
-import StaffReports from "./pages/staff/StaffReports";
-import StaffNotification from "./pages/staff/StaffNotification";
-import StaffCategories from "./pages/staff/StaffCategories";
+import StaffDashboard from "./pages/prevstaff/StaffDashboard";
+import StaffProfile from "./pages/prevstaff/StaffProfile";
+import StaffRequestOrder from "./pages/prevstaff/StaffRequestOrder";
+import StaffCustomerOrder from "./pages/prevstaff/StaffCustomerOrder";
+import StaffCustomerDelivery from "./pages/prevstaff/StaffCustomerDelivery";
+import StaffSupplierDelivery from "./pages/prevstaff/StaffSupplierDelivery";
+import StaffProducts from "./pages/prevstaff/StaffProducts";
+import StaffInventory from "./pages/prevstaff/StaffInventory";
+import StaffCustomers from "./pages/prevstaff/StaffCustomers";
+import StaffReturns from "./pages/prevstaff/StaffReturns";
+import StaffReports from "./pages/prevstaff/StaffReports";
+import StaffNotification from "./pages/prevstaff/StaffNotification";
+import StaffCategories from "./pages/prevstaff/StaffCategories";
 
 import NotFoundPage from "./pages/NotFoundPage";
 
@@ -92,134 +92,119 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* SuperAdmin Routes */}
+            <Route path="/admin/dashboard" element={<SuperAdminDashboard />} />
+            <Route path="/admin/profile" element={<SuperAdminProfile />} />
+            <Route path="/admin/users" element={<SuperAdminUsers />} />
+            <Route path="/admin/customers" element={<SuperAdminCustomers />} />
+            <Route path="/admin/inventory" element={<SuperAdminInventory />} />
+            <Route path="/admin/reports" element={<SuperAdminReports />} />
+            <Route path="/admin/suppliers" element={<SuperAdminSuppliers />} />
             <Route
-              path="/superadmin/dashboard"
-              element={<SuperAdminDashboard />}
-            />
-            <Route path="/superadmin/profile" element={<SuperAdminProfile />} />
-            <Route path="/superadmin/users" element={<SuperAdminUsers />} />
-            <Route
-              path="/superadmin/customers"
-              element={<SuperAdminCustomers />}
-            />
-            <Route
-              path="/superadmin/inventory"
-              element={<SuperAdminInventory />}
-            />
-            <Route path="/superadmin/reports" element={<SuperAdminReports />} />
-            <Route
-              path="/superadmin/suppliers"
-              element={<SuperAdminSuppliers />}
-            />
-            <Route
-              path="/superadmin/request-order"
+              path="/admin/request-order"
               element={<SuperAdminRequestOrder />}
             />
             <Route
-              path="/superadmin/customer-order"
+              path="/admin/customer-order"
               element={<SuperAdminCustomerOrder />}
             />
             <Route
-              path="/superadmin/purchase-order"
+              path="/admin/purchase-order"
               element={<SuperAdminSupplierOrder />}
             />
             <Route
-              path="/superadmin/customer-delivery"
+              path="/admin/customer-delivery"
               element={<SuperAdminCustomerDelivery />}
             />
             <Route
-              path="/superadmin/supplier-delivery"
+              path="/admin/supplier-delivery"
               element={<SuperAdminSupplierDelivery />}
             />
+            <Route path="/admin/products" element={<SuperAdminProducts />} />
             <Route
-              path="/superadmin/products"
-              element={<SuperAdminProducts />}
-            />
-            <Route
-              path="/superadmin/price-history"
+              path="/admin/price-history"
               element={<SuperAdminPriceHistory />}
             />
-            <Route path="/superadmin/sales" element={<SuperAdminSales />} />
-            <Route path="/superadmin/issues" element={<SuperAdminReturns />} />
-            <Route path="/superadmin/logs" element={<SuperAdminLogs />} />
+            <Route path="/admin/sales" element={<SuperAdminSales />} />
+            <Route path="/admin/issues" element={<SuperAdminReturns />} />
+            <Route path="/admin/logs" element={<SuperAdminLogs />} />
             <Route
-              path="/superadmin/categories"
+              path="/admin/categories"
               element={<SuperAdminCategories />}
             />
             <Route
-              path="/superadmin/notifications"
+              path="/admin/notifications"
               element={<SuperAdminNotification />}
             />
 
             {/* Admin Routes */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/profile" element={<AdminProfile />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/customers" element={<AdminCustomers />} />
-            <Route path="/admin/inventory" element={<AdminInventory />} />
-            <Route path="/admin/reports" element={<AdminReports />} />
-            <Route path="/admin/suppliers" element={<AdminSuppliers />} />
+            <Route path="/staff/dashboard" element={<AdminDashboard />} />
+            <Route path="/staff/profile" element={<AdminProfile />} />
+            <Route path="/staff/users" element={<AdminUsers />} />
+            <Route path="/staff/customers" element={<AdminCustomers />} />
+            <Route path="/staff/inventory" element={<AdminInventory />} />
+            <Route path="/staff/reports" element={<AdminReports />} />
+            <Route path="/staff/suppliers" element={<AdminSuppliers />} />
             <Route
-              path="/admin/request-order"
+              path="/staff/request-order"
               element={<AdminRequestOrder />}
             />
             <Route
-              path="/admin/customer-order"
+              path="/staff/customer-order"
               element={<AdminCustomerOrder />}
             />
             <Route
-              path="/admin/purchase-order"
+              path="/staff/purchase-order"
               element={<AdminSupplierOrder />}
             />
             <Route
-              path="/admin/customer-delivery"
+              path="/staff/customer-delivery"
               element={<AdminCustomerDelivery />}
             />
             <Route
-              path="/admin/supplier-delivery"
+              path="/staff/supplier-delivery"
               element={<AdminSupplierDelivery />}
             />
-            <Route path="/admin/products" element={<AdminProducts />} />
+            <Route path="/staff/products" element={<AdminProducts />} />
             <Route
-              path="/admin/price-history"
+              path="/staff/price-history"
               element={<AdminPriceHistory />}
             />
-            <Route path="/admin/sales" element={<AdminSales />} />
-            <Route path="/admin/issues" element={<AdminReturns />} />
-            <Route path="/admin/logs" element={<AdminLogs />} />
-            <Route path="/admin/categories" element={<AdminCategories />} />
+            <Route path="/staff/sales" element={<AdminSales />} />
+            <Route path="/staff/issues" element={<AdminReturns />} />
+            <Route path="/staff/logs" element={<AdminLogs />} />
+            <Route path="/staff/categories" element={<AdminCategories />} />
             <Route
-              path="/admin/notifications"
+              path="/staff/notifications"
               element={<AdminNotification />}
             />
 
             {/* Staff Routes */}
-            <Route path="/staff/dashboard" element={<StaffDashboard />} />
-            <Route path="/staff/profile" element={<StaffProfile />} />
+            <Route path="/prevstaff/dashboard" element={<StaffDashboard />} />
+            <Route path="/prevstaff/profile" element={<StaffProfile />} />
             <Route
-              path="/staff/request-order"
+              path="/prevstaff/request-order"
               element={<StaffRequestOrder />}
             />
             <Route
-              path="/staff/customer-order"
+              path="/prevstaff/customer-order"
               element={<StaffCustomerOrder />}
             />
             <Route
-              path="/staff/customer-delivery"
+              path="/prevstaff/customer-delivery"
               element={<StaffCustomerDelivery />}
             />
             <Route
-              path="/staff/supplier-delivery"
+              path="/prevstaff/supplier-delivery"
               element={<StaffSupplierDelivery />}
             />
-            <Route path="/staff/products" element={<StaffProducts />} />
-            <Route path="/staff/inventory" element={<StaffInventory />} />
-            <Route path="/staff/customers" element={<StaffCustomers />} />
-            <Route path="/staff/issues" element={<StaffReturns />} />
-            <Route path="/staff/reports" element={<StaffReports />} />
-            <Route path="/staff/categories" element={<StaffCategories />} />
+            <Route path="/prevstaff/products" element={<StaffProducts />} />
+            <Route path="/prevstaff/inventory" element={<StaffInventory />} />
+            <Route path="/prevstaff/customers" element={<StaffCustomers />} />
+            <Route path="/prevstaff/issues" element={<StaffReturns />} />
+            <Route path="/prevstaff/reports" element={<StaffReports />} />
+            <Route path="/prevstaff/categories" element={<StaffCategories />} />
             <Route
-              path="/staff/notifications"
+              path="/prevstaff/notifications"
               element={<StaffNotification />}
             />
 

@@ -11,14 +11,18 @@ const sampleData = [
 
 const HighestSellingProducts = () => {
   const headers = ["Product Name", "Quantity Sold", "Revenue"];
-  const data = sampleData.map(product => [product.name, product.quantity, product.revenue]);
+  const data = sampleData.map((product) => [
+    product.name,
+    product.quantity,
+    product.revenue,
+  ]);
 
   return (
     <DashboardTable
       title="Highest Selling Products"
       headers={headers}
       data={data}
-      onRowClick={(id) => window.location.href = "/admin/products"}
+      onRowClick={(id) => (window.location.href = "/staff/products")}
     />
   );
 };

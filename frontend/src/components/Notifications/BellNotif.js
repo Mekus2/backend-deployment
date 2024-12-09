@@ -12,11 +12,11 @@ const BellNotif = () => {
 
   const goToNotifications = () => {
     if (location.pathname.startsWith("/admin")) {
-      navigate("/admin/notifications");
-    } else if (location.pathname.startsWith("/staff")) {
       navigate("/staff/notifications");
+    } else if (location.pathname.startsWith("/staff")) {
+      navigate("/prevstaff/notifications");
     } else if (location.pathname.startsWith("/superadmin")) {
-      navigate("/superadmin/notifications");
+      navigate("/admin/notifications");
     }
   };
 

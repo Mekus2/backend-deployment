@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate, useLocation } from "react-router-dom";
 import { fetchProductList } from "../../api/ProductApi";
@@ -12,19 +12,19 @@ import ProductDetailsModal from "./ProductDetailsModal";
 import { FaPlus } from "react-icons/fa";
 import { colors } from "../../colors";
 import { fetchCategory } from "../../api/CategoryApi";
-import axios from 'axios';
-
+import axios from "axios";
 
 const SharedProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
-  const [isProductDetailsModalOpen, setIsProductDetailsModalOpen] = useState(false);
+  const [isProductDetailsModalOpen, setIsProductDetailsModalOpen] =
+    useState(false);
   const [product, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rows, setRows] = useState([]);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   useEffect(() => {
@@ -32,32 +32,37 @@ const SharedProductsPage = () => {
       try {
         // Fetch products
         const fetchedProducts = (await fetchProductList()).results;
-        console.log('fetchedProducts:', fetchedProducts);
+        console.log("fetchedProducts:", fetchedProducts);
         setProducts(fetchedProducts);
-        
+
         // Filter products based on search term
         const filteredProducts = fetchedProducts.filter((products) =>
           products.PROD_NAME.toLowerCase().includes(searchTerm.toLowerCase())
         );
 
         // Get unique category codes
-        const uncachedCategoryCodes = [...new Set(
-          filteredProducts.map((product) => product.PROD_DETAILS["PROD_CAT_CODE"])
-        )];
-        
+        const uncachedCategoryCodes = [
+          ...new Set(
+            filteredProducts.map(
+              (product) => product.PROD_DETAILS["PROD_CAT_CODE"]
+            )
+          ),
+        ];
+
         console.log("uncachedCategoryCodes:", uncachedCategoryCodes);
-        
+
         // Fetch categories if uncached codes are found
-        const uncachedCategories = uncachedCategoryCodes.length > 0 
-          ? await Promise.all(uncachedCategoryCodes.map(fetchCategory)) 
-          : [];
-        
+        const uncachedCategories =
+          uncachedCategoryCodes.length > 0
+            ? await Promise.all(uncachedCategoryCodes.map(fetchCategory))
+            : [];
+
         // Map products to rows
         const rowsData = filteredProducts.map((product) => {
-          console.log('Product ID:', product.id); // Log product IDs for debugging
-          console.log('Product Object:', product);  // To verify that the correct product is passed
+          console.log("Product ID:", product.id); // Log product IDs for debugging
+          console.log("Product Object:", product); // To verify that the correct product is passed
           const prodId = product.id;
-          console.log('prod IDDD:',prodId);
+          console.log("prod IDDD:", prodId);
           const productDetail = product.PROD_DETAILS;
           const category = uncachedCategories.find(
             (cat) => cat.PROD_CAT_CODE === productDetail.PROD_CAT_CODE
@@ -90,7 +95,7 @@ const SharedProductsPage = () => {
 
         setRows(rowsData);
         setLoading(false);
-        console.log('rowsData:', rowsData);
+        console.log("rowsData:", rowsData);
       } catch (err) {
         setError("Error fetching products or categories");
         setLoading(false);
@@ -106,33 +111,34 @@ const SharedProductsPage = () => {
   const openProductDetailsModal = async (product) => {
     try {
       // Ensure product.id is a valid number or string
-      const productResponse = await axios.get(`http://127.0.0.1:8000/items/productList/${product.id}`);
-      console.log('Product API Response:', productResponse.data); // Log the product data
-  
+      const productResponse = await axios.get(
+        `http://127.0.0.1:8000/items/productList/${product.id}`
+      );
+      console.log("Product API Response:", productResponse.data); // Log the product data
+
       // Set only the product ID into state
       setSelectedProductId(product.id);
-  
+
       // Open the modal with the selected product ID
       setIsProductDetailsModalOpen(true);
     } catch (error) {
       console.error("Error fetching product data:", error);
-    } 
+    }
   };
-  
 
   const closeProductDetailsModal = () => {
     setSelectedProductId(null);
     setIsProductDetailsModalOpen(false);
   };
-  
+
   const handleCardClick = () => {
     let path;
     if (location.pathname.includes("/superadmin")) {
-      path = "/superadmin/categories";
-    } else if (location.pathname.includes("/admin")) {
       path = "/admin/categories";
-    } else if (location.pathname.includes("/staff")) {
+    } else if (location.pathname.includes("/admin")) {
       path = "/staff/categories";
+    } else if (location.pathname.includes("/staff")) {
+      path = "/prevstaff/categories";
     } else {
       alert("Access denied");
       return;
@@ -149,7 +155,7 @@ const SharedProductsPage = () => {
   }
 
   const headers = [
-   // "Image",
+    // "Image",
     "Product Name",
     "Category",
     "Unit",
@@ -176,7 +182,6 @@ const SharedProductsPage = () => {
       <AnalyticsContainer>
         <CardTotalProducts />
         <ClickableCard onClick={handleCardClick}>
-          
           {/* <CardTotalCategories /> */}
         </ClickableCard>
       </AnalyticsContainer>

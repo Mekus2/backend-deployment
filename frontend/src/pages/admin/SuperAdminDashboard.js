@@ -32,7 +32,7 @@ const SuperAdminDashboard = () => {
   const navigate = useNavigate();
   const [currentCardOrder, setCurrentCardOrder] = useState([
     "CardTotalProducts",
-   // "CardLowStocks",
+    // "CardLowStocks",
     "CardTotalInventoryValue",
     "CardTotalCustomerOrder",
     "CardTotalCustomers",
@@ -103,33 +103,33 @@ const SuperAdminDashboard = () => {
 
   // Custom onClick handlers for cards (with superadmin role)
   const cardOnClickHandlers = {
-    CardTotalProducts: () => navigate("/superadmin/products"),
-    //CardLowStocks: () => navigate("/superadmin/inventory"),
-    CardTotalInventoryValue: () => navigate("/superadmin/inventory"),
-    CardTotalCustomerOrder: () => navigate("/superadmin/customer-order"),
-    CardTotalCustomers: () => navigate("/superadmin/customers"),
-    CardTotalDelivery: () => navigate("/superadmin/delivery"),
-    CardTotalLogs: () => navigate("/superadmin/logs"),
-    CardTotalSupplierOrder: () => navigate("/superadmin/purchase-order"),
-    CardTotalReturns: () => navigate("/superadmin/issues"),
-    CardTotalSuppliers: () => navigate("/superadmin/suppliers"),
-    CardTotalTransactions: () => navigate("/superadmin/reports"),
-    CardTotalUsers: () => navigate("/superadmin/users"),
-    CardTotalSales: () => navigate("/superadmin/sales"),
+    CardTotalProducts: () => navigate("/admin/products"),
+    //CardLowStocks: () => navigate("/admin/inventory"),
+    CardTotalInventoryValue: () => navigate("/admin/inventory"),
+    CardTotalCustomerOrder: () => navigate("/admin/customer-order"),
+    CardTotalCustomers: () => navigate("/admin/customers"),
+    CardTotalDelivery: () => navigate("/admin/delivery"),
+    CardTotalLogs: () => navigate("/admin/logs"),
+    CardTotalSupplierOrder: () => navigate("/admin/purchase-order"),
+    CardTotalReturns: () => navigate("/admin/issues"),
+    CardTotalSuppliers: () => navigate("/admin/suppliers"),
+    CardTotalTransactions: () => navigate("/admin/reports"),
+    CardTotalUsers: () => navigate("/admin/users"),
+    CardTotalSales: () => navigate("/admin/sales"),
   };
 
   // Custom onClick handlers for tables (with superadmin role)
   const tableOnClickHandlers = {
-    HighestSellingProducts: () => navigate("/superadmin/products"),
-    ExpiredItemsAlert: () => navigate("/superadmin/inventory"),
-    RecentlyAddedProducts: () => navigate("/superadmin/products"),
-    LowestStocks: () => navigate("/superadmin/inventory"),
+    HighestSellingProducts: () => navigate("/admin/products"),
+    ExpiredItemsAlert: () => navigate("/admin/inventory"),
+    RecentlyAddedProducts: () => navigate("/admin/products"),
+    LowestStocks: () => navigate("/admin/inventory"),
   };
 
   const cardComponents = {
     CardTotalSales: <CardTotalSales />,
     CardTotalProducts: <CardTotalProducts />,
-  //  CardLowStocks: <CardLowStocks />,
+    //  CardLowStocks: <CardLowStocks />,
     CardTotalInventoryValue: <CardTotalInventoryValue />,
     CardTotalCustomerOrder: <CardTotalCustomerOrder />,
     CardTotalCustomers: <CardTotalCustomers />,
@@ -145,7 +145,7 @@ const SuperAdminDashboard = () => {
   const tableComponents = {
     ExpiredItemsAlert: <ExpiredItemsAlert />,
     //HighestSellingProducts: <HighestSellingProducts />,
-   // RecentlyAddedProducts: <RecentlyAddedProducts />,
+    // RecentlyAddedProducts: <RecentlyAddedProducts />,
     LowestStocks: <LowestStocks />,
   };
 

@@ -30,7 +30,7 @@ const StaffDashboard = () => {
     CardTotalCustomerOrder: <CardTotalCustomerOrder />,
     CardTotalReturns: <CardTotalReturns />,
     CardTotalDelivery: <CardTotalDelivery />,
-  //  CardTotalNotification: <CardTotalNotification />,
+    //  CardTotalNotification: <CardTotalNotification />,
     // CardTotalCategories: <CardTotalCategories />, // Add categories card
   };
 
@@ -43,26 +43,26 @@ const StaffDashboard = () => {
   const tableOrder = Object.keys(tableComponents); // Get all table keys from the tableComponents object
 
   const cardOnClickHandlers = {
-    CardTotalProducts: () => navigate("/staff/products"),
-    CardLowStocks: () => navigate("/staff/inventory"),
-    CardTotalCustomers: () => navigate("/staff/customers"),
-    CardTotalCustomerOrder: () => navigate("/staff/customer-order"),
-    CardTotalReturns: () => navigate("/staff/issues"),
-    CardTotalDelivery: () => navigate("/staff/delivery"),
-    CardTotalNotification: () => navigate("/staff/notifications"), // Update as necessary
-    CardTotalCategories: () => navigate("/staff/categories"), // Update as necessary
+    CardTotalProducts: () => navigate("/prevstaff/products"),
+    CardLowStocks: () => navigate("/prevstaff/inventory"),
+    CardTotalCustomers: () => navigate("/prevstaff/customers"),
+    CardTotalCustomerOrder: () => navigate("/prevstaff/customer-order"),
+    CardTotalReturns: () => navigate("/prevstaff/issues"),
+    CardTotalDelivery: () => navigate("/prevstaff/delivery"),
+    CardTotalNotification: () => navigate("/prevstaff/notifications"), // Update as necessary
+    CardTotalCategories: () => navigate("/prevstaff/categories"), // Update as necessary
   };
 
   const tableOnClickHandlers = {
-    LowestStocks: () => navigate("/staff/inventory"), // Update as necessary
-    ExpiredItemsAlert: () => navigate("/staff/inventory"), // Update as necessary
+    LowestStocks: () => navigate("/prevstaff/inventory"), // Update as necessary
+    ExpiredItemsAlert: () => navigate("/prevstaff/inventory"), // Update as necessary
   };
 
   useEffect(() => {
     const loadLayout = async () => {
       setLoading(true);
       try {
-        await getLayout("staff", "cardOrder");
+        await getLayout("prevstaff", "cardOrder");
         // No layout saving/loading as we're not implementing drag-and-drop
       } catch (error) {
         console.error("Error loading layout:", error);

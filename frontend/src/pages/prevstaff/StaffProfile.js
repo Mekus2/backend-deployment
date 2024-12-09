@@ -1,14 +1,14 @@
-// SuperAdminProfile.js
+// PrevStaffProfile.js
 import React from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 import SharedProfilePage from "../../components/Profile/SharedProfilePage";
 
-const SuperAdminProfile = () => {
+const PrevStaffProfile = () => {
   return (
     <MainLayout>
-      <SharedProfilePage userRole="SuperAdmin" />
+      <SharedProfilePage userRole="PrevStaff" />
     </MainLayout>
   );
 };
 
-export default SuperAdminProfile;
+export default PrevStaffProfile;

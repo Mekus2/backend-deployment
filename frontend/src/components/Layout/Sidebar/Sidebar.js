@@ -6,8 +6,7 @@ import philvetsLogo from "../../../assets/philvets.png";
 import {
   adminSidebarItems,
   staffSidebarItems,
-  superadminSidebarItems,
-} from "./sidebarItems"; // Imported superadmin items
+} from "./sidebarItems";
 import { TbLogout2 } from "react-icons/tb";
 
 // Centralized theme object for colors (move this if it's defined elsewhere)
@@ -39,16 +38,14 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
     };
   }, [onClose]);
 
-  // Determine sidebar items based on userRole and location
   const getSidebarItems = () => {
-    if (location.pathname.startsWith("/superadmin")) {
-      return superadminSidebarItems;
-    } else if (location.pathname.startsWith("/admin")) {
+    if (location.pathname.startsWith("/admin")) {
       return adminSidebarItems;
     } else {
       return staffSidebarItems;
     }
   };
+  
 
   const sidebarItems = getSidebarItems();
 

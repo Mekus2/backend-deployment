@@ -8,6 +8,25 @@ import { colors } from "../../colors";
 // Updated pageTitles with superadmin and other role titles
 const pageTitles = {
   // Admin routes
+  "/staff/dashboard": "Dashboard",
+  "/staff/orders": "Order",
+  "/staff/customer-order": "Customer Order",
+  "/staff/purchase-order": "Supplier Order",
+  "/staff/customer-delivery": "Customer Delivery",
+  "/staff/supplier-delivery": "Supplier Delivery",
+  "/staff/issues": "Issue",
+  "/staff/products": "Product",
+  "/staff/inventory": "Inventory",
+  "/staff/price-history": "Price History",
+  "/staff/customers": "Customer",
+  "/staff/suppliers": "Supplier",
+  "/staff/users": "PrevStaff",
+  "/staff/logs": "Logs",
+  "/staff/reports": "Reports",
+  "/staff/profile": "Profile",
+  "/staff/notifications": "Notifications",
+
+  // SuperAdmin routes
   "/admin/dashboard": "Dashboard",
   "/admin/orders": "Order",
   "/admin/customer-order": "Customer Order",
@@ -20,42 +39,23 @@ const pageTitles = {
   "/admin/price-history": "Price History",
   "/admin/customers": "Customer",
   "/admin/suppliers": "Supplier",
-  "/admin/users": "Staff",
+  "/admin/users": "User",
+  "/admin/sales": "Sales",
   "/admin/logs": "Logs",
   "/admin/reports": "Reports",
-  "/admin/profile": "Profile",
+  "/admin/profile": "Admin Profile",
   "/admin/notifications": "Notifications",
 
-  // SuperAdmin routes
-  "/superadmin/dashboard": "Dashboard",
-  "/superadmin/orders": "Order",
-  "/superadmin/customer-order": "Customer Order",
-  "/superadmin/purchase-order": "Supplier Order",
-  "/superadmin/customer-delivery": "Customer Delivery",
-  "/superadmin/supplier-delivery": "Supplier Delivery",
-  "/superadmin/issues": "Issue",
-  "/superadmin/products": "Product",
-  "/superadmin/inventory": "Inventory",
-  "/superadmin/price-history": "Price History",
-  "/superadmin/customers": "Customer",
-  "/superadmin/suppliers": "Supplier",
-  "/superadmin/users": "User",
-  "/superadmin/sales": "Sales",
-  "/superadmin/logs": "Logs",
-  "/superadmin/reports": "Reports",
-  "/superadmin/profile": "SuperAdmin Profile",
-  "/superadmin/notifications": "Notifications",
-
   // Staff routes
-  "/staff/dashboard": "Dashboard",
-  "/staff/customer-order": "Customer Order",
-  "/staff/customer-delivery": "Customer Delivery",
-  "/staff/issues": "Issue",
-  "/staff/products": "Product",
-  "/staff/inventory": "Inventory",
-  "/staff/customers": "Customers",
-  "/staff/profile": "Staff Profile",
-  "/staff/notifications": "Notifications",
+  "/prevstaff/dashboard": "Dashboard",
+  "/prevstaff/customer-order": "Customer Order",
+  "/prevstaff/customer-delivery": "Customer Delivery",
+  "/prevstaff/issues": "Issue",
+  "/prevstaff/products": "Product",
+  "/prevstaff/inventory": "Inventory",
+  "/prevstaff/customers": "Customers",
+  "/prevstaff/profile": "Staff Profile",
+  "/prevstaff/notifications": "Notifications",
 };
 
 const Header = ({ toggleSidebar }) => {
@@ -78,18 +78,16 @@ const Header = ({ toggleSidebar }) => {
       navigate("/admin/profile");
     } else if (location.pathname.startsWith("/staff")) {
       navigate("/staff/profile");
-    } else if (location.pathname.startsWith("/superadmin")) {
-      navigate("/superadmin/profile");
     }
   };
 
   const goToNotifications = () => {
     if (location.pathname.startsWith("/admin")) {
-      navigate("/admin/notifications");
-    } else if (location.pathname.startsWith("/staff")) {
       navigate("/staff/notifications");
+    } else if (location.pathname.startsWith("/staff")) {
+      navigate("/prevstaff/notifications");
     } else if (location.pathname.startsWith("/superadmin")) {
-      navigate("/superadmin/notifications");
+      navigate("/admin/notifications");
     }
   };
 
@@ -125,11 +123,11 @@ const Header = ({ toggleSidebar }) => {
             onClick={goToProfile}
           >
             <span>
-              {location.pathname.startsWith("/admin")
+              {location.pathname.startsWith("/staff")
+                ? "Staff"
+                : location.pathname.startsWith("/admin")
                 ? "Admin"
-                : location.pathname.startsWith("/superadmin")
-                ? "SuperAdmin"
-                : "Staff"}
+                : "PrevStaff"}
             </span>
             <TbUserCircle className="h-5 w-5 ml-1" />
           </ProfileButton>

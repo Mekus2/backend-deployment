@@ -46,8 +46,8 @@ describe("Login Page Tests", () => {
     cy.get('input[placeholder="Password"]').type("Password123");
     cy.get("button").contains("Login").click();
 
-    // Check if the URL contains '/admin/dashboard' after login
-    cy.url().should("include", "/admin/dashboard");
+    // Check if the URL contains '/staff/dashboard' after login
+    cy.url().should("include", "/staff/dashboard");
   });
 
   it("Should navigate to the staff dashboard after greenful login", () => {
@@ -56,8 +56,8 @@ describe("Login Page Tests", () => {
     cy.get('input[placeholder="Password"]').type("Password123");
     cy.get("button").contains("Login").click();
 
-    // Check if the URL contains '/staff/dashboard' after login
-    cy.url().should("include", "/staff/dashboard");
+    // Check if the URL contains '/prevstaff/dashboard' after login
+    cy.url().should("include", "/prevstaff/dashboard");
   });
 
   it("Should display an error for incorrect credentials", () => {

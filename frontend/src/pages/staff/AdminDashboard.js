@@ -29,7 +29,7 @@ const AdminDashboard = () => {
 
   const cardComponents = {
     CardTotalProducts: <CardTotalProducts />,
-   // CardLowStocks: <CardLowStocks />,
+    // CardLowStocks: <CardLowStocks />,
     CardTotalCustomerOrder: <CardTotalCustomerOrder />,
     CardTotalCustomers: <CardTotalCustomers />,
     CardTotalDelivery: <CardTotalDelivery />,
@@ -42,8 +42,8 @@ const AdminDashboard = () => {
   };
 
   const tableComponents = {
-   // HighestSellingProducts: <HighestSellingProducts />,
-  //  RecentlyAddedProducts: <RecentlyAddedProducts />,
+    // HighestSellingProducts: <HighestSellingProducts />,
+    //  RecentlyAddedProducts: <RecentlyAddedProducts />,
     LowestStocks: <LowestStocks />,
   };
 
@@ -70,31 +70,31 @@ const AdminDashboard = () => {
   ];
 
   const cardOnClickHandlers = {
-    CardTotalProducts: () => navigate("/admin/products"),
-    CardLowStocks: () => navigate("/admin/inventory"),
-    CardTotalCustomerOrder: () => navigate("/admin/customer-order"),
-    CardTotalCustomers: () => navigate("/admin/customers"),
-    CardTotalDelivery: () => navigate("/admin/delivery"),
-    CardTotalReturns: () => navigate("/admin/issues"),
-    CardTotalLogs: () => navigate("/admin/logs"), // Update as necessary
-    CardTotalSuppliers: () => navigate("/admin/suppliers"), // Update as necessary
-    CardTotalStaffs: () => navigate("/admin/users"), // Update as necessary
-    CardTotalSupplierOrder: () => navigate("/admin/purchase-orders"), // Update as necessary
-    CardTotalNotification: () => navigate("/admin/notifications"), // Update as necessary
+    CardTotalProducts: () => navigate("/staff/products"),
+    CardLowStocks: () => navigate("/staff/inventory"),
+    CardTotalCustomerOrder: () => navigate("/staff/customer-order"),
+    CardTotalCustomers: () => navigate("/staff/customers"),
+    CardTotalDelivery: () => navigate("/staff/delivery"),
+    CardTotalReturns: () => navigate("/staff/issues"),
+    CardTotalLogs: () => navigate("/staff/logs"), // Update as necessary
+    CardTotalSuppliers: () => navigate("/staff/suppliers"), // Update as necessary
+    CardTotalStaffs: () => navigate("/staff/users"), // Update as necessary
+    CardTotalSupplierOrder: () => navigate("/staff/purchase-orders"), // Update as necessary
+    CardTotalNotification: () => navigate("/staff/notifications"), // Update as necessary
   };
 
   const tableOnClickHandlers = {
-    HighestSellingProducts: () => navigate("/admin/products"),
-    RecentlyAddedProducts: () => navigate("/admin/products"),
-    LowestStocks: () => navigate("/admin/inventory"),
+    HighestSellingProducts: () => navigate("/staff/products"),
+    RecentlyAddedProducts: () => navigate("/staff/products"),
+    LowestStocks: () => navigate("/staff/inventory"),
   };
 
   useEffect(() => {
     const loadLayout = async () => {
       setLoading(true);
       try {
-        await getLayout("admin", "cardOrder");
-        await getLayout("admin", "tableOrder");
+        await getLayout("staff", "cardOrder");
+        await getLayout("staff", "tableOrder");
         // No layout saving/loading since we're not implementing drag-and-drop
       } catch (error) {
         console.error("Error loading layout:", error);
