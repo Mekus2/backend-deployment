@@ -65,16 +65,18 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
   };
 
   const handleSignOut = () => {
-    // Clear access token and any other user-related data from localStorage
-    localStorage.removeItem("access_tokenStorage");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("user_first_name");
-    localStorage.removeItem("user_type"); // Clear any other stored user info
-
-    console.log("User signed out. Tokens cleared."); // Logs the sign-out action
-    navigate("/login"); // Redirect to the login page
+    localStorage.clear(); // Clear all stored user-related data
+    sessionStorage.clear(); // Clear session storage if used
+    console.log("User signed out. Tokens cleared.");
+  
+    // Prevent accessing the previous pages by replacing the history state
+    window.history.replaceState({}, document.title, "/login");
+  
+    // Navigate to the login page
+    navigate("/login", { replace: true }); // 'replace: true' will ensure that the login page replaces the current page in the history stack
   };
+  
+
 
   return (
     <SidebarContainer ref={sidebarRef} isOpen={isOpen}>

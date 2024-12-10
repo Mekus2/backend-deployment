@@ -131,7 +131,7 @@ const Header = ({ toggleSidebar }) => {
             </span>
             <TbUserCircle className="h-5 w-5 ml-1" />
           </ProfileButton>
-          {isDropdownOpen && (
+          {/* {isDropdownOpen && (
             <DropdownContent
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
@@ -139,7 +139,7 @@ const Header = ({ toggleSidebar }) => {
               <DropdownItem onClick={goToProfile}>Profile</DropdownItem>
               <DropdownItem onClick={handleSignOut}>Sign out</DropdownItem>
             </DropdownContent>
-          )}
+          )} */}
         </ProfileContainer>
       </RightSection>
     </HeaderContainer>
