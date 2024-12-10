@@ -108,7 +108,38 @@ export const adminSidebarItems = [
   },
   { icon: TbBasketDollar, label: "Sales", link: "/admin/sales" },
   { icon: TbHistory, label: "Logs", link: "/admin/logs" },
-  { icon: TbFileReport, label: "Report", link: "/admin/reports" },
+  // { icon: TbFileReport, label: "Report", link: "/admin/reports" },
+  {
+    icon: TbFileReport,
+    label: "Reports",
+    dropdown: [
+      {
+        icon: TbChevronRight,
+        label: "Daily Report",
+        link: "/admin/reports",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Delivery",
+        link: "/admin/suppliers",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Low Stocks",
+        link: "/admin/users",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Expiry",
+        link: "/admin/users",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Deficit Product",
+        link: "/admin/users",
+      },
+    ],
+  },
 ];
 
 // Sidebar Items for Admin
