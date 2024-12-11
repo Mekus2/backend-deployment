@@ -97,3 +97,54 @@ export const acceptCustomerOrder = async (sales_order_id, username) => {
     throw error;
   }
 };
+
+export const updateOrderDetails = async (salesOrderId, orderDetails) => {
+  // Prepare the request body in the required format
+  const exportData = {
+    details: orderDetails.map((detail) => ({
+      SALES_ORDER_PROD_ID: parseInt(detail.SALES_ORDER_PROD_ID, 10),
+      SALES_ORDER_PROD_NAME: detail.SALES_ORDER_PROD_NAME,
+      // Convert SALES_ORDER_LINE_PRICE to a number and call toFixed
+      SALES_ORDER_LINE_PRICE: isNaN(Number(detail.SALES_ORDER_LINE_PRICE))
+        ? "0.00"
+        : Number(detail.SALES_ORDER_LINE_PRICE).toFixed(2),
+      SALES_ORDER_LINE_QTY: parseInt(detail.SALES_ORDER_LINE_QTY, 10) || 0,
+      // Convert SALES_ORDER_LINE_DISCOUNT to a number and call toFixed
+      SALES_ORDER_LINE_DISCOUNT: isNaN(Number(detail.SALES_ORDER_LINE_DISCOUNT))
+        ? "0.00"
+        : Number(detail.SALES_ORDER_LINE_DISCOUNT).toFixed(2),
+      // Convert SALES_ORDER_LINE_TOTAL to a number and call toFixed
+      SALES_ORDER_LINE_TOTAL: isNaN(Number(detail.SALES_ORDER_LINE_TOTAL))
+        ? "0.00"
+        : Number(detail.SALES_ORDER_LINE_TOTAL).toFixed(2),
+    })),
+  };
+
+  try {
+    // Send the request to the backend API for exporting the order details
+    const response = await fetch(
+      `http://127.0.0.1:8000/api/customer-order/update/${salesOrderId}`, // Ensure correct URL format
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(exportData),
+      }
+    );
+
+    console.log("Data Passed:", exportData);
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.log("Error Response:", errorData); // Log error for debugging
+      return false; // Return false if the response is not ok
+    }
+
+    const data = await response.json();
+    console.log("Success Response:", data); // Log success message
+    return true; // Return true if everything is okay
+  } catch (error) {
+    console.error("Error updating order:", error);
+    return false; // Return false on network errors or unexpected issues
+  }
+};
