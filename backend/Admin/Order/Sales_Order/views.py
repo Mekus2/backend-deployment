@@ -380,7 +380,7 @@ class SalesOrderUpdateAPIView(APIView):
                             OUTBOUND_DETAILS_PROD_ID=product,
                             defaults={
                                 "OUTBOUND_DETAILS_PROD_NAME": product_name,
-                                "OUTBOUND_DETAILS_PROD_QTY": quantity,
+                                "OUTBOUND_DETAILS_PROD_QTY_ORDERED": quantity,
                                 "OUTBOUND_DETAILS_SELL_PRICE": price,
                                 "OUTBOUND_DETAIL_LINE_TOTAL": line_total,
                             },
@@ -430,10 +430,21 @@ class SalesOrderUpdateAPIView(APIView):
                 )
 
                 if outbound_delivery:
+                    outbound_total_price = OutboundDeliveryDetails.objects.filter(
+                        OUTBOUND_DEL_ID=outbound_delivery
+                    ).aggregate(outbound_total_price=Sum("OUTBOUND_DETAIL_LINE_TOTAL"))[
+                        "outbound_total_price"
+                    ]
+
                     outbound_delivery.OUTBOUND_DEL_TOTAL_ORDERED_QTY = total_qty or 0
+                    outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE = (
+                        outbound_total_price or 0
+                    )
                     outbound_delivery.save()
                     logger.info(
-                        "OutboundDelivery totals updated: %s", outbound_delivery
+                        "OutboundDelivery totals updated: Total Qty: %s, Total Price: %s",
+                        total_qty,
+                        outbound_total_price,
                     )
 
                 return Response(
