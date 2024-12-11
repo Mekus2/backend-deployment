@@ -25,6 +25,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const [orderDetails, setOrderDetails] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const userId = localStorage.getItem("user_id");
+  const [orderStatus, setOrderStatus] = useState("");
 
   const handleUpdateOrder = () => {
     setIsEditModalOpen(true); // Open the edit modal
@@ -51,6 +52,7 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
             controller.signal
           );
           setOrderDetails(details);
+          setOrderStatus(order.SALES_ORDER_STATUS); // Use setOrderStatus to update the state
         } catch (err) {
           if (err.name === "AbortError") {
             console.log("Fetch aborted");
@@ -253,17 +255,25 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
         </TotalSummary>
 
         <ButtonGroup>
-          <Button variant="red" onClick={handleCancelOrder}>
-            Cancel Order
-          </Button>
-          {userRole !== "staff" && (
-            <Button variant="green" onClick={handleUpdateOrder}>
-              Update Order
-            </Button>
+          {orderStatus !== "Completed" && (
+            <>
+              {orderStatus !== "Accepted" && (
+                <Button variant="red" onClick={handleCancelOrder}>
+                  Cancel Order
+                </Button>
+              )}
+              {userRole !== "staff" && (
+                <Button variant="green" onClick={handleUpdateOrder}>
+                  Update Order
+                </Button>
+              )}
+              {orderStatus !== "Accepted" && (
+                <Button variant="primary" onClick={handleAcceptOrder}>
+                  Accept Order
+                </Button>
+              )}
+            </>
           )}
-          <Button variant="primary" onClick={handleAcceptOrder}>
-            Accept Order
-          </Button>
         </ButtonGroup>
       </Modal>
 

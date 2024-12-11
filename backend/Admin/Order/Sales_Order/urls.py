@@ -27,7 +27,7 @@ urlpatterns = [
         name="accept-sales-order",
     ),
     path(
-        "<int:sales_order_id>/update/",
+        "update/<int:sales_order_id>",
         SalesOrderUpdateAPIView.as_view(),
         name="update-sales-order",
     ),
