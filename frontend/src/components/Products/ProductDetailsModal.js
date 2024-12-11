@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import styled from "styled-components";
 import Modal from "../Layout/Modal";
@@ -12,6 +13,20 @@ const ProductDetailsModal = ({ productId, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editFields, setEditFields] = useState({ tags: [] });
   const [showPriceHistory, setShowPriceHistory] = useState(false);
+  const location = useLocation();
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const determineRole = () => {
+      if (location.pathname.includes("/admin/")) {
+        return "admin";
+      } else if (location.pathname.includes("/staff/")) {
+        return "staff";
+      }
+      return null;
+    };
+    setUserRole(determineRole());
+  }, [location]);
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -202,7 +217,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             />
           </DetailItem>
           <DetailItem>
-            <Label>Price:</Label>
+            <Label>Sell Price:</Label>
             <Input
               type="number"
               value={editFields.PROD_DETAILS_PRICE || ""}
@@ -211,6 +226,21 @@ const ProductDetailsModal = ({ productId, onClose }) => {
               }
             />
           </DetailItem>
+          {userRole === "admin" && (
+            <DetailItem>
+              <Label>Purchase Price:</Label>
+              <Input
+                type="number"
+                value={editFields.PROD_DETAILS_PURCHASE_PRICE || ""}
+                onChange={(e) =>
+                  handleInputChange(
+                    "PROD_DETAILS_PURCHASE_PRICE",
+                    e.target.value
+                  )
+                }
+              />
+            </DetailItem>
+          )}
           <DetailItem>
             <Label>Description:</Label>
             <TextArea
@@ -249,12 +279,6 @@ const ProductDetailsModal = ({ productId, onClose }) => {
         </Details>
       ) : (
         <Details>
-          {/* <Detail>
-            <DetailLabel>Image:</DetailLabel>
-            {product.PROD_IMG && (
-              <ImagePreview src={product.PROD_IMG} alt="Product Image" />
-            )}
-          </Detail> */}
           <Detail>
             <DetailLabel>Name:</DetailLabel> {product.PROD_NAME}
           </Detail>
@@ -270,12 +294,15 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             {productDetail.PROD_DETAILS_SUPPLIER}
           </Detail>
           <Detail>
-            <DetailLabel>Price:</DetailLabel> ₱
+            <DetailLabel>Sell Price:</DetailLabel> ₱
             {productDetail.PROD_DETAILS_PRICE}
-            {/* <MoreInfoButton onClick={handleMoreInfoClick}>
-              More Info
-            </MoreInfoButton> */}
           </Detail>
+          {userRole === "admin" && (
+            <Detail>
+              <DetailLabel>Purchase Price:</DetailLabel> ₱
+              {productDetail.PROD_DETAILS_PURCHASE_PRICE}
+            </Detail>
+          )}
           <Detail>
             <DetailLabel>Description:</DetailLabel>{" "}
             {productDetail.PROD_DETAILS_DESCRIPTION}
@@ -303,12 +330,16 @@ const ProductDetailsModal = ({ productId, onClose }) => {
           </>
         ) : (
           <>
-            <Button variant="red" onClick={handleRemove}>
-              Remove
-            </Button>
-            <Button variant="primary" onClick={handleEdit}>
-              Edit
-            </Button>
+            {userRole === "admin" && (
+              <Button variant="red" onClick={handleRemove}>
+                Remove
+              </Button>
+            )}
+            {userRole === "admin" && (
+              <Button variant="primary" onClick={handleEdit}>
+                Edit
+              </Button>
+            )}
           </>
         )}
       </ButtonGroup>
