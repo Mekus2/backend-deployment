@@ -45,6 +45,9 @@ const pageTitles = {
   "/admin/reports": "Reports",
   "/admin/profile": "Admin Profile",
   "/admin/notifications": "Notifications",
+  "/admin/daily-reports": "Daily Report",
+  "/admin/expiration-reports": "Expiration Report",
+  "/admin/stock-reports": "Stocks Report",
 
   // Staff routes
   "/prevstaff/dashboard": "Dashboard",
