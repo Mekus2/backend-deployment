@@ -311,27 +311,27 @@ class SalesOrderUpdateAPIView(APIView):
                 )
                 logger.debug("SalesOrder fetched successfully: %s", sales_order)
 
-                # Update SalesOrder fields from the request data
-                sales_order.CLIENT_ID = request.data.get(
-                    "CLIENT_ID", sales_order.CLIENT_ID
-                )
-                sales_order.SALES_ORDER_CLIENT_NAME = request.data.get(
-                    "CLIENT_NAME", sales_order.SALES_ORDER_CLIENT_NAME
-                )
-                sales_order.SALES_ORDER_CLIENT_PROVINCE = request.data.get(
-                    "CLIENT_PROVINCE", sales_order.SALES_ORDER_CLIENT_PROVINCE
-                )
-                sales_order.SALES_ORDER_CLIENT_CITY = request.data.get(
-                    "CLIENT_CITY", sales_order.SALES_ORDER_CLIENT_CITY
-                )
-                sales_order.SALES_ORDER_DLVRY_OPTION = request.data.get(
-                    "DELIVERY_OPTION", sales_order.SALES_ORDER_DLVRY_OPTION
-                )
-                sales_order.SALES_ORDER_PYMNT_OPTION = request.data.get(
-                    "PAYMENT_OPTION", sales_order.SALES_ORDER_PYMNT_OPTION
-                )
-                sales_order.save()
-                logger.info("SalesOrder updated successfully: %s", sales_order_id)
+                # # Update SalesOrder fields from the request data
+                # sales_order.CLIENT_ID = request.data.get(
+                #     "CLIENT_ID", sales_order.CLIENT_ID
+                # )
+                # sales_order.SALES_ORDER_CLIENT_NAME = request.data.get(
+                #     "CLIENT_NAME", sales_order.SALES_ORDER_CLIENT_NAME
+                # )
+                # sales_order.SALES_ORDER_CLIENT_PROVINCE = request.data.get(
+                #     "CLIENT_PROVINCE", sales_order.SALES_ORDER_CLIENT_PROVINCE
+                # )
+                # sales_order.SALES_ORDER_CLIENT_CITY = request.data.get(
+                #     "CLIENT_CITY", sales_order.SALES_ORDER_CLIENT_CITY
+                # )
+                # sales_order.SALES_ORDER_DLVRY_OPTION = request.data.get(
+                #     "DELIVERY_OPTION", sales_order.SALES_ORDER_DLVRY_OPTION
+                # )
+                # sales_order.SALES_ORDER_PYMNT_OPTION = request.data.get(
+                #     "PAYMENT_OPTION", sales_order.SALES_ORDER_PYMNT_OPTION
+                # )
+                # sales_order.save()
+                # logger.info("SalesOrder updated successfully: %s", sales_order_id)
 
                 # Check if there is an existing OutboundDelivery for the SalesOrder
                 outbound_delivery = OutboundDelivery.objects.filter(

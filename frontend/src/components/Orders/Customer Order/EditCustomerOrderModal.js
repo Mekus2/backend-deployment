@@ -335,7 +335,7 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
                                   key={product.PROD_ID}
                                   onClick={() =>
                                     handleProductSelect(index, product)
-                                  } // Ensure the correct index is passed
+                                  }
                                 >
                                   {product.PROD_NAME}
                                 </SuggestionItem>
@@ -354,6 +354,11 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
                         }
                         onChange={(e) => {
                           const newQuantity = e.target.value;
+                          console.log(
+                            `Updating Quantity for index ${index}:`,
+                            newQuantity
+                          );
+
                           setInputStates((prevStates) => {
                             const newStates = [...prevStates];
                             newStates[index].quantity = newQuantity;
@@ -367,39 +372,14 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
                               newQuantity;
                             newDetails[index].SALES_ORDER_LINE_TOTAL =
                               calculateLineTotal(newDetails[index]); // Recalculate line total
+                            console.log(
+                              `Updated orderDetails (Quantity) for index ${index}:`,
+                              newDetails[index]
+                            );
                             return newDetails;
                           });
                         }}
                         placeholder="Quantity"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <InputField
-                        type="number"
-                        value={
-                          inputStates[index]?.purchasePrice ||
-                          detail.SALES_ORDER_LINE_PURCHASE_PRICE ||
-                          0
-                        }
-                        onChange={(e) => {
-                          const newPurchasePrice = e.target.value;
-                          setInputStates((prevStates) => {
-                            const newStates = [...prevStates];
-                            newStates[index].purchasePrice = newPurchasePrice;
-                            return newStates;
-                          });
-
-                          // Update orderDetails to reflect the change in purchase price and recalculate the line total
-                          setOrderDetails((prevDetails) => {
-                            const newDetails = [...prevDetails];
-                            newDetails[index].SALES_ORDER_LINE_PURCHASE_PRICE =
-                              newPurchasePrice;
-                            newDetails[index].SALES_ORDER_LINE_TOTAL =
-                              calculateLineTotal(newDetails[index]); // Recalculate line total
-                            return newDetails;
-                          });
-                        }}
-                        placeholder="Purchase Price"
                       />
                     </TableCell>
                     <TableCell>
@@ -412,6 +392,11 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
                         }
                         onChange={(e) => {
                           const newSellPrice = e.target.value;
+                          console.log(
+                            `Updating Sell Price for index ${index}:`,
+                            newSellPrice
+                          );
+
                           setInputStates((prevStates) => {
                             const newStates = [...prevStates];
                             newStates[index].sellPrice = newSellPrice;
@@ -425,6 +410,10 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
                               newSellPrice;
                             newDetails[index].SALES_ORDER_LINE_TOTAL =
                               calculateLineTotal(newDetails[index]); // Recalculate line total
+                            console.log(
+                              `Updated orderDetails (Sell Price) for index ${index}:`,
+                              newDetails[index]
+                            );
                             return newDetails;
                           });
                         }}
@@ -441,6 +430,11 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
                         }
                         onChange={(e) => {
                           const newDiscount = e.target.value;
+                          console.log(
+                            `Updating Discount for index ${index}:`,
+                            newDiscount
+                          );
+
                           setInputStates((prevStates) => {
                             const newStates = [...prevStates];
                             newStates[index].discount = newDiscount;
@@ -454,6 +448,10 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
                               newDiscount;
                             newDetails[index].SALES_ORDER_LINE_TOTAL =
                               calculateLineTotal(newDetails[index]); // Recalculate line total
+                            console.log(
+                              `Updated orderDetails (Discount) for index ${index}:`,
+                              newDetails[index]
+                            );
                             return newDetails;
                           });
                         }}
@@ -493,11 +491,9 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
         <Button
           variant="primary"
           onClick={async () => {
-            // Log the order details to the console
-            console.log("Order Details to be Passed:", orderDetails);
-
             // Call the updateOrderDetails function and await the result
-            const salesOrderId = order.SALES_ORDER_ID; // Use the actual SalesOrder ID
+            const salesOrderId = order.SALES_ORDER_ID;
+            console.log("Order Details Passed:", orderDetails);
             console.log("Order ID:", salesOrderId);
             const isUpdateSuccessful = await updateOrderDetails(
               salesOrderId,
@@ -507,8 +503,12 @@ const EditCustomerOrderModal = ({ order, onClose }) => {
             // Show appropriate alert based on whether the update was successful
             if (isUpdateSuccessful) {
               alert("Sales Order updated successfully!");
+              // Reload the page after successful update
+              window.location.reload();
             } else {
               alert("Failed to update Sales Order.");
+              // Reload the page after failure
+              window.location.reload();
             }
           }}
         >
