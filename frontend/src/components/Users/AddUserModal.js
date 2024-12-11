@@ -16,7 +16,7 @@ const AddUserModal = ({ onClose, onSave }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [address, setAddress] = useState("");
-  const [acctype, setAcctype] = useState("prevstaff");
+  const [acctype, setAcctype] = useState("staff");
   const [errors, setErrors] = useState({});
   const modalRef = useRef();
 
@@ -262,7 +262,7 @@ const AddUserModal = ({ onClose, onSave }) => {
             </PasswordWrapper>
             {errors.password && <ErrorMessage>{errors.password}</ErrorMessage>}
           </Field>
-          {isSuperadminPage && (
+          {/* {isSuperadminPage && (
             <Field>
               <Label>Account Type</Label>
               <Select
@@ -284,7 +284,7 @@ const AddUserModal = ({ onClose, onSave }) => {
                 <option value="prevstaff">Staff</option>
               </Select>
             </Field>
-          )}
+          )} */}
         </ModalBody>
         <ModalFooter>
           <Button variant="red" onClick={onClose}>
