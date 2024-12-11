@@ -97,3 +97,53 @@ export const acceptCustomerOrder = async (sales_order_id, username) => {
     throw error;
   }
 };
+
+export const updateOrderDetails = async (salesOrderId, orderDetails) => {
+  // Prepare the request body in the required format
+  const exportData = {
+    details: orderDetails.map((detail) => ({
+      SALES_ORDER_PROD_ID: detail.productId,
+      SALES_ORDER_PROD_NAME: detail.productName,
+      // Ensure price is a number before calling toFixed
+      SALES_ORDER_LINE_PRICE: isNaN(detail.price)
+        ? "0.00"
+        : detail.price.toFixed(2),
+      SALES_ORDER_LINE_QTY: detail.quantity,
+      // Ensure discountValue is a number before calling toFixed
+      SALES_ORDER_LINE_DISCOUNT: isNaN(detail.discountValue)
+        ? "0.00"
+        : detail.discountValue.toFixed(2),
+      // Ensure lineTotal is a number before calling toFixed
+      SALES_ORDER_LINE_TOTAL: isNaN(detail.lineTotal)
+        ? "0.00"
+        : detail.lineTotal.toFixed(2),
+    })),
+  };
+
+  try {
+    // Send the request to the backend API for exporting the order details
+    const response = await fetch(
+      `http://127.0.0.1:8000/api/customer-order/update/${salesOrderId}`, // Ensure correct URL format
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(exportData),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.ok) {
+      // Check if the response is successful (status 200)
+      alert("Sales Order updated successfully!");
+    } else {
+      console.error("Error:", data.message);
+      alert(`Failed to update Sales Order: ${data.message || "Unknown error"}`);
+    }
+  } catch (error) {
+    console.error("Error updating Sales Order:", error);
+    alert("An error occurred while updating the Sales Order.");
+  }
+};
