@@ -67,8 +67,7 @@ urlpatterns = [
         GetTotalInboundPendingCount.as_view(),
         name="total-supplier-pending",
     ),
-
-    #Path for all delivered
+    # Path for all delivered
     path(
         "customer/delivered",
         DeliveredOutboundDeliveryView.as_view(),

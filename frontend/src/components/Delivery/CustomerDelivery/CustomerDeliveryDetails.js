@@ -49,15 +49,28 @@ const getProgressForStatus = (status) => {
   }
 };
 
+const formatDate = (isoDate) => {
+  if (!isoDate) return "Invalid Date"; // Handle null, undefined, or invalid input
+
+  const date = new Date(isoDate);
+
+  // Check if the date is valid
+  if (isNaN(date)) return "Invalid Date"; // Handle invalid date
+
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed, so add 1
+  const day = String(date.getDate()).padStart(2, "0"); // Ensure two-digit day
+  const year = date.getFullYear();
+
+  return `${month}/${day}/${year}`; // Return in mm-dd-yyyy format
+};
+
 const CustomerDeliveryDetails = ({ delivery, onClose }) => {
   const abortControllerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState([]);
   const [status, setStatus] = useState("");
-  const [receivedDate, setReceivedDate] = useState(
-    delivery.OUTBOUND_DEL_DATE_CUST_RCVD || "Not Received"
-  );
+  const [receivedDate, setReceivedDate] = useState("Not Received");
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
   const [isIssueDetailsOpen, setIsIssueDetailsOpen] = useState(false); // State for IssueDetails modal
   const [issueReported, setIssueReported] = useState(false); // Track if issue has been reported
@@ -84,6 +97,7 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
           controller.signal
         );
         console.log("Fetched Details:", details);
+        setReceivedDate(delivery.OUTBOUND_DEL_CSTMR_RCVD_DATE);
         setOrderDetails(details);
         setStatus(delivery.OUTBOUND_DEL_STATUS);
       } catch (error) {
@@ -133,9 +147,14 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
       notify.info("Delivery status updated to Dispatched.");
     } else if (status === "Dispatched") {
       newStatus = "Delivered"; // Update the status to Delivered
+
       // Call the createSalesInvoice function and store its response status in a new variable
       const outboundDeliveryId = delivery.OUTBOUND_DEL_ID;
-      const invoiceStatus = await createSalesInvoice(outboundDeliveryId);
+      console.log("Updated Order Details:", orderDetails);
+      const invoiceStatus = await createSalesInvoice(
+        outboundDeliveryId,
+        orderDetails
+      );
 
       // Check the status returned from the API call
       if (invoiceStatus === 200) {
@@ -240,12 +259,20 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
     // Customer and delivery details
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text(`Customer: ${delivery.CUSTOMER_NAME}`, 20, 40);
+    doc.text(`Customer: ${delivery.OUTBOUND_DEL_CUSTOMER_NAME}`, 20, 40);
     doc.text(`City: ${delivery.OUTBOUND_DEL_CITY}`, 20, 45);
     doc.text(`Province: ${delivery.OUTBOUND_DEL_PROVINCE}`, 20, 50);
     doc.text(`Delivery Status: ${status}`, 20, 55);
-    doc.text(`Shipped Date: ${delivery.OUTBOUND_DEL_SHIPPED_DATE}`, 20, 60);
-    doc.text(`Received Date: ${receivedDate}`, 20, 65);
+    doc.text(
+      `Shipped Date: ${formatDate(delivery.OUTBOUND_DEL_SHIPPED_DATE)}`,
+      20,
+      60
+    );
+    doc.text(
+      `Received Date: ${formatDate(delivery.OUTBOUND_DEL_CSTMR_RCVD_DATE)}`,
+      20,
+      65
+    );
 
     // Table for order details
     doc.autoTable({
@@ -314,18 +341,28 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                 <FormGroup>
                   <Label>Shipped Date:</Label>
                   <Value>
-                    {delivery.OUTBOUND_DEL_SHIPPED_DATE || "Not yet Shipped"}
+                    {delivery.OUTBOUND_DEL_SHIPPED_DATE
+                      ? formatDate(delivery.OUTBOUND_DEL_SHIPPED_DATE)
+                      : "Not yet shipped"}
                   </Value>
                 </FormGroup>
                 <FormGroup>
                   <Label>Received Date:</Label>
-                  <Value>{receivedDate}</Value>
+                  <Value>
+                    {receivedDate
+                      ? formatDate(receivedDate)
+                      : " Not yet received"}
+                  </Value>
                 </FormGroup>
               </Column>
               <Column>
                 <FormGroup>
                   <Label>Delivery Option:</Label>
                   <Value>{delivery.OUTBOUND_DEL_DLVRY_OPTION}</Value>
+                </FormGroup>
+                <FormGroup>
+                  <Label>Client:</Label>
+                  <Value>{delivery.OUTBOUND_DEL_CUSTOMER_NAME}</Value>
                 </FormGroup>
                 <FormGroup>
                   <Label>City:</Label>
@@ -359,38 +396,45 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                       {status === "Dispatched" ? (
                         <input
                           type="text"
-                          value={item.QTY_ACCEPTED || ""}
+                          value={item.QTY_ACCEPTED ?? ""}
                           onChange={(e) => {
-                            const value = e.target.value;
-                            const numericValue =
-                              value === "" ? "" : value.replace(/[^0-9]/g, ""); // Allow empty string for direct "0" input
+                            const inputValue = e.target.value;
 
+                            // Allow empty value or numeric input only
+                            const numericValue =
+                              inputValue === ""
+                                ? ""
+                                : inputValue.replace(/[^0-9]/g, "");
                             let newQtyAccepted =
                               numericValue === ""
                                 ? ""
                                 : parseInt(numericValue, 10);
-                            // Ensure the new quantity is within the valid range (not greater than Qty Ordered)
+
+                            // Ensure the accepted quantity does not exceed the ordered quantity
                             if (
                               newQtyAccepted !== "" &&
                               newQtyAccepted >
                                 item.OUTBOUND_DETAILS_PROD_QTY_ORDERED
-                            )
+                            ) {
                               newQtyAccepted =
                                 item.OUTBOUND_DETAILS_PROD_QTY_ORDERED;
+                            }
 
+                            // Calculate the defect quantity based on the accepted quantity
                             const newQtyDefect =
                               newQtyAccepted === "" || newQtyAccepted === 0
                                 ? 0
                                 : item.OUTBOUND_DETAILS_PROD_QTY_ORDERED -
                                   newQtyAccepted;
 
+                            // Update the order details state
                             setOrderDetails((prevDetails) =>
                               prevDetails.map((detail, detailIndex) =>
                                 detailIndex === index
                                   ? {
                                       ...detail,
                                       QTY_ACCEPTED: newQtyAccepted,
-                                      QTY_DEFECT: newQtyDefect, // Update Qty Defect based on Qty Accepted
+                                      QTY_DEFECT: newQtyDefect,
                                     }
                                   : detail
                               )
@@ -401,10 +445,12 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                             padding: "5px",
                             borderRadius: "4px",
                             textAlign: "center",
+                            width: "100%",
                           }}
                         />
                       ) : (
-                        item.QTY_ACCEPTED || 0
+                        // When not "Dispatched," show the accepted quantity from OUTBOUND_DETAILS_PROD_QTY_ACCEPTED
+                        item.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED || 0
                       )}
                     </TableCell>
 
@@ -420,13 +466,18 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
 
                     <TableCell>
                       ₱
-                      {(
-                        calculateItemTotal(
-                          item.QTY_ACCEPTED || item.OUTBOUND_DETAILS_PROD_QTY,
-                          item.OUTBOUND_DETAILS_SELL_PRICE
-                        ) *
-                        (1 - (item.OUTBOUND_DETAILS_DISCOUNT || 0) / 100)
-                      ).toFixed(2)}
+                      {status === "Dispatched"
+                        ? (
+                            calculateItemTotal(
+                              item.QTY_ACCEPTED ||
+                                item.OUTBOUND_DETAILS_PROD_QTY, // Use QTY_ACCEPTED if available, fallback to QTY
+                              item.OUTBOUND_DETAILS_SELL_PRICE
+                            ) *
+                            (1 - (item.OUTBOUND_DETAILS_DISCOUNT || 0) / 100)
+                          ).toFixed(2)
+                        : (
+                            Number(item.OUTBOUND_DETAIL_LINE_TOTAL) || 0
+                          ).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -440,7 +491,8 @@ const CustomerDeliveryDetails = ({ delivery, onClose }) => {
                 {orderDetails.reduce(
                   (acc, detail) =>
                     acc +
-                    (parseInt(detail.OUTBOUND_DETAILS_PROD_LINE_QTY, 10) || 0),
+                    (parseInt(detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED, 10) ||
+                      0),
                   0
                 )}
               </SummaryItem>

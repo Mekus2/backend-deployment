@@ -79,21 +79,26 @@ export const fetchCustomerDelDetails = async (orderId) => {
 };
 
 // Function to create a new sales invoice
-export const createSalesInvoice = async (outboundDeliveryId) => {
+export const createSalesInvoice = async (outboundDeliveryId, orderDetails) => {
   const url = `${BASE_URL}/api/delivery/customer/${outboundDeliveryId}/create-invoice/`; // Your API endpoint URL with pk
 
   try {
-    // Send POST request to backend using axios without data in the body
-    const response = await axios.post(
-      url,
-      {},
-      {
-        // Sending an empty object in the body
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    // Prepare the request body
+    const requestBody = {
+      items: orderDetails.map((item) => ({
+        prod_details_id: item.OUTBOUND_DEL_DETAIL_ID,
+        productId: item.OUTBOUND_DETAILS_PROD_ID, // Replace with the correct key for product ID
+        qtyAccepted: item.QTY_ACCEPTED || 0,
+        qtyDefect: item.QTY_DEFECT || 0,
+      })),
+    };
+
+    // Send POST request to backend using axios
+    const response = await axios.post(url, requestBody, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     // Return the response status
     return response.status;

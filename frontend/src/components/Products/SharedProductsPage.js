@@ -69,7 +69,7 @@ const SharedProductsPage = () => {
           );
 
           const unit = productDetail.PROD_DETAILS_UNIT || "N/A";
-          const brand = productDetail.PROD_DETAILS_BRAND || "N/A";
+          const brand = productDetail.PROD_DETAILS_SUPPLIER || "N/A";
           const price = parseFloat(productDetail.PROD_DETAILS_PRICE);
 
           return [
@@ -159,7 +159,7 @@ const SharedProductsPage = () => {
     "Product Name",
     "Category",
     "Unit",
-    "Brand",
+    "Supplier",
     "Price",
     "Actions",
   ];

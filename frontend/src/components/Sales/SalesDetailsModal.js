@@ -117,8 +117,7 @@ const SalesDetailsModal = ({ sale, onClose }) => {
           </DetailsColumn>
           <DetailsColumn>
             <Detail>
-              <strong>Balance:</strong>{" "}
-              {formatCurrency(sale.SALES_INV_AMOUNT_BALANCE || 0)}
+              <strong>Balance:</strong> {sale.SALES_INV_AMOUNT_BALANCE || 0}
             </Detail>
             <Detail>
               <strong>Payment Terms (Days):</strong>

@@ -178,7 +178,7 @@ class AcceptOutboundDeliveryAPI(APIView):
                             quantity_to_deduct = (
                                 detail.OUTBOUND_DETAILS_PROD_QTY_ORDERED
                             )
-                            logger.error("Product ID", product_id)
+                            logger.error(f"Product ID: {product_id}")
 
                             if not product_id:
                                 logger.error(
@@ -263,9 +263,20 @@ class AcceptOutboundDeliveryAPI(APIView):
                         logger.info(
                             f"Outbound Delivery {outbound_delivery.pk} marked as Dispatched."
                         )
+
+                        # Fetch and update the connected SalesOrder
+                        sales_order = (
+                            outbound_delivery.SALES_ORDER_ID
+                        )  # Access the related SalesOrder
+                        sales_order.SALES_ORDER_STATUS = "Completed"
+                        sales_order.save()
+                        logger.info(
+                            f"Sales Order {sales_order.SALES_ORDER_ID} marked as Completed."
+                        )
+
                         return Response(
                             {
-                                "message": "Outbound Delivery marked as Dispatched and inventory updated successfully."
+                                "message": "Outbound Delivery marked as Dispatched, inventory updated, and SalesOrder marked as Completed."
                             },
                             status=status.HTTP_200_OK,
                         )
@@ -321,6 +332,42 @@ class CompleteOutboundDeliveryAPI(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
+                # Parse request data
+                items = request.data.get("items", [])
+                if not items:
+                    logger.error("Request body missing 'items'.")
+                    return Response(
+                        {"error": "Request must include 'items' data."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Update the delivery details with accepted and defect quantities
+                for item in items:
+                    detail_id = item.get("prod_details_id")
+                    qty_accepted = item.get("qtyAccepted", 0)
+                    qty_defect = item.get("qtyDefect", 0)
+
+                    try:
+                        detail = OutboundDeliveryDetails.objects.get(
+                            OUTBOUND_DEL_DETAIL_ID=detail_id
+                        )
+                        detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED = qty_accepted
+                        detail.OUTBOUND_DETAILS_PROD_QTY_DEFECT = qty_defect
+                        detail.save()
+
+                        logger.info(
+                            f"Updated delivery detail {detail_id}: "
+                            f"Accepted: {qty_accepted}, Defective: {qty_defect}"
+                        )
+                    except OutboundDeliveryDetails.DoesNotExist:
+                        logger.error(f"Delivery detail with ID {detail_id} not found.")
+                        return Response(
+                            {
+                                "error": f"Delivery detail with ID {detail_id} not found."
+                            },
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
+
                 # Update the delivery status to "Delivered"
                 outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
                 outbound_delivery.OUTBOUND_DEL_CSTMR_RCVD_DATE = timezone.now()
@@ -331,12 +378,12 @@ class CompleteOutboundDeliveryAPI(APIView):
 
                 # Create a Sales Invoice for the completed Outbound Delivery
                 sales_invoice = SalesInvoice(
-                    SALES_INV_DATETIME=outbound_delivery.OUTBOUND_DEL_CREATED,  # Example: Assigning relevant datetime
+                    SALES_INV_DATETIME=outbound_delivery.OUTBOUND_DEL_CREATED,
                     SALES_INV_TOTAL_PRICE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
                     SALES_ORDER_DLVRY_OPTION=outbound_delivery.OUTBOUND_DEL_DLVRY_OPTION,
                     CLIENT_ID=outbound_delivery.CLIENT_ID,
                     CLIENT_NAME=outbound_delivery.OUTBOUND_DEL_CUSTOMER_NAME,
-                    SALES_INV_PYMNT_METHOD="Cash",  # Example: Set payment method
+                    SALES_INV_PYMNT_METHOD="Cash",
                     OUTBOUND_DEL_ID=outbound_delivery,
                 )
 
@@ -344,43 +391,30 @@ class CompleteOutboundDeliveryAPI(APIView):
                 sales_invoice.save()
 
                 for detail in outbound_delivery.outbound_details.all():
-                    # Check if OUTBOUND_DETAILS_PROD_ID is already a Product instance or just the ID
-                    if isinstance(detail.OUTBOUND_DETAILS_PROD_ID, Product):
-                        product = detail.OUTBOUND_DETAILS_PROD_ID
-                    else:
-                        product = Product.objects.get(
-                            id=detail.OUTBOUND_DETAILS_PROD_ID
-                        )  # Assuming Product model has an id field
-
-                    # Retrieve the associated ProductDetails instance
-                    product_details = (
-                        product.PROD_DETAILS_CODE
-                    )  # Accessing the related ProductDetails through the ForeignKey
+                    product = detail.OUTBOUND_DETAILS_PROD_ID
+                    product_details = product.PROD_DETAILS_CODE
 
                     # Create a SalesInvoiceItems record
                     SalesInvoiceItems.objects.create(
                         SALES_INV_ID=sales_invoice,
-                        SALES_INV_ITEM_PROD_ID=product,  # Pass the actual Product instance, not just its id
+                        SALES_INV_ITEM_PROD_ID=product,
                         SALES_INV_ITEM_PROD_NAME=detail.OUTBOUND_DETAILS_PROD_NAME,
                         SALES_INV_item_PROD_DLVRD=detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
                         SALES_INV_ITEM_PROD_SELL_PRICE=detail.OUTBOUND_DETAILS_SELL_PRICE,
-                        # Set the purchase price from the ProductDetails model
-                        SALES_INV_ITEM_PROD_PURCH_PRICE=product_details.PROD_DETAILS_PURCHASE_PRICE,  # Using PROD_DETAILS_PRICE from ProductDetails
+                        SALES_INV_ITEM_PROD_PURCH_PRICE=product_details.PROD_DETAILS_PURCHASE_PRICE,
                         SALES_INV_ITEM_LINE_GROSS_REVENUE=detail.OUTBOUND_DETAILS_SELL_PRICE
                         * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
-                        # Calculate Gross Income: adjusted to use the product's purchase price from ProductDetails
                         SALES_INV_ITEM_LINE_GROSS_INCOME=(
-                            (
-                                detail.OUTBOUND_DETAILS_SELL_PRICE
-                                - product_details.PROD_DETAILS_PRICE
-                            )  # Using the product's purchase price
-                            * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED
-                        ),
+                            detail.OUTBOUND_DETAILS_SELL_PRICE
+                            - product_details.PROD_DETAILS_PRICE
+                        )
+                        * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
                     )
+
                 # Return success response
                 return Response(
                     {
-                        "message": "Outbound Delivery marked as Delivered and Sales Invoice created."
+                        "message": "Outbound Delivery marked as Delivered, delivery details updated, and Sales Invoice created."
                     },
                     status=status.HTTP_200_OK,
                 )

@@ -92,7 +92,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
     const username = userData.username; // Assuming the API response includes a `username` field
 
     const changes = [];
-    const fieldsToCheck =[
+    const fieldsToCheck = [
       { field: "PROD_NAME", label: "Product Name" },
       { field: "PROD_RO_LEVEL", label: "Reorder Level" },
       { field: "PROD_RO_QTY", label: "Reorder Quantity" },
@@ -103,49 +103,50 @@ const ProductDetailsModal = ({ productId, onClose }) => {
       { field: "PROD_DETAILS_SUPPLIER", label: "Supplier" },
       { field: "PROD_DETAILS_UNITS", label: "Units" },
     ];
-      // Check for changes and format them for logging
-      fieldsToCheck.forEach(({ field, label }) => {
-        if (oldProduct[field] !== updatedProduct[field]) {
-            changes.push(
-                `${label} changed from "${oldProduct[field] || "N/A"}" to "${
-                    updatedProduct[field] || "N/A"
-                }"`
-            );
-        }
+    // Check for changes and format them for logging
+    fieldsToCheck.forEach(({ field, label }) => {
+      if (oldProduct[field] !== updatedProduct[field]) {
+        changes.push(
+          `${label} changed from "${oldProduct[field] || "N/A"}" to "${
+            updatedProduct[field] || "N/A"
+          }"`
+        );
+      }
     });
-    
+
     // If there are changes, prepare the log payload
     if (changes.length > 0) {
       const logPayload = {
-          LLOG_TYPE: "User logs",
-          LOG_DESCRIPTION: `${username} updated the Product details:${changes.join("\n")}`,
-          USER_ID: userId,
+        LLOG_TYPE: "User logs",
+        LOG_DESCRIPTION: `${username} updated the Product details:${changes.join(
+          "\n"
+        )}`,
+        USER_ID: userId,
       };
 
       try {
-        
-          // Send the log data to the backend
-          const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-              },
-              body: JSON.stringify(logPayload),
-          });
+        // Send the log data to the backend
+        const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(logPayload),
+        });
 
-          // Handle the response
-          if (response.ok) {
-              console.log("Product updated details:", logPayload);
-          } else {
-              const errorData = await response.json();
-              console.error("Failed to create log:", errorData);
-          }
+        // Handle the response
+        if (response.ok) {
+          console.log("Product updated details:", logPayload);
+        } else {
+          const errorData = await response.json();
+          console.error("Failed to create log:", errorData);
+        }
       } catch (error) {
-          console.error("Error logging product updates:", error);
+        console.error("Error logging product updates:", error);
       }
-  } else {
+    } else {
       console.log("No changes detected. Logging skipped.");
-  }  
+    }
   };
 
   const handleRemove = () => {
@@ -265,7 +266,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             <DetailLabel>Units:</DetailLabel> {productDetail.PROD_DETAILS_UNITS}
           </Detail>
           <Detail>
-            <DetailLabel>Brand:</DetailLabel>{" "}
+            <DetailLabel>Supplier:</DetailLabel>{" "}
             {productDetail.PROD_DETAILS_SUPPLIER}
           </Detail>
           <Detail>

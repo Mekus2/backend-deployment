@@ -240,13 +240,14 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                       display: "inline-block",
                       width: "calc(100% - 20px)",
                     }}
-                    value={inputStates[index] || ""}
+                    value={inputStates[index] || ""} // Controlled input value
                     onChange={(e) => {
+                      const userInput = e.target.value;
                       setInputStates((prevStates) => ({
                         ...prevStates,
-                        [index]: e.target.value,
+                        [index]: userInput,
                       }));
-                      handleProductInputChange(index, e.target.value);
+                      handleProductInputChange(index, userInput); // Trigger search and manual input handling
                       clearError(`productName${index}`);
                     }}
                     placeholder="Product Name"
@@ -267,7 +268,7 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                                   ...prevStates,
                                   [index]: product.PROD_NAME,
                                 }));
-                                handleProductSelect(index, product);
+                                handleProductSelect(index, product); // Select the product from suggestions
                               }}
                             >
                               {product.PROD_NAME}

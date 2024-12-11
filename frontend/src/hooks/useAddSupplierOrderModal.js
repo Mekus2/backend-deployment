@@ -78,19 +78,26 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
       },
     ]);
   };
-// Add validation when manually setting supplier data
-const validateSupplierInput = () => {
-  if (!supplierCompanyNum || supplierCompanyNum.length !== 11) {
-    alert("Supplier Company Number must be 11 digits.");
-    return false;
-  }
-  return true;
+  // Add validation when manually setting supplier data
+  const validateSupplierInput = () => {
+    if (!supplierCompanyNum || supplierCompanyNum.length !== 11) {
+      alert("Supplier Company Number must be 11 digits.");
+      return false;
+    }
+    return true;
   };
-  
+
   const handleProductInputChange = (index, value) => {
     console.log(`Input changed at index ${index}: ${value}`); // Log the input change
     setCurrentEditingIndex(index);
     setProductSearch(value); // Update immediately for input responsiveness
+
+    // Update the order details with the current input value
+    setOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = [...prevOrderDetails];
+      updatedOrderDetails[index].productName = value; // Store user input for new product or search
+      return updatedOrderDetails;
+    });
 
     // Clear any previously set timeout to avoid multiple fetches
     if (debounceTimeoutRef.current) {
@@ -98,11 +105,11 @@ const validateSupplierInput = () => {
       console.log("Cleared previous debounce timeout"); // Log debounce timeout clearance
     }
 
-    // Set a new debounce timeout
+    // Set a new debounce timeout for searching
     debounceTimeoutRef.current = setTimeout(() => {
       console.log(`Fetching products for: ${value}`); // Log before fetching
       fetchFilteredProducts(value, index); // Fetch products after delay
-    }, 800); // Adjust delay as needed (e.g., 300ms)
+    }, 800); // Adjust delay as needed (e.g., 800ms for a smooth search experience)
   };
 
   const fetchFilteredProducts = async (searchValue) => {
@@ -193,24 +200,29 @@ const validateSupplierInput = () => {
 
   const handleSupplierSelect = (supplier) => {
     console.log("Selected Supplier Details:", supplier);
-    console.log("Supplier Company Number from supplier object:", supplier.Supp_Company_Num);
-  
+    console.log(
+      "Supplier Company Number from supplier object:",
+      supplier.Supp_Company_Num
+    );
+
     setSupplierID(supplier.id);
     setContactPersonName(supplier.Supp_Contact_Pname);
     setContactPersonNumber(supplier.Supp_Contact_Num);
     setSupplierCompanyName(supplier.Supp_Company_Name);
-  
+
     // Log the value before setting it
     console.log("Setting Supplier Company Number:", supplier.Supp_Company_Num);
     setSupplierCompanyNum(supplier.Supp_Company_Num);
-  
-    console.log("Supplier Company Number after selection:", supplier.Supp_Company_Num);
-  
+
+    console.log(
+      "Supplier Company Number after selection:",
+      supplier.Supp_Company_Num
+    );
+
     setSupplierSearch("");
     setFilteredSuppliers([]);
   };
-  
-  
+
   const handleQuantityChange = (index, value) => {
     const quantity = Math.max(1, value);
     setOrderDetails((prevOrderDetails) => {
@@ -255,7 +267,7 @@ const validateSupplierInput = () => {
     if (!validateSupplierInput()) {
       return; // Exit if validation fails
     }
-  
+
     try {
       const newOrder = {
         PURCHASE_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
@@ -271,20 +283,18 @@ const validateSupplierInput = () => {
           PURCHASE_ORDER_DET_PROD_LINE_QTY: item.quantity,
         })),
       };
-  
+
       console.log("Final Data to be passed:", newOrder);
-  
+
       const createdOrder = await addNewPurchaseOrder(newOrder);
       console.log("Order Saved:", createdOrder);
-  
+
       if (onSave) onSave(newOrder);
       if (onClose) onClose();
     } catch (error) {
       console.error("Error saving order:", error);
     }
   };
-  
-  
 
   const logAddSupplierOrder = async (createdOrder) => {
     // Retrieve the userId from localStorage

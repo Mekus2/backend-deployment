@@ -13,6 +13,7 @@ class OutboundDeliveryDetailsSerializer(serializers.ModelSerializer):
         fields = [
             "OUTBOUND_DEL_DETAIL_ID",
             "OUTBOUND_DEL_ID",
+            "OUTBOUND_DETAILS_PROD_ID",
             "OUTBOUND_DETAILS_PROD_NAME",
             "OUTBOUND_DETAILS_PROD_QTY_ORDERED",
             "OUTBOUND_DETAILS_PROD_QTY_ACCEPTED",
@@ -42,6 +43,8 @@ class OutboundDeliverySerializer(serializers.ModelSerializer):
             "OUTBOUND_DEL_CREATED",
             "OUTBOUND_DEL_ACCPTD_BY_USERNAME",
             "OUTBOUND_DEL_ACCPTD_BY_USER",
+            "OUTBOUND_DEL_SHIPPED_DATE",
+            "OUTBOUND_DEL_CSTMR_RCVD_DATE",
             "details",
         ]
 
