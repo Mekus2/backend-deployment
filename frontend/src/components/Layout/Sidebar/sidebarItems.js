@@ -125,11 +125,6 @@ export const adminSidebarItems = [
       },
       {
         icon: TbChevronRight,
-        label: "Stock Report",
-        link: "/admin/stock-reports",
-      },
-      {
-        icon: TbChevronRight,
         label: "Expiry",
         link: "/admin/users",
       },
