@@ -163,14 +163,25 @@ WSGI_APPLICATION = "PHILVETS.wsgi.application"
 
 
 # P@ssTh1s*** - Venice Pass || P@ssw0rd - Edie
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv("DB_NAME"),
+#         "USER": os.getenv("DB_USER"),
+#         "PASSWORD": os.getenv("DB_PASSWORD"),
+#         "HOST": os.getenv("DB_HOST"),
+#         "PORT": os.getenv("DB_PORT"),
+#     }
+# }
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME"),
-        "USER": os.getenv("DB_USER"),
-        "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+        "NAME": "d30drrcs4a7ljp",  # Your database name
+        "USER": "u4ktkv4ohgvc08",  # Your database user
+        "PASSWORD": "pe346a4a864d97c1f7a61dba7a42692c09011172a02f4c44e854b5d784dae9a79",  # Your database password
+        "HOST": "ce0lkuo944ch99.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com",  # Your database host
+        "PORT": "5432",  # Your database port (default for PostgreSQL)
     }
 }
 
