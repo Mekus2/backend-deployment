@@ -1,4 +1,4 @@
-const roles = ["admin", "staff", "superadmin"];
+const roles = ["staff", "prevstaff", "superadmin"];
 
 roles.forEach((role) => {
   describe(`${

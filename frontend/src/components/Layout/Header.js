@@ -8,60 +8,57 @@ import { colors } from "../../colors";
 // Updated pageTitles with superadmin and other role titles
 const pageTitles = {
   // Admin routes
-  "/admin/dashboard": "Dashboard",
-  "/admin/orders": "Order",
-  "/admin/request-order": "Request Order",
-  "/admin/customer-order": "Customer Order",
-  "/admin/purchase-order": "Supplier Order",
-  "/admin/delivery": "Delivery",
-  "/admin/products": "Total Products",
-  "/admin/categories": "Category",
-  "/admin/inventory": "Inventory",
-  "/admin/suppliers": "Supplier",
-  "/admin/customers": "Customer",
-  "/admin/users": "User",
-  "/admin/sales": "Sales",
-  "/admin/returns": "Return",
-  "/admin/logs": "Log",
-  "/admin/reports": "Reports",
-  "/admin/profile": "Profile",
-  "/admin/notifications": "Notifications",
-  "/admin/purchase": "Supplier Order",
+  "/staff/dashboard": "Dashboard",
+  "/staff/orders": "Order",
+  "/staff/customer-order": "Customer Order",
+  "/staff/purchase-order": "Supplier Order",
+  "/staff/customer-delivery": "Customer Delivery",
+  "/staff/supplier-delivery": "Supplier Delivery",
+  "/staff/issues": "Issue",
+  "/staff/products": "Product",
+  "/staff/inventory": "Inventory",
+  "/staff/price-history": "Price History",
+  "/staff/customers": "Customer",
+  "/staff/suppliers": "Supplier",
+  "/staff/users": "PrevStaff",
+  "/staff/logs": "Logs",
+  "/staff/reports": "Reports",
+  "/staff/profile": "Profile",
+  "/staff/notifications": "Notifications",
 
   // SuperAdmin routes
-  "/superadmin/dashboard": "Dashboard",
-  "/superadmin/orders": "Order",
-  "/superadmin/request-order": "Request Order",
-  "/superadmin/customer-order": "Customer Order",
-  "/superadmin/purchase-order": "Supplier Order",
-  "/superadmin/delivery": "Delivery",
-  "/superadmin/products": "Total Products",
-  "/superadmin/categories": "Category",
-  "/superadmin/inventory": "Inventory",
-  "/superadmin/suppliers": "Supplier",
-  "/superadmin/customers": "Customer",
-  "/superadmin/users": "User",
-  "/superadmin/sales": "Sales",
-  "/superadmin/returns": "Return",
-  "/superadmin/logs": "Log",
-  "/superadmin/reports": "Reports",
-  "/superadmin/profile": "SuperAdmin Profile",
-  "/superadmin/notifications": "Notifications",
-  "/superadmin/purchase": "Supplier Order",
+  "/admin/dashboard": "Dashboard",
+  "/admin/orders": "Order",
+  "/admin/customer-order": "Customer Order",
+  "/admin/purchase-order": "Supplier Order",
+  "/admin/customer-delivery": "Customer Delivery",
+  "/admin/supplier-delivery": "Supplier Delivery",
+  "/admin/issues": "Issue",
+  "/admin/products": "Product",
+  "/admin/inventory": "Inventory",
+  "/admin/price-history": "Price History",
+  "/admin/customers": "Customer",
+  "/admin/suppliers": "Supplier",
+  "/admin/users": "User",
+  "/admin/sales": "Sales",
+  "/admin/logs": "Logs",
+  "/admin/reports": "Reports",
+  "/admin/profile": "Admin Profile",
+  "/admin/notifications": "Notifications",
+  "/admin/daily-reports": "Daily Report",
+  "/admin/expiration-reports": "Expiration Report",
+  "/admin/stock-reports": "Stocks Report",
 
   // Staff routes
-  "/staff/dashboard": "Dashboard",
-  "/staff/profile": "Staff Profile",
-  "/staff/request-order": "Request Order",
-  "/staff/customer-order": "Customer Order",
-  "/staff/delivery": "Delivery",
-  "/staff/products": "Total Products",
-  "/staff/categories": "Category",
-  "/staff/inventory": "Inventory",
-  "/staff/customers": "Customers",
-  "/staff/reports": "Reports",
-  "/staff/returns": "Returns",
-  "/staff/notifications": "Notifications",
+  "/prevstaff/dashboard": "Dashboard",
+  "/prevstaff/customer-order": "Customer Order",
+  "/prevstaff/customer-delivery": "Customer Delivery",
+  "/prevstaff/issues": "Issue",
+  "/prevstaff/products": "Product",
+  "/prevstaff/inventory": "Inventory",
+  "/prevstaff/customers": "Customers",
+  "/prevstaff/profile": "Staff Profile",
+  "/prevstaff/notifications": "Notifications",
 };
 
 const Header = ({ toggleSidebar }) => {
@@ -69,7 +66,7 @@ const Header = ({ toggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const pageTitle = pageTitles[location.pathname] || "Page Title";
+  const pageTitle = pageTitles[location.pathname] || "Main Page";
 
   const handleMouseEnter = () => {
     setIsDropdownOpen(true);
@@ -84,31 +81,29 @@ const Header = ({ toggleSidebar }) => {
       navigate("/admin/profile");
     } else if (location.pathname.startsWith("/staff")) {
       navigate("/staff/profile");
-    } else if (location.pathname.startsWith("/superadmin")) {
-      navigate("/superadmin/profile");
     }
   };
 
   const goToNotifications = () => {
     if (location.pathname.startsWith("/admin")) {
-      navigate("/admin/notifications");
-    } else if (location.pathname.startsWith("/staff")) {
       navigate("/staff/notifications");
+    } else if (location.pathname.startsWith("/staff")) {
+      navigate("/prevstaff/notifications");
     } else if (location.pathname.startsWith("/superadmin")) {
-      navigate("/superadmin/notifications");
+      navigate("/admin/notifications");
     }
   };
 
   const handleSignOut = () => {
-       // Clear access token and any other user-related data from localStorage
-       localStorage.removeItem('access_tokenStorage');
-       localStorage.removeItem('refresh_token');
-       localStorage.removeItem('user_id');
-       localStorage.removeItem('user_first_name');
-       localStorage.removeItem('user_type'); // Clear any other stored user info
-   
-       console.log("User signed out. Tokens cleared."); // Log the sign-out action
-       navigate("/login"); // Redirect to the login page
+    // Clear access token and any other user-related data from localStorage
+    localStorage.removeItem("access_tokenStorage");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_first_name");
+    localStorage.removeItem("user_type");
+
+    console.log("User signed out. Tokens cleared.");
+    navigate("/login");
   };
 
   return (
@@ -116,12 +111,12 @@ const Header = ({ toggleSidebar }) => {
       <HamburgerMenu onClick={toggleSidebar} />
       <PageTitle>{pageTitle}</PageTitle>
       <RightSection>
-        <BellIcon
+        {/* <BellIcon
           className={
             location.pathname.includes("/notifications") ? "active" : ""
           }
           onClick={goToNotifications}
-        />
+        /> */}
         <ProfileContainer
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -131,15 +126,15 @@ const Header = ({ toggleSidebar }) => {
             onClick={goToProfile}
           >
             <span>
-              {location.pathname.startsWith("/admin")
+              {location.pathname.startsWith("/staff")
+                ? "Staff"
+                : location.pathname.startsWith("/admin")
                 ? "Admin"
-                : location.pathname.startsWith("/superadmin")
-                ? "SuperAdmin"
-                : "User"}
+                : "PrevStaff"}
             </span>
             <TbUserCircle className="h-5 w-5 ml-1" />
           </ProfileButton>
-          {isDropdownOpen && (
+          {/* {isDropdownOpen && (
             <DropdownContent
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
@@ -147,7 +142,7 @@ const Header = ({ toggleSidebar }) => {
               <DropdownItem onClick={goToProfile}>Profile</DropdownItem>
               <DropdownItem onClick={handleSignOut}>Sign out</DropdownItem>
             </DropdownContent>
-          )}
+          )} */}
         </ProfileContainer>
       </RightSection>
     </HeaderContainer>

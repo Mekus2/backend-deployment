@@ -1,4 +1,4 @@
-const roles = ["admin", "staff", "superadmin"]; // Included superadmin
+const roles = ["staff", "prevstaff", "superadmin"]; // Included superadmin
 
 roles.forEach((role) => {
   describe(`${
@@ -22,7 +22,7 @@ roles.forEach((role) => {
       });
     };
 
-    if (role === "admin" || role === "superadmin") {
+    if (role === "staff" || role === "superadmin") {
       // Tests for both admin and superadmin roles
       it("Should display the Highest Selling Products table", () => {
         cy.contains("Highest Selling Products")
@@ -44,7 +44,7 @@ roles.forEach((role) => {
       }
     }
 
-    if (role === "staff") {
+    if (role === "prevstaff") {
       // Staff-specific tests
       commonTests(); // Include common tests for Recently Added Products, Lowest Stocks, and Products
 

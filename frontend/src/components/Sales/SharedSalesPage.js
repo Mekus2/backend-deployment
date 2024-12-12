@@ -1,88 +1,114 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
 import ReportCard from "../Layout/ReportCard";
 import { FaShoppingCart, FaDollarSign } from "react-icons/fa";
-import { SALES_ORDER } from "../../data/CustomerOrderData";
-import PURCHASE_ORDERS from "../../data/SupplierOrderData";
+// import { SALES_ORDR } from "../../data/CusOrderData"; // Import customer orders data
+// import PURCHASE_ORDR from "../../data/SuppOrderData"; // Import purchase orders data
+import Button from "../Layout/Button"; // Import the Button component
+import SalesDetailsModal from "./SalesDetailsModal"; // Import SalesDetailsModal component
 
 const SharedSalesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for controlling modal visibility
+  const [selectedOrder, setSelectedOrder] = useState(null); // State to store selected order for details
+  const [salesInvoice, setSalesInvoices] = useState([]);
 
   const combinedOrders = [];
 
-  // Process sales orders
-  SALES_ORDER.forEach((order) => {
-    combinedOrders.push({
-      id: order.SALES_ORDER_ID,
-      date: new Date(order.SALES_ORDER_DLVRY_DATE),
-      quantity: order.SALES_ORDER_TOT_QTY,
-      amount: order.SALES_ORDER_PROD_TOTAL,
-      type: "Sales Order",
-    });
-  });
+  useEffect(() => {
+    const fetchSalesInvoices = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/sales/list/"); // Your API endpoint for sales invoices
+        const data = await response.json();
 
-  // Process purchase orders
-  PURCHASE_ORDERS.forEach((order) => {
-    combinedOrders.push({
-      id: order.PURCHASE_ORDER_ID,
-      date: new Date(order.PURCHASE_ORDER_DATE),
-      quantity: -order.PURCHASE_ORDER_TOT_QTY,
-      amount: -order.PURCHASE_ORDER_TOTAL,
-      type: "Supplier Order",
-    });
-  });
+        // Assuming the fetched data is an array of sales invoices, set it to the state
+        setSalesInvoices(data.results);
+        console.log("Received Invoice list:", data.results);
 
-  const filteredOrders = combinedOrders.filter((order) => {
-    const matchesSearchTerm =
-      order.type.toLowerCase().includes(searchTerm.toLowerCase()) || // Filter by Type
-      order.id.toString().toLowerCase().includes(searchTerm.toLowerCase()) || // Filter by Order ID
-      order.date.toLocaleDateString().includes(searchTerm) || // Filter by Date
-      order.quantity
-        .toString()
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) || // Filter by Quantity
-      order.amount.toFixed(2).toLowerCase().includes(searchTerm.toLowerCase()); // Filter by Amount
+        // setCombinedOrders(allOrders);
+      } catch (error) {
+        console.error("Error fetching sales invoices:", error);
+      }
+    };
 
-    const matchesDateRange =
-      (!startDate || order.date >= new Date(startDate)) &&
-      (!endDate || order.date <= new Date(endDate));
+    fetchSalesInvoices();
+  }, []);
 
-    return matchesSearchTerm && matchesDateRange;
-  });
-
-  // Sort orders by date in descending order (latest first)
-  const sortedOrders = filteredOrders.sort((a, b) => b.date - a.date);
-  const totalOrders = sortedOrders.length;
-  const totalSales = sortedOrders.reduce(
-    (acc, order) => acc + (order.amount > 0 ? order.amount : 0),
+  const totalOrders = salesInvoice.length;
+  const totalSales = salesInvoice.reduce(
+    (acc, order) => acc + (order.revenue > 0 ? order.revenue : 0),
     0
   );
-  const totalExpenses = sortedOrders.reduce(
-    (acc, order) => acc + (order.amount < 0 ? -order.amount : 0),
-    0
-  );
-  const netProfit = totalSales - totalExpenses;
 
   const formatCurrency = (value) => {
-    return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+    // Ensure the value is a number and fallback to 0 if it's not a valid number
+    const numberValue = isNaN(value) ? 0 : Number(value);
+    return `₱${numberValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  };
+  // Prepare table data with required columns: TYPE, DATE, COST, REVENUE, GROSS PROFIT, ACTION (Details Button)
+  const tableData = salesInvoice.map((order) => [
+    order.SALES_INV_ID || "N/A", // Sales Invoice ID
+    order.SALES_INV_DATETIME
+      ? new Date(order.SALES_INV_DATETIME).toISOString().slice(0, 10) // Convert to Date if necessary
+      : "N/A", // Format date as YYYY-MM-DD
+    order.CLIENT_NAME || "Unknown", // Client Name
+    formatCurrency(order.SALES_INV_AMOUNT_BALANCE || 0), // Balance (Total Amount Balance)
+    order.SALES_INV_PYMNT_STATUS || "Pending", // Payment Status
+    <Button
+      variant="primary"
+      onClick={() => handleOpenModal(order)} // Pass the corresponding order to the modal
+    >
+      {console.log("Sent Invoice list:", order)}
+      Details
+    </Button>,
+  ]);
+  const header = [
+    "Invoice ID",
+    "Date",
+    "Client Name",
+    "Balance",
+    "Status",
+    "Action",
+  ];
+
+  const handleOpenModal = (order) => {
+    setSelectedOrder(order); // Set the selected order to be shown in the modal
+    setIsModalOpen(true); // Open the modal
   };
 
-  const tableData = sortedOrders.map((order) => [
-    order.type,
-    order.id,
-    order.date.toLocaleDateString(),
-    order.quantity,
-    formatCurrency(order.amount),
-  ]);
-
-  const header = ["Type", "Order ID", "Date", "Quantity", "Amount"];
+  const handleCloseModal = () => {
+    setIsModalOpen(false); // Close the modal
+    setSelectedOrder(null); // Clear selected order
+  };
 
   return (
     <>
+      <CardsContainer>
+        <ReportCard
+          label="Total Orders"
+          value={`${totalOrders} Orders`}
+          icon={<FaShoppingCart />}
+        />
+        <ReportCard
+          label="Revenue"
+          value={formatCurrency(totalSales)}
+          icon={<FaDollarSign />}
+        />
+        <ReportCard
+          label="Cost"
+          value={formatCurrency(0)} // totalExpense Here
+          icon={<FaDollarSign />}
+        />
+        <ReportCard
+          label="Gross Profit"
+          value={formatCurrency()} // Net Profit here
+          icon={<FaDollarSign />}
+        />
+      </CardsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter orders..."
@@ -109,28 +135,14 @@ const SharedSalesPage = () => {
         </DateContainer>
       </Controls>
 
-      <CardsContainer>
-        <ReportCard
-          label="Total Orders"
-          value={`${totalOrders} Orders`}
-          icon={<FaShoppingCart />}
+      {/* Conditional rendering of SalesDetailsModal */}
+      {isModalOpen && selectedOrder && (
+        <SalesDetailsModal
+          onClose={handleCloseModal}
+          sale={selectedOrder} // Ensure the sale data is passed to the modal
         />
-        <ReportCard
-          label="Sales Value"
-          value={formatCurrency(totalSales)}
-          icon={<FaDollarSign />}
-        />
-        <ReportCard
-          label="Expenses"
-          value={`${formatCurrency(-totalExpenses)}`}
-          icon={<FaDollarSign />}
-        />
-        <ReportCard
-          label="Profit"
-          value={formatCurrency(netProfit)}
-          icon={<FaDollarSign />}
-        />
-      </CardsContainer>
+      )}
+      {console.log("Selected Order:", selectedOrder)}
 
       <ReportContent>
         <Table headers={header} rows={tableData} />

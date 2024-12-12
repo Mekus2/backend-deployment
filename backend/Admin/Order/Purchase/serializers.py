@@ -72,3 +72,32 @@ class PurchaseOrderSerializer(serializers.ModelSerializer):
             PurchaseOrderDetails.objects.create(**detail_data)
 
         return purchase_order
+
+
+class PurchaseOrderDetailsUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseOrderDetails
+        fields = (
+            "PURCHASE_ORDER_DET_ID",
+            "PURCHASE_ORDER_DET_PROD_ID",
+            "PURCHASE_ORDER_DET_PROD_NAME",
+            "PURCHASE_ORDER_DET_PROD_LINE_QTY",
+        )
+
+
+# PurchaseOrder serializer for updating PurchaseOrder and details
+class PurchaseOrderUpdateSerializer(serializers.ModelSerializer):
+    details = PurchaseOrderDetailsUpdateSerializer(many=True, required=False)
+
+    class Meta:
+        model = PurchaseOrder
+        fields = (
+            "PURCHASE_ORDER_STATUS",
+            "PURCHASE_ORDER_TOTAL_QTY",
+            "PURCHASE_ORDER_SUPPLIER_ID",
+            "PURCHASE_ORDER_SUPPLIER_CMPNY_NAME",
+            "PURCHASE_ORDER_SUPPLIER_CMPNY_NUM",
+            "PURCHASE_ORDER_CONTACT_PERSON",
+            "PURCHASE_ORDER_CONTACT_NUMBER",
+            "details",
+        )

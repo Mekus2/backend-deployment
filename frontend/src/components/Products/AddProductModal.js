@@ -1,25 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { colors } from "../../colors";
-import { IoCloseCircle } from "react-icons/io5";
+import { FaTimes } from "react-icons/fa";
 import Button from "../Layout/Button";
-import productData from "../../data/ProductData"; // Adjust the import path as necessary
 
 const AddProductModal = ({ onClose, onSave }) => {
   const [productName, setProductName] = useState("");
-  const [detailsCode, setDetailsCode] = useState("");
   const [roLevel, setRoLevel] = useState("");
   const [roQty, setRoQty] = useState("");
   const [qoh, setQoh] = useState("");
-  const [category, setCategory] = useState("No Category"); // Default category
-  const [categoryCode, setCategoryCode] = useState(""); // Keep the code separate for saving
+  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [brand, setBrand] = useState("");
+  const [supplier, setSupplier] = useState("");
   const [size, setSize] = useState("");
-  const [measurement, setMeasurement] = useState("");
-  const [image, setImage] = useState(null);
+  const [measurement] = useState("");
+  // const [image, setImage] = useState(null);
   const [errors, setErrors] = useState({});
+  const [purchasePrice, setPurchasePrice] = useState(""); // Add this line
 
   const modalRef = useRef();
 
@@ -36,27 +34,32 @@ const AddProductModal = ({ onClose, onSave }) => {
     };
   }, [onClose]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(URL.createObjectURL(file));
-    }
-  };
+  // const handleImageChange = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     setImage(URL.createObjectURL(file));
+  //   }
+  // };
 
   const validate = () => {
     const newErrors = {};
     if (!productName) newErrors.productName = "This field is required.";
-    if (!detailsCode) newErrors.detailsCode = "This field is required.";
     if (!roLevel || isNaN(roLevel) || roLevel < 1)
-      newErrors.roLevel = "This field is required.";
-    if (!roQty || isNaN(roQty) || roQty < 0)
-      newErrors.roQty = "This field is required.";
+      newErrors.roLevel = "RO Level must be a positive number.";
+    if (!roQty || isNaN(roQty) || roQty <= 0)
+      // Disallow 0 or negative
+      newErrors.roQty = "RO Quantity must be a positive number.";
     if (!qoh || isNaN(qoh) || qoh < 0)
-      newErrors.qoh = "This field is required.";
+      // Allow zero for QOH, but no negative values
+      newErrors.qoh = "Quantity on Hand (QOH) cannot be negative.";
     if (!description) newErrors.description = "This field is required.";
     if (!price || isNaN(price) || price <= 0)
-      newErrors.price = "This field is required.";
-    if (!brand) newErrors.brand = "This field is required.";
+      // Ensure price is a positive number
+      newErrors.price = "This field is required and must be positive.";
+    if (!purchasePrice || isNaN(purchasePrice) || purchasePrice <= 0)
+      newErrors.purchasePrice =
+        "Purchase price must be a valid number greater than 0.";
+    if (!supplier) newErrors.supplier = "This field is required.";
     if (!size) newErrors.size = "This field is required.";
     if (!measurement) newErrors.measurement = "This field is required.";
 
@@ -64,50 +67,43 @@ const AddProductModal = ({ onClose, onSave }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleNumberInput = (e, setter) => {
+    const value = e.target.value;
+
+    // Allow empty input to clear the field
+    if (value === "" || (!isNaN(value) && parseFloat(value) >= 0)) {
+      setter(value);
+    }
+  };
+
+  // Modify handleSave function to include purchasePrice
   const handleSave = () => {
     if (!validate()) return;
 
     const newProduct = {
       PROD_ID: `P00${Math.floor(Math.random() * 1000)}`, // Example ID, should be unique
       PROD_NAME: productName,
-      PROD_DETAILS_CODE: detailsCode,
       PROD_RO_LEVEL: parseInt(roLevel),
       PROD_RO_QTY: parseInt(roQty),
       PROD_QOH: parseInt(qoh),
-      PROD_IMG: image, // Store the image URL
-      PROD_DATECREATED:
-        productData.PROD_DATECREATED || new Date().toISOString().split("T")[0],
-      PROD_DATEUPDATED:
-        productData.PROD_DATEUPDATED || new Date().toISOString().split("T")[0],
-      PROD_CAT_CODE: categoryCode || "C000", // Default code if none is selected
+      // PROD_IMG: image || "https://via.placeholder.com/50", // Use default image if none uploaded
+      PROD_DATECREATED: new Date().toISOString().split("T")[0],
+      PROD_DATEUPDATED: new Date().toISOString().split("T")[0],
+      PROD_CATEGORY: category,
     };
 
     const newProductDetails = {
-      PROD_DETAILS_CODE: detailsCode,
-      PROD_DETAILS_DESCRIPTION: description,
+      PROD_DETAILS_PURCHASE_PRICE: parseFloat(purchasePrice), // Save purchase price
       PROD_DETAILS_PRICE: parseFloat(price),
-      PROD_DETAILS_BRAND: brand,
-      PROD_DETAILS_SIZE: size,
+      PROD_DETAILS_DESCRIPTION: description,
+      PROD_DETAILS_SUPPLIER: supplier,
+      PROD_DETAILS_UNITS: size,
       PROD_DETAILS_MEASUREMENT: measurement,
-      PROD_CAT_CODE: categoryCode || "C000", // Default code if none is selected
+      PROD_CATEGORY: category,
     };
 
     onSave(newProduct, newProductDetails);
     onClose();
-  };
-
-  const handleCategoryChange = (e) => {
-    const selectedCategory = e.target.value;
-    const categoryData = productData.PRODUCT_CATEGORY.find(
-      (cat) => cat.PROD_CAT_NAME === selectedCategory
-    );
-    if (categoryData) {
-      setCategory(selectedCategory);
-      setCategoryCode(categoryData.PROD_CAT_CODE); // Set the category code from selected category
-    } else {
-      setCategory("No Category");
-      setCategoryCode(""); // Reset code if "No Category" is selected
-    }
   };
 
   return (
@@ -116,14 +112,14 @@ const AddProductModal = ({ onClose, onSave }) => {
         <ModalHeader>
           <h2>Add Product</h2>
           <CloseButton onClick={onClose}>
-            <IoCloseCircle />
+            <FaTimes />
           </CloseButton>
         </ModalHeader>
         <ModalBody>
-          <ImageUpload>
+          {/* <ImageUpload>
             {image ? <ImagePreview src={image} alt="Product Preview" /> : null}
             <input type="file" accept="image/*" onChange={handleImageChange} />
-          </ImageUpload>
+          </ImageUpload> */}
           <Field>
             <Label>Product Name</Label>
             <Input
@@ -134,56 +130,74 @@ const AddProductModal = ({ onClose, onSave }) => {
             {errors.productName && <ErrorText>{errors.productName}</ErrorText>}
           </Field>
           <Field>
-            <Label>Details Code</Label>
+            <Label>Category</Label>
             <Input
-              value={detailsCode}
-              onChange={(e) => setDetailsCode(e.target.value)}
-              placeholder="Enter details code"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="Enter category"
             />
-            {errors.detailsCode && <ErrorText>{errors.detailsCode}</ErrorText>}
+            {errors.category && <ErrorText>{errors.category}</ErrorText>}
           </Field>
-          <Field>
-            <Label>RO Level</Label>
-            <Input
-              type="number"
-              value={roLevel}
-              onChange={(e) => setRoLevel(e.target.value)}
-              placeholder="Enter RO level"
-              min="1"
-            />
-            {errors.roLevel && <ErrorText>{errors.roLevel}</ErrorText>}
+          <Field style={{ display: "flex", gap: "20px" }}>
+            <div style={{ flex: 1 }}>
+              <Label>Price Details</Label>
+              <Input
+                type="number"
+                value={purchasePrice}
+                onChange={(e) => handleNumberInput(e, setPurchasePrice)}
+                placeholder="Enter purchase price"
+                min="0.01"
+                step="0.01"
+              />
+              {errors.purchasePrice && (
+                <ErrorText>{errors.purchasePrice}</ErrorText>
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <Label>&nbsp;</Label> {/* Empty label to maintain alignment */}
+              <Input
+                type="number"
+                value={price}
+                onChange={(e) => handleNumberInput(e, setPrice)}
+                placeholder="Enter product price"
+              />
+              {errors.price && <ErrorText>{errors.price}</ErrorText>}
+            </div>
           </Field>
-          <Field>
-            <Label>RO Qty</Label>
-            <Input
-              type="number"
-              value={roQty}
-              onChange={(e) => setRoQty(e.target.value)}
-              placeholder="Enter RO quantity"
-            />
-            {errors.roQty && <ErrorText>{errors.roQty}</ErrorText>}
+
+          <Field style={{ display: "flex", gap: "20px" }}>
+            <div style={{ flex: 1 }}>
+              <Label>Reorder Details</Label>
+              <Input
+                type="number"
+                value={roLevel}
+                onChange={(e) => setRoLevel(e.target.value)}
+                placeholder="Enter RO level"
+                min="1"
+              />
+              {errors.roLevel && <ErrorText>{errors.roLevel}</ErrorText>}
+            </div>
+            <div style={{ flex: 1 }}>
+              <Label>&nbsp;</Label> {/* Empty label to maintain alignment */}
+              <Input
+                type="number"
+                value={roQty}
+                onChange={(e) => handleNumberInput(e, setRoQty)}
+                placeholder="Enter RO quantity"
+              />
+              {errors.roQty && <ErrorText>{errors.roQty}</ErrorText>}
+            </div>
           </Field>
+
           <Field>
             <Label>Quantity on Hand (QOH)</Label>
             <Input
               type="number"
               value={qoh}
-              onChange={(e) => setQoh(e.target.value)}
+              onChange={(e) => handleNumberInput(e, setQoh)}
               placeholder="Enter quantity on hand"
             />
             {errors.qoh && <ErrorText>{errors.qoh}</ErrorText>}
-          </Field>
-          <Field>
-            <Label>Category</Label>
-            <Select value={category} onChange={handleCategoryChange}>
-              <option value="No Category">No Category</option>
-              {productData.PRODUCT_CATEGORY.map((cat) => (
-                <option key={cat.PROD_CAT_CODE} value={cat.PROD_CAT_NAME}>
-                  {cat.PROD_CAT_NAME}
-                </option>
-              ))}
-            </Select>
-            {errors.category && <ErrorText>{errors.category}</ErrorText>}
           </Field>
           <Field>
             <Label>Description</Label>
@@ -195,50 +209,43 @@ const AddProductModal = ({ onClose, onSave }) => {
             {errors.description && <ErrorText>{errors.description}</ErrorText>}
           </Field>
           <Field>
-            <Label>Price</Label>
+            <Label>Supplier</Label>
             <Input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Enter product price"
-              min="0.01"
-              step="0.01"
+              value={supplier}
+              onChange={(e) => setSupplier(e.target.value)}
+              placeholder="Enter supplier"
             />
-            {errors.price && <ErrorText>{errors.price}</ErrorText>}
+            {errors.supplier && <ErrorText>{errors.supplier}</ErrorText>}
           </Field>
           <Field>
-            <Label>Brand</Label>
+            <Label>Units</Label>
             <Input
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-              placeholder="Enter brand"
+              list="units-list" // Link the input field to the datalist
+              value={size}
+              onChange={(e) => setSize(e.target.value)}
+              placeholder="Enter or select unit"
             />
-            {errors.brand && <ErrorText>{errors.brand}</ErrorText>}
-          </Field>
-          <Field>
-            <Label>Size</Label>
-            <Select value={size} onChange={(e) => setSize(e.target.value)}>
-              <option value="">Select Size</option>
-              <option value="Small">Small</option>
-              <option value="Medium">Medium</option>
-              <option value="Large">Large</option>
-            </Select>
+            <datalist id="units-list">
+              <option value="unit" />
+              <option value="pack" />
+              <option value="box" />
+              <option value="bundle" />
+              <option value="case" />
+              <option value="carton" />
+              <option value="bottle" />
+              <option value="can" />
+              <option value="kg" />
+              <option value="g" />
+              <option value="liter" />
+              <option value="ml" />
+              <option value="meter" />
+              <option value="dozen" />
+              <option value="roll" />
+              <option value="sheet" />
+              <option value="tile" />
+            </datalist>
+
             {errors.size && <ErrorText>{errors.size}</ErrorText>}
-          </Field>
-          <Field>
-            <Label>Measurement</Label>
-            <Select
-              value={measurement}
-              onChange={(e) => setMeasurement(e.target.value)}
-            >
-              <option value="">Select Measurement</option>
-              <option value="cm">Centimeters (cm)</option>
-              <option value="inches">Inches (in)</option>
-              <option value="kg">Kilograms (kg)</option>
-              <option value="lbs">Pounds (lbs)</option>
-              <option value="liter">Liters (L)</option>
-            </Select>
-            {errors.measurement && <ErrorText>{errors.measurement}</ErrorText>}
           </Field>
         </ModalBody>
         <ModalFooter>
@@ -310,22 +317,25 @@ const CloseButton = styled.button`
 
 const ModalBody = styled.div``;
 
-const ImageUpload = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin-bottom: 15px;
-`;
+// const ImageUpload = styled.div`
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+//   flex-direction: column;
+//   margin-bottom: 15px;
+// `;
 
-const ImagePreview = styled.img`
-  width: 100px; /* Adjust width as needed */
-  height: 100px; /* Adjust height as needed */
-  object-fit: cover;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-bottom: 10px;
-`;
+// const ImagePreview = styled.img`
+//   width: 100px;
+//   height: 100px;
+//   object-fit: cover;
+//   border: 1px solid #ddd;
+//   border-radius: 4px;
+//   margin-bottom: 10px;
+//   display: block;
+//   margin-left: auto;
+//   margin-right: auto; /* Center horizontally */
+// `;
 
 const Field = styled.div`
   margin-bottom: 15px;
@@ -345,13 +355,6 @@ const Input = styled.input`
 `;
 
 const TextArea = styled.textarea`
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-`;
-
-const Select = styled.select`
   width: 100%;
   padding: 8px;
   border: 1px solid #ddd;

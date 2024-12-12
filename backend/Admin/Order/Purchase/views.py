@@ -1,5 +1,9 @@
 from django.shortcuts import render
 from django.db import transaction
+from django.db.models import Sum
+from django.shortcuts import get_object_or_404
+import logging
+from django.http import Http404
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,14 +11,24 @@ from rest_framework import status, permissions
 
 from .models import PurchaseOrder, PurchaseOrderDetails
 from ...Product.models import Product
+from Admin.Delivery.models import InboundDelivery, InboundDeliveryDetails
+from Admin.Supplier.models import Supplier
 
-from .serializers import PurchaseOrderSerializer, PurchaseOrderDetailsSerializer
+from .serializers import (
+    PurchaseOrderSerializer,
+    PurchaseOrderDetailsSerializer,
+    PurchaseOrderDetailsUpdateSerializer,
+    PurchaseOrderUpdateSerializer,
+)
 from ...Supplier.utils import (
     check_supplier_exists,
     add_supplier,
     get_existing_supplier_id,
 )
 from ...Product.utils import get_existing_product_, check_product_exists, add_product
+
+# Configure logging for error tracking
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
@@ -37,7 +51,7 @@ class PurchaseOrderListCreateView(APIView):
         )
 
     def get(self, request):
-        queryset = PurchaseOrder.objects.all()
+        queryset = PurchaseOrder.objects.all().order_by("-PURCHASE_ORDER_DATE_CREATED")
         serializer = PurchaseOrderSerializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -72,7 +86,13 @@ class PurchaseOrderListCreateView(APIView):
                 # If product doesn't exist by name, create it
                 if not check_product_exists(product_name):
                     print(f"Product does not exist, creating: {product_name}")
-                    product = add_product(product_name)
+                    # Assuming the supplier name is passed with the request data
+                    supplier_name = request.data.get(
+                        "PURCHASE_ORDER_SUPPLIER_CMPNY_NAME", "Unknown Supplier"
+                    )
+                    product = add_product(
+                        product_name, supplier_name
+                    )  # Pass the supplier name here
                 else:
                     print(f"Product exists, fetching by name: {product_name}")
                     product_id = get_existing_product_(product_name)
@@ -188,3 +208,329 @@ class PurchaseOrderDetailView(APIView):
             )
         serializer = PurchaseOrderDetailsSerializer(details, many=True)
         return Response(serializer.data)
+
+
+class UpdatePurchaseOrderView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def put(self, request, pk):
+        try:
+            # Fetch the instance of PurchaseOrder
+            try:
+                purchase_order = PurchaseOrder.objects.get(pk=pk)
+            except PurchaseOrder.DoesNotExist:
+                return Response(
+                    {"detail": f"PurchaseOrder with ID {pk} does not exist."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Deserialize and validate data using the serializer
+            serializer = PurchaseOrderUpdateSerializer(
+                purchase_order, data=request.data, partial=True
+            )
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            validated_data = serializer.validated_data
+
+            # Handle the update process
+            with transaction.atomic():
+                # Update the main PurchaseOrder instance
+                for field, value in validated_data.items():
+                    if field != "purchase_order_details":
+                        setattr(purchase_order, field, value)
+                purchase_order.save()
+
+                # Update nested details if provided
+                if "purchase_order_details" in validated_data:
+                    details_data = validated_data["purchase_order_details"]
+
+                    # Use the PurchaseOrderDetailsUpdateSerializer
+                    existing_details = {
+                        detail.PURCHASE_ORDER_DET_ID: detail
+                        for detail in purchase_order.purchase_order.all()
+                    }
+                    updates = []
+                    creations = []
+
+                    for detail_data in details_data:
+                        detail_id = detail_data.get("PURCHASE_ORDER_DET_ID")
+
+                        if detail_id:
+                            if detail_id in existing_details:
+                                # Update existing detail
+                                detail_instance = existing_details.pop(detail_id)
+                                detail_serializer = (
+                                    PurchaseOrderDetailsUpdateSerializer(
+                                        detail_instance, data=detail_data, partial=True
+                                    )
+                                )
+                                if detail_serializer.is_valid():
+                                    updates.append(detail_serializer.save())
+                                else:
+                                    return Response(
+                                        detail_serializer.errors,
+                                        status=status.HTTP_400_BAD_REQUEST,
+                                    )
+                            else:
+                                # Create new detail if ID not found
+                                creations.append(
+                                    PurchaseOrderDetails(
+                                        PURCHASE_ORDER_ID=purchase_order, **detail_data
+                                    )
+                                )
+                        else:
+                            # Create new detail if no ID provided
+                            creations.append(
+                                PurchaseOrderDetails(
+                                    PURCHASE_ORDER_ID=purchase_order, **detail_data
+                                )
+                            )
+
+                    # Bulk update and create
+                    if updates:
+                        PurchaseOrderDetails.objects.bulk_update(
+                            updates,
+                            [
+                                "PURCHASE_ORDER_DET_PROD_ID",
+                                "PURCHASE_ORDER_DET_PROD_NAME",
+                                "PURCHASE_ORDER_DET_PROD_LINE_QTY",
+                            ],
+                        )
+                    if creations:
+                        PurchaseOrderDetails.objects.bulk_create(creations)
+
+                    # Delete details not included in the update
+                    for detail in existing_details.values():
+                        detail.delete()
+
+            return Response(
+                {"detail": "PurchaseOrder and its details updated successfully."},
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            return Response(
+                {"detail": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+# Function to accept Purchase Order
+class TransferToInboundDelivery(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, purchase_order_id):
+        try:
+            with transaction.atomic():  # Start the atomic transaction
+                # Fetch the PurchaseOrder
+                purchase_order = PurchaseOrder.objects.get(
+                    PURCHASE_ORDER_ID=purchase_order_id
+                )
+
+                # Check if the status is being updated to 'Accepted'
+                if request.data.get("PURCHASE_ORDER_STATUS") == "Accepted":
+                    # Update the purchase order status
+                    purchase_order.PURCHASE_ORDER_STATUS = "Accepted"
+                    purchase_order.save()
+
+                    accepted_by_user = request.data.get("USERNAME")
+
+                    # Create InboundDelivery from the PurchaseOrder
+                    inbound_delivery = InboundDelivery.objects.create(
+                        PURCHASE_ORDER_ID=purchase_order,
+                        INBOUND_DEL_SUPP_ID=purchase_order.PURCHASE_ORDER_SUPPLIER_ID,
+                        INBOUND_DEL_SUPP_NAME=purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME,
+                        INBOUND_DEL_TOTAL_ORDERED_QTY=purchase_order.PURCHASE_ORDER_TOTAL_QTY,
+                        INBOUND_DEL_STATUS="Pending",
+                        INBOUND_DEL_TOTAL_PRICE=0,  # Default value, can be updated later
+                        INBOUND_DEL_ORDER_APPRVDBY_USER=accepted_by_user,
+                    )
+
+                    # Transfer PurchaseOrderDetails to InboundDeliveryDetails
+                    purchase_order_details = PurchaseOrderDetails.objects.filter(
+                        PURCHASE_ORDER_ID=purchase_order
+                    )
+                    for detail in purchase_order_details:
+                        InboundDeliveryDetails.objects.create(
+                            INBOUND_DEL_ID=inbound_delivery,
+                            INBOUND_DEL_DETAIL_PROD_ID_id=detail.PURCHASE_ORDER_DET_PROD_ID,
+                            INBOUND_DEL_DETAIL_PROD_NAME=detail.PURCHASE_ORDER_DET_PROD_NAME,
+                            INBOUND_DEL_DETAIL_ORDERED_QTY=detail.PURCHASE_ORDER_DET_PROD_LINE_QTY,
+                        )
+
+                    return Response(
+                        {
+                            "message": "Purchase Order accepted and transferred to Inbound Delivery successfully."
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+
+                else:
+                    return Response(
+                        {
+                            "error": "Invalid status update. Only 'Accepted' status can trigger the transfer."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+        except PurchaseOrder.DoesNotExist:
+            return Response(
+                {"error": f"Purchase Order with ID {purchase_order_id} not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class PurchaseOrderUpdateAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def patch(self, request, purchase_order_id):
+        try:
+            with transaction.atomic():
+                # Fetch the PurchaseOrder
+                purchase_order = get_object_or_404(
+                    PurchaseOrder, PURCHASE_ORDER_ID=purchase_order_id
+                )
+
+                # Update PurchaseOrder fields from the request data
+                if supplier_id := request.data.get("PURCHASE_ORDER_SUPPLIER_ID"):
+                    supplier = get_object_or_404(Supplier, id=supplier_id)
+                    purchase_order.PURCHASE_ORDER_SUPPLIER_ID = supplier
+
+                purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME = request.data.get(
+                    "PURCHASE_ORDER_SUPPLIER_CMPNY_NAME",
+                    purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME,
+                )
+                purchase_order.save()
+
+                # Check if there is an existing InboundDelivery for the PurchaseOrder
+                inbound_delivery = InboundDelivery.objects.filter(
+                    PURCHASE_ORDER_ID=purchase_order
+                ).first()
+
+                if inbound_delivery:
+                    # Update existing InboundDelivery fields
+                    inbound_delivery.INBOUND_DEL_SUPP_ID = (
+                        purchase_order.PURCHASE_ORDER_SUPPLIER_ID
+                    )
+                    inbound_delivery.INBOUND_DEL_SUPP_NAME = (
+                        purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME
+                    )
+                    inbound_delivery.save()
+
+                # Update PurchaseOrderDetails and optionally InboundDeliveryDetails
+                updated_details = request.data.get("details", [])
+                existing_details_ids = set()
+
+                for detail_data in updated_details:
+                    prod_id = detail_data.get("PURCHASE_ORDER_DET_PROD_ID")
+                    prod_name = detail_data.get("PURCHASE_ORDER_DET_PROD_NAME")
+                    prod_line_qty = detail_data.get("PURCHASE_ORDER_DET_PROD_LINE_QTY")
+
+                    product = get_object_or_404(Product, id=prod_id)
+
+                    # Update or create PurchaseOrderDetails
+                    purchase_order_detail, _ = (
+                        PurchaseOrderDetails.objects.update_or_create(
+                            PURCHASE_ORDER_ID=purchase_order,
+                            PURCHASE_ORDER_DET_PROD_ID=prod_id,
+                            defaults={
+                                "PURCHASE_ORDER_DET_PROD_NAME": prod_name,
+                                "PURCHASE_ORDER_DET_PROD_LINE_QTY": prod_line_qty,
+                            },
+                        )
+                    )
+                    existing_details_ids.add(
+                        purchase_order_detail.PURCHASE_ORDER_DET_ID
+                    )
+
+                    # If an InboundDelivery exists, update or create InboundDeliveryDetails
+                    if inbound_delivery:
+                        InboundDeliveryDetails.objects.update_or_create(
+                            INBOUND_DEL_ID=inbound_delivery,
+                            INBOUND_DEL_DETAIL_PROD_ID=product,
+                            defaults={
+                                "INBOUND_DEL_DETAIL_PROD_NAME": prod_name,
+                                "INBOUND_DEL_DETAIL_ORDERED_QTY": prod_line_qty,
+                            },
+                        )
+
+                # Remove outdated details
+                PurchaseOrderDetails.objects.filter(
+                    PURCHASE_ORDER_ID=purchase_order
+                ).exclude(PURCHASE_ORDER_DET_ID__in=existing_details_ids).delete()
+
+                if inbound_delivery:
+                    InboundDeliveryDetails.objects.filter(
+                        INBOUND_DEL_ID=inbound_delivery
+                    ).exclude(
+                        INBOUND_DEL_DETAIL_PROD_ID__in=[
+                            d["PURCHASE_ORDER_DET_PROD_ID"] for d in updated_details
+                        ]
+                    ).delete()
+
+                    # Recalculate the total quantity
+                    total_qty = (
+                        PurchaseOrderDetails.objects.filter(
+                            PURCHASE_ORDER_ID=purchase_order
+                        ).aggregate(total_qty=Sum("PURCHASE_ORDER_DET_PROD_LINE_QTY"))[
+                            "total_qty"
+                        ]
+                        or 0
+                    )
+
+                    # Update the total quantity in the InboundDelivery
+                    inbound_delivery.INBOUND_DEL_TOTAL_ORDERED_QTY = total_qty
+                    inbound_delivery.save()
+
+                # Recalculate and update the total quantity in the PurchaseOrder
+                total_qty = (
+                    PurchaseOrderDetails.objects.filter(
+                        PURCHASE_ORDER_ID=purchase_order
+                    ).aggregate(total_qty=Sum("PURCHASE_ORDER_DET_PROD_LINE_QTY"))[
+                        "total_qty"
+                    ]
+                    or 0
+                )
+
+                purchase_order.PURCHASE_ORDER_TOTAL_QTY = total_qty
+                purchase_order.save()
+
+                return Response(
+                    {
+                        "message": (
+                            "Purchase Order and related Inbound Delivery updated successfully."
+                            if inbound_delivery
+                            else "Purchase Order updated successfully. No related Inbound Delivery exists."
+                        ),
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+        except Http404 as e:
+            return Response(
+                {"error": f"Resource not found: {str(e)}"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        # except PurchaseOrder.DoesNotExist:
+        #     return Response(
+        #         {"error": f"Purchase Order with ID {purchase_order_id} not found."},
+        #         status=status.HTTP_404_NOT_FOUND,
+        #     )
+        # except Exception as e:
+        #     return Response(
+        #         {"error": f"An error occurred: {str(e)}"},
+        #         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #     )

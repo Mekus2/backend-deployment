@@ -33,8 +33,8 @@
 //       PROD_DETAILS_CODE: "",
 //       PROD_DETAILS_DESCRIPTION: "",
 //       PROD_DETALS_PRICE: 0.0,
-//       PROD_DETAILS_BRAND: "",
-//       PROD_DETAILS_SIZE: "",
+//       PROD_DETAILS_SUPPLIER: "",
+//       PROD_DETAILS_UNITS: "",
 //       PROD_DETAILS_MEASUREMENT: "",
 //       PROD_CAT_CODE: "",
 //     },
@@ -57,7 +57,6 @@
 // };
 
 // export default productData;
-
 
 //ProductData.js
 const productData = {
@@ -382,8 +381,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Broad-spectrum antibiotic used to treat bacterial infections.",
       PROD_DETALS_PRICE: 29.99,
-      PROD_DETAILS_BRAND: "VetMed",
-      PROD_DETAILS_SIZE: "500mg",
+      PROD_DETAILS_SUPPLIER: "VetMed",
+      PROD_DETAILS_UNITS: "500mg",
       PROD_DETAILS_MEASUREMENT: "Bottle",
       PROD_CAT_CODE: "C001",
     },
@@ -392,8 +391,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Shampoo formulated to eliminate fleas and ticks from pets.",
       PROD_DETALS_PRICE: 15.99,
-      PROD_DETAILS_BRAND: "FleaAway",
-      PROD_DETAILS_SIZE: "250ml",
+      PROD_DETAILS_SUPPLIER: "FleaAway",
+      PROD_DETAILS_UNITS: "250ml",
       PROD_DETAILS_MEASUREMENT: "Bottle",
       PROD_CAT_CODE: "C002",
     },
@@ -402,8 +401,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Sterile syringes for administering injections.",
       PROD_DETALS_PRICE: 9.99,
-      PROD_DETAILS_BRAND: "MedSupply",
-      PROD_DETAILS_SIZE: "10ml",
+      PROD_DETAILS_SUPPLIER: "MedSupply",
+      PROD_DETAILS_UNITS: "10ml",
       PROD_DETAILS_MEASUREMENT: "Pack of 10",
       PROD_CAT_CODE: "C003",
     },
@@ -412,8 +411,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Digital thermometer for accurate temperature readings in animals.",
       PROD_DETALS_PRICE: 22.5,
-      PROD_DETAILS_BRAND: "ThermoVet",
-      PROD_DETAILS_SIZE: "1 unit",
+      PROD_DETAILS_SUPPLIER: "ThermoVet",
+      PROD_DETAILS_UNITS: "1 unit",
       PROD_DETAILS_MEASUREMENT: "Unit",
       PROD_CAT_CODE: "C004",
     },
@@ -422,8 +421,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Ointment for treating wounds and promoting healing.",
       PROD_DETALS_PRICE: 12.99,
-      PROD_DETAILS_BRAND: "HealFast",
-      PROD_DETAILS_SIZE: "100g",
+      PROD_DETAILS_SUPPLIER: "HealFast",
+      PROD_DETAILS_UNITS: "100g",
       PROD_DETAILS_MEASUREMENT: "Tube",
       PROD_CAT_CODE: "C005",
     },
@@ -432,8 +431,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Effective antibiotic used for treating a wide range of bacterial infections.",
       PROD_DETALS_PRICE: 27.99,
-      PROD_DETAILS_BRAND: "VetHealth",
-      PROD_DETAILS_SIZE: "250mg",
+      PROD_DETAILS_SUPPLIER: "VetHealth",
+      PROD_DETAILS_UNITS: "250mg",
       PROD_DETAILS_MEASUREMENT: "Bottle",
       PROD_CAT_CODE: "C001",
     },
@@ -442,8 +441,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Antibiotic that treats various types of bacterial infections.",
       PROD_DETALS_PRICE: 32.5,
-      PROD_DETAILS_BRAND: "BioPharma",
-      PROD_DETAILS_SIZE: "500mg",
+      PROD_DETAILS_SUPPLIER: "BioPharma",
+      PROD_DETAILS_UNITS: "500mg",
       PROD_DETAILS_MEASUREMENT: "Bottle",
       PROD_CAT_CODE: "C001",
     },
@@ -452,8 +451,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Antibiotic for treating respiratory and bacterial infections in animals.",
       PROD_DETALS_PRICE: 28.99,
-      PROD_DETAILS_BRAND: "PetMeds",
-      PROD_DETAILS_SIZE: "300mg",
+      PROD_DETAILS_SUPPLIER: "PetMeds",
+      PROD_DETAILS_UNITS: "300mg",
       PROD_DETAILS_MEASUREMENT: "Bottle",
       PROD_CAT_CODE: "C001",
     },
@@ -462,8 +461,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Flea collar providing long-lasting protection against fleas and ticks.",
       PROD_DETALS_PRICE: 18.99,
-      PROD_DETAILS_BRAND: "PestGuard",
-      PROD_DETAILS_SIZE: "One size fits all",
+      PROD_DETAILS_SUPPLIER: "PestGuard",
+      PROD_DETAILS_UNITS: "One size fits all",
       PROD_DETAILS_MEASUREMENT: "Unit",
       PROD_CAT_CODE: "C002",
     },
@@ -472,8 +471,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Spray that effectively repels ticks and prevents infestations.",
       PROD_DETALS_PRICE: 14.99,
-      PROD_DETAILS_BRAND: "TickShield",
-      PROD_DETAILS_SIZE: "300ml",
+      PROD_DETAILS_SUPPLIER: "TickShield",
+      PROD_DETAILS_UNITS: "300ml",
       PROD_DETAILS_MEASUREMENT: "Bottle",
       PROD_CAT_CODE: "C002",
     },
@@ -482,8 +481,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Spot-on treatment for eliminating fleas on pets.",
       PROD_DETALS_PRICE: 25.99,
-      PROD_DETAILS_BRAND: "QuickFlea",
-      PROD_DETAILS_SIZE: "3 doses",
+      PROD_DETAILS_SUPPLIER: "QuickFlea",
+      PROD_DETAILS_UNITS: "3 doses",
       PROD_DETAILS_MEASUREMENT: "Pack",
       PROD_CAT_CODE: "C002",
     },
@@ -492,8 +491,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Insulin syringes for precise dosage administration.",
       PROD_DETALS_PRICE: 19.99,
-      PROD_DETAILS_BRAND: "MediCare",
-      PROD_DETAILS_SIZE: "1ml",
+      PROD_DETAILS_SUPPLIER: "MediCare",
+      PROD_DETAILS_UNITS: "1ml",
       PROD_DETAILS_MEASUREMENT: "Pack of 10",
       PROD_CAT_CODE: "C003",
     },
@@ -502,8 +501,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Oral dosing syringes for administering medications to pets.",
       PROD_DETALS_PRICE: 7.99,
-      PROD_DETAILS_BRAND: "EasyDose",
-      PROD_DETAILS_SIZE: "5ml",
+      PROD_DETAILS_SUPPLIER: "EasyDose",
+      PROD_DETAILS_UNITS: "5ml",
       PROD_DETAILS_MEASUREMENT: "Pack of 5",
       PROD_CAT_CODE: "C003",
     },
@@ -512,8 +511,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Infrared thermometer for quick and contactless temperature readings.",
       PROD_DETALS_PRICE: 35.99,
-      PROD_DETAILS_BRAND: "InfraVet",
-      PROD_DETAILS_SIZE: "1 unit",
+      PROD_DETAILS_SUPPLIER: "InfraVet",
+      PROD_DETAILS_UNITS: "1 unit",
       PROD_DETAILS_MEASUREMENT: "Unit",
       PROD_CAT_CODE: "C004",
     },
@@ -522,8 +521,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Ear thermometer for measuring pets' temperature.",
       PROD_DETALS_PRICE: 29.99,
-      PROD_DETAILS_BRAND: "PetTemp",
-      PROD_DETAILS_SIZE: "1 unit",
+      PROD_DETAILS_SUPPLIER: "PetTemp",
+      PROD_DETAILS_UNITS: "1 unit",
       PROD_DETAILS_MEASUREMENT: "Unit",
       PROD_CAT_CODE: "C004",
     },
@@ -532,8 +531,8 @@ const productData = {
       PROD_DETAILS_DESCRIPTION:
         "Antiseptic spray for cleaning wounds and preventing infection.",
       PROD_DETALS_PRICE: 16.99,
-      PROD_DETAILS_BRAND: "FirstAid",
-      PROD_DETAILS_SIZE: "250ml",
+      PROD_DETAILS_SUPPLIER: "FirstAid",
+      PROD_DETAILS_UNITS: "250ml",
       PROD_DETAILS_MEASUREMENT: "Bottle",
       PROD_CAT_CODE: "C005",
     },
@@ -541,14 +540,13 @@ const productData = {
       PROD_DETAILS_CODE: "D017",
       PROD_DETAILS_DESCRIPTION: "Sterile gauze pads for dressing wounds.",
       PROD_DETALS_PRICE: 5.99,
-      PROD_DETAILS_BRAND: "MedClean",
-      PROD_DETAILS_SIZE: "10cm x 10cm",
+      PROD_DETAILS_SUPPLIER: "MedClean",
+      PROD_DETAILS_UNITS: "10cm x 10cm",
       PROD_DETAILS_MEASUREMENT: "Pack of 20",
       PROD_CAT_CODE: "C005",
     },
   ],
 
-  
   PRODUCT_CATEGORY: [
     {
       PROD_CAT_CODE: "C001",
@@ -557,19 +555,14 @@ const productData = {
         {
           PROD_SUBCAT_ID: "C001_1",
           PROD_SUBCAT_NAME: "Penicillins",
-          PRODUCT: [
-            { PROD_ID: "P001" },
-            { PROD_ID: "P006" }
-          ]
+          PRODUCT: [{ PROD_ID: "P001" }, { PROD_ID: "P006" }],
         },
         {
           PROD_SUBCAT_ID: "C001_2",
           PROD_SUBCAT_NAME: "Fluoroquinolones",
-          PRODUCT: [
-            { PROD_ID: "P007" }
-          ]
-        }
-      ]
+          PRODUCT: [{ PROD_ID: "P007" }],
+        },
+      ],
     },
     {
       PROD_CAT_CODE: "C002",
@@ -578,18 +571,14 @@ const productData = {
         {
           PROD_SUBCAT_ID: "C002_1",
           PROD_SUBCAT_NAME: "Shampoos",
-          PRODUCT: [
-            { PROD_ID: "P002" }
-          ]
+          PRODUCT: [{ PROD_ID: "P002" }],
         },
         {
           PROD_SUBCAT_ID: "C002_2",
           PROD_SUBCAT_NAME: "Collars",
-          PRODUCT: [
-            { PROD_ID: "P009" }
-          ]
-        }
-      ]
+          PRODUCT: [{ PROD_ID: "P009" }],
+        },
+      ],
     },
     {
       PROD_CAT_CODE: "C003",
@@ -598,19 +587,14 @@ const productData = {
         {
           PROD_SUBCAT_ID: "C003_1",
           PROD_SUBCAT_NAME: "General Syringes",
-          PRODUCT: [
-            { PROD_ID: "P003" },
-            { PROD_ID: "P012" }
-          ]
+          PRODUCT: [{ PROD_ID: "P003" }, { PROD_ID: "P012" }],
         },
         {
           PROD_SUBCAT_ID: "C003_2",
           PROD_SUBCAT_NAME: "Specialty Syringes",
-          PRODUCT: [
-            { PROD_ID: "P013" }
-          ]
-        }
-      ]
+          PRODUCT: [{ PROD_ID: "P013" }],
+        },
+      ],
     },
     {
       PROD_CAT_CODE: "C004",
@@ -619,26 +603,22 @@ const productData = {
         {
           PROD_SUBCAT_ID: "C004_1",
           PROD_SUBCAT_NAME: "Digital Thermometers",
-          PRODUCT: [
-            { PROD_ID: "P004" }
-          ]
+          PRODUCT: [{ PROD_ID: "P004" }],
         },
         {
           PROD_SUBCAT_ID: "C004_2",
           PROD_SUBCAT_NAME: "Infrared Thermometers",
-          PRODUCT: [
-            { PROD_ID: "P014" }
-          ]
-        }
-      ]
+          PRODUCT: [{ PROD_ID: "P014" }],
+        },
+      ],
     },
     {
       PROD_CAT_CODE: "C006",
       PROD_CAT_NAME: "Miscellaneous",
       PROD_CAT_SUBCATEGORY: [], // No subcategories
       PRODUCT: [
-        { PROD_ID: "P018" } // Product without a subcategory
-      ]
+        { PROD_ID: "P018" }, // Product without a subcategory
+      ],
     },
     {
       PROD_CAT_CODE: "C005",
@@ -647,20 +627,16 @@ const productData = {
         {
           PROD_SUBCAT_ID: "C005_1",
           PROD_SUBCAT_NAME: "Ointments",
-          PRODUCT: [
-            { PROD_ID: "P005" }
-          ]
+          PRODUCT: [{ PROD_ID: "P005" }],
         },
         {
           PROD_SUBCAT_ID: "C005_2",
           PROD_SUBCAT_NAME: "Gauze",
-          PRODUCT: [
-            { PROD_ID: "P017" }
-          ]
-        }
-      ]
-    }
-  ]
+          PRODUCT: [{ PROD_ID: "P017" }],
+        },
+      ],
+    },
+  ],
 };
 
 export default productData;

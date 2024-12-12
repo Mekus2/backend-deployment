@@ -78,11 +78,26 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
       },
     ]);
   };
+  // Add validation when manually setting supplier data
+  const validateSupplierInput = () => {
+    if (!supplierCompanyNum || supplierCompanyNum.length !== 11) {
+      alert("Supplier Company Number must be 11 digits.");
+      return false;
+    }
+    return true;
+  };
 
   const handleProductInputChange = (index, value) => {
     console.log(`Input changed at index ${index}: ${value}`); // Log the input change
     setCurrentEditingIndex(index);
     setProductSearch(value); // Update immediately for input responsiveness
+
+    // Update the order details with the current input value
+    setOrderDetails((prevOrderDetails) => {
+      const updatedOrderDetails = [...prevOrderDetails];
+      updatedOrderDetails[index].productName = value; // Store user input for new product or search
+      return updatedOrderDetails;
+    });
 
     // Clear any previously set timeout to avoid multiple fetches
     if (debounceTimeoutRef.current) {
@@ -90,11 +105,11 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
       console.log("Cleared previous debounce timeout"); // Log debounce timeout clearance
     }
 
-    // Set a new debounce timeout
+    // Set a new debounce timeout for searching
     debounceTimeoutRef.current = setTimeout(() => {
       console.log(`Fetching products for: ${value}`); // Log before fetching
       fetchFilteredProducts(value, index); // Fetch products after delay
-    }, 800); // Adjust delay as needed (e.g., 300ms)
+    }, 800); // Adjust delay as needed (e.g., 800ms for a smooth search experience)
   };
 
   const fetchFilteredProducts = async (searchValue) => {
@@ -185,11 +200,24 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
 
   const handleSupplierSelect = (supplier) => {
     console.log("Selected Supplier Details:", supplier);
+    console.log(
+      "Supplier Company Number from supplier object:",
+      supplier.Supp_Company_Num
+    );
+
     setSupplierID(supplier.id);
     setContactPersonName(supplier.Supp_Contact_Pname);
     setContactPersonNumber(supplier.Supp_Contact_Num);
     setSupplierCompanyName(supplier.Supp_Company_Name);
+
+    // Log the value before setting it
+    console.log("Setting Supplier Company Number:", supplier.Supp_Company_Num);
     setSupplierCompanyNum(supplier.Supp_Company_Num);
+
+    console.log(
+      "Supplier Company Number after selection:",
+      supplier.Supp_Company_Num
+    );
 
     setSupplierSearch("");
     setFilteredSuppliers([]);
@@ -235,6 +263,11 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
   };
 
   const handleSave = async () => {
+    // Validate supplier input
+    if (!validateSupplierInput()) {
+      return; // Exit if validation fails
+    }
+
     try {
       const newOrder = {
         PURCHASE_ORDER_TOTAL_QTY: calculateTotalQuantity(orderDetails),
@@ -253,22 +286,77 @@ const useAddSupplierOrderModal = (onSave, onClose) => {
 
       console.log("Final Data to be passed:", newOrder);
 
-      // Call API to save order
       const createdOrder = await addNewPurchaseOrder(newOrder);
       console.log("Order Saved:", createdOrder);
 
-      // Optionally, trigger a state update or re-fetch to reflect new order without reloading page
-      if (onSave) {
-        onSave(newOrder); // Call onSave with order data
-      }
-
-      if (onClose) {
-        onClose(); // Close modal after save
-      }
+      if (onSave) onSave(newOrder);
+      if (onClose) onClose();
     } catch (error) {
       console.error("Error saving order:", error);
     }
   };
+
+  const logAddSupplierOrder = async (createdOrder) => {
+    // Retrieve the userId from localStorage
+    const userId = localStorage.getItem("user_id");
+
+    if (!userId) {
+      console.error("User ID is missing from localStorage");
+      return;
+    }
+
+    try {
+      // Fetch user details from the backend using the userId
+      const userResponse = await fetch(
+        `http://127.0.0.1:8000/account/logs/${userId}/`
+      );
+      if (!userResponse.ok) {
+        const errorData = await userResponse.json();
+        console.error("Failed to fetch user details:", errorData);
+        return;
+      }
+      const userData = await userResponse.json();
+      const username = userData.username; // Assuming the API response includes a `username` field
+
+      // Log the createdOrder data for debugging purposes
+      console.log("Created Order:", createdOrder);
+
+      // Get the Sales ID from the created order
+      const IDD = createdOrder.PURCHASE_ORDER_ID;
+
+      // Validate the essential fields before proceeding
+      if (!supplierCompanyName) {
+        console.error("Missing clientName, deliveryOption, or paymentTerms");
+        return;
+      }
+
+      // Prepare the log payload
+      const logPayload = {
+        LLOG_TYPE: "User logs",
+        LOG_DESCRIPTION: `${username} placed a new Supplier order (ID: ${IDD}) for ${supplierCompanyName}. `,
+        USER_ID: userId,
+      };
+
+      // Send the log payload to the server to create a log entry
+      const logResponse = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        body: JSON.stringify(logPayload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (logResponse.ok) {
+        console.log("Supplier Order log successfully created:", logPayload);
+      } else {
+        const logErrorData = await logResponse.json();
+        console.error("Failed to create log:", logErrorData);
+      }
+    } catch (error) {
+      console.error("Error logging order creation:", error);
+    }
+  };
+
   const handleRemoveProduct = (index) => {
     setOrderDetails((prevOrderDetails) => {
       const updatedOrderDetails = [...prevOrderDetails];

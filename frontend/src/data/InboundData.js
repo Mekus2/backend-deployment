@@ -35,7 +35,7 @@ const INBOUND_DELIVERY = {
     {
       INBOUND_DEL_ID: "INB002",
       INBOUND_DEL_DATE_RCVD: "2024-08-10",
-      INBOUND_DEL_STATUS: "In Transit",
+      INBOUND_DEL_STATUS: "Dispatched",
       INBOUND_DEL_DLVRY_OPT: "Sea",
       INBOUND_DEL_RCVD_QTY: 100,
       INBOUND_DEL_PROD_TOTAL: 2400,
@@ -52,7 +52,7 @@ const INBOUND_DELIVERY = {
         USER_EMAIL: "alice.williams@gmail.com",
         USER_PHONENUMBER: "678-901-2345",
         USER_ADDRESS: "321 Birch St, Springfield, USA",
-        USER_ACCTTYPE: "Admin",
+        USER_ACCTTYPE: "Staff",
         USER_ISACTIVE: true,
         USER_AGE: 31,
       },

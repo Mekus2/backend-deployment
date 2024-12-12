@@ -61,22 +61,20 @@ const SharedSupplierOrderPage = () => {
     );
   });
 
-  // Sort the filtered orders based on sort configuration
   const sortedOrders = filteredOrders.sort((a, b) => {
     if (sortConfig.key === "PURCHASE_ORDER_DATE_CREATED") {
+      // Always sort in descending order by date
       return (
-        (new Date(b.PURCHASE_ORDER_DATE) -
-          new Date(a.PURCHASE_ORDER_DATE_CREATED)) *
-        (sortConfig.direction === "asc" ? 1 : -1)
+        new Date(b.PURCHASE_ORDER_DATE_CREATED) -
+        new Date(a.PURCHASE_ORDER_DATE_CREATED)
       );
     }
     if (sortConfig.key === "PURCHASE_ORDER_ID") {
-      return (
-        (a.PURCHASE_ORDER_ID - b.PURCHASE_ORDER_ID) *
-        (sortConfig.direction === "asc" ? 1 : -1)
-      );
+      // Always sort in descending order by ID
+      return b.PURCHASE_ORDER_ID - a.PURCHASE_ORDER_ID;
     }
-    return a.PURCHASE_ORDER_SUPPLIER_ID - b.PURCHASE_ORDER_SUPPLIER_ID; // Sorting by Supplier ID
+    // Always sort in descending order by Supplier ID
+    return b.PURCHASE_ORDER_SUPPLIER_ID - a.PURCHASE_ORDER_SUPPLIER_ID;
   });
 
   const openDetailsModal = (order) => setSelectedOrder(order);
@@ -122,6 +120,11 @@ const SharedSupplierOrderPage = () => {
 
   return (
     <>
+      <AnalyticsContainer>
+        <div onClick={() => navigate("/staff/orders/purchase-order")}>
+          <CardTotalSupplierOrder />
+        </div>
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter purchase orders..."
@@ -132,11 +135,6 @@ const SharedSupplierOrderPage = () => {
           <FaPlus className="icon" /> Supplier Order
         </StyledButton>
       </Controls>
-      <AnalyticsContainer>
-        <div onClick={() => navigate("/admin/orders/purchase-order")}>
-          <CardTotalSupplierOrder />
-        </div>
-      </AnalyticsContainer>
       <Table
         headers={headers.map((header, index) => (
           <TableHeader
@@ -222,9 +220,9 @@ const AnalyticsContainer = styled.div`
 
 const Status = styled.span`
   background-color: ${(props) =>
-    props.status === "Completed"
+    props.status === "Accepted"
       ? "#1DBA0B"
-      : props.status === "Pending" || props.status === "In Progress"
+      : (props.status === props.status) === "In Progress"
       ? "#f08400"
       : "#ff5757"};
   color: white;

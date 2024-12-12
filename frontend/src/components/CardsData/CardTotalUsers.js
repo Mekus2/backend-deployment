@@ -32,7 +32,7 @@ const CardTotalUsers = () => {
   if (loading) {
     return (
       <CardContainer> 
-        <Card label="STaff" value="Loading..." icon={<FaUserTie />} />
+        <Card label="Users" value="Loading..." icon={<FaUserTie />} />
       </CardContainer>
     );
   }
@@ -41,7 +41,7 @@ const CardTotalUsers = () => {
   if (error) {
     return (
       <CardContainer>
-        <Card label="Staff" value={error} icon={<FaUserTie />} />
+        <Card label="Users" value={error} icon={<FaUserTie />} />
       </CardContainer>
     );
   }
@@ -49,7 +49,7 @@ const CardTotalUsers = () => {
   // Return the total users count if data is fetched successfully
   return (
     <CardContainer>
-      <Card label="Staff" value={totalUsers} icon={<FaUserTie />} />
+      <Card label="Users" value={totalUsers} icon={<FaUserTie />} />
     </CardContainer>
   );
 };

@@ -12,14 +12,19 @@ class ProductCategory(models.Model):
 
 class ProductDetails(models.Model):
     PROD_DETAILS_CODE = models.AutoField(primary_key=True)
-    PROD_DETAILS_DESCRIPTION = models.CharField(max_length=255)
-    PROD_DETAILS_PRICE = models.DecimalField(max_digits=10, decimal_places=2)
-    PROD_DETAILS_BRAND = models.CharField(max_length=255)
+    PROD_DETAILS_DESCRIPTION = models.CharField(
+        max_length=255, default="No Description"
+    )
+    PROD_DETAILS_PRICE = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    PROD_DETAILS_PURCHASE_PRICE = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0
+    )
+    PROD_DETAILS_SUPPLIER = models.CharField(max_length=255, null=True)
     PROD_DETAILS_QUANTITY = models.IntegerField(default=0)
     PROD_DETAILS_UNIT = models.CharField(max_length=255, null=True)
-    PROD_DETAILS_PACKAGING = models.CharField(max_length=255)
+    PROD_DETAILS_PACKAGING = models.CharField(max_length=255, null=True)
     PROD_CAT_CODE = models.ForeignKey(
-        ProductCategory, on_delete=models.CASCADE, blank=False, null=False
+        ProductCategory, on_delete=models.CASCADE, blank=True, null=True
     )
 
     def __str__(self):

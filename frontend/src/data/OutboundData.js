@@ -24,7 +24,7 @@ const OUTBOUND_DELIVERY = {
       OUTBOUND_DEL_ID: "OUT002",
       OUTBOUND_DEL_SHIPPED_DATE: "2024-08-15",
       OUTBOUND_DEL_DATE_CUST_RCVD: null, // Not yet received
-      OUTBOUND_DEL_STATUS: "In Transit",
+      OUTBOUND_DEL_STATUS: "Dispatched",
       OUTBOUND_DEL_DLVRY_OPT: "Express",
       OUTBOUND_DEL_DLVRY_QTY: 10,
       OUTBOUND_DEL_CITY: "San Francisco",
@@ -58,7 +58,7 @@ const OUTBOUND_DELIVERY = {
       PROD_NAME: "Wound Care Ointment",
       OUTBOUND_DEL_DETAIL_QTY_SHIPPED: 15,
       OUTBOUND_DEL_DETAIL_EXPIRY_DATE: "2025-06-10",
-      OUTBOUND_DEL_DETAIL_PRICE: 10.50, // Product price from PRODUCT_DETAILS
+      OUTBOUND_DEL_DETAIL_PRICE: 10.5, // Product price from PRODUCT_DETAILS
     },
     {
       OUTBOUND_DEL_DETAIL_ID: "OUT_DET003",

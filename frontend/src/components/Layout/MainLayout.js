@@ -11,9 +11,9 @@ const MainLayout = ({ children }) => {
   const location = useLocation(); 
 
   // Determine the role based on the URL
-  const role = location.pathname.includes('/superadmin') ? 'superadmin' :
-               location.pathname.includes('/admin') ? 'admin' :
-               'staff';
+  const role = location.pathname.includes('/admin') ? 'admin' :
+               location.pathname.includes('/staff') ? 'staff' :
+               'prevstaff';
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

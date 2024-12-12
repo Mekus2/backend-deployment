@@ -1,47 +1,54 @@
-import React from "react";
-import DashboardTable from "./DashboardTable";
-import productData from "../../data/ProductData"; // Adjust the import path accordingly
+import React, { useState, useEffect } from "react";
+import axios from "axios"; // Ensure axios is installed in your project
+import DashboardTable from "./DashboardTable"; // Adjust the path accordingly
 
 const ExpiredItemsAlert = () => {
-  const inventory = productData?.PRODUCT_INVENTORY; // Get inventory data
+  const [expiringProducts, setExpiringProducts] = useState([]); // State to store the expiring products
+  const [loading, setLoading] = useState(true); // Loading state
+  const [error, setError] = useState(null); // Error state
 
-  // Ensure inventory is defined before using filter
-  if (!inventory) {
-    return <p>Loading inventory data...</p>;
+  // Fetch data from the backend API
+  useEffect(() => {
+    const fetchExpiringProducts = async () => {
+      try {
+        const response = await axios.get(
+          "http://127.0.0.1:8000/inventory/expiredsoon/"
+        );
+        setExpiringProducts(response.data); // Store fetched data
+      } catch (err) {
+        setError("Error fetching expiring products.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExpiringProducts(); // Call the fetch function
+  }, []);
+
+  // Show loading or error message
+  if (loading) {
+    return <p>Loading expiring products...</p>;
   }
 
-  // Get the current date
-  const currentDate = new Date();
+  if (error) {
+    return <p>{error}</p>;
+  }
 
-  // Get a list of all products with their quantities and expiry dates
-  const allProducts = inventory
-    .map((item) => {
-      const product = productData.PRODUCT.find((p) => p.PROD_ID === item.PROD_ID);
-      return product
-        ? {
-            id: item.PROD_ID,
-            name: product.PROD_NAME,
-            quantity: item.PROD_INV_QTY_ON_HAND,
-            expiryDate: item.PROD_INV_EXP_DATE,
-            daysToExpiry: (new Date(item.PROD_INV_EXP_DATE) - currentDate) / (1000 * 60 * 60 * 24), // Calculate days to expiry
-          }
-        : null;
-    })
-    .filter(Boolean) // Remove any nulls
-    .sort((a, b) => a.daysToExpiry - b.daysToExpiry) // Sort by days to expiry
-    .slice(0, 5); // Get the top 5 nearest to expiry
-
-  // Define table headers
-  const headers = ["Product Name", "Quantity", "Expiry Date"];
-  // Format data for the table
-  const data = allProducts.map(({ name, quantity, expiryDate }) => [name, quantity, expiryDate]);
+  const headers = ["Product Name", "Quantity", "Expiry Date"]; // Table headers
+  const data = expiringProducts.map(
+    ({ PRODUCT_NAME, QUANTITY_ON_HAND, EXPIRY_DATE }) => [
+      PRODUCT_NAME,
+      QUANTITY_ON_HAND,
+      new Date(EXPIRY_DATE).toLocaleDateString(), // Format expiry date
+    ]
+  ); // Format data for the table
 
   return (
     <DashboardTable
       title="Expiring Soon"
       headers={headers}
       data={data}
-      onRowClick={(id) => (window.location.href = `/admin/inventory/${id}`)} // Navigate to specific product's inventory page
+      onRowClick={(id) => (window.location.href = `/staff/inventory/${id}`)} // Navigate to specific product's inventory page
     />
   );
 };

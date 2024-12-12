@@ -1,37 +1,51 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import DashboardTable from "./DashboardTable";
-import productData from "../../data/ProductData"; // Adjust the import path accordingly
+import axios from "axios"; // Import axios for HTTP requests
 
 const LowestStocks = () => {
-  const lowStockThreshold = 10; // Define the threshold for low stock
-  const inventory = productData?.PRODUCT_INVENTORY; // Get inventory data
+  const [lowStockProducts, setLowStockProducts] = useState([]); // State to store the low-stock products
+  const [loading, setLoading] = useState(true); // State for loading indicator
+  const [error, setError] = useState(null); // State for error handling
 
-  // Ensure inventory is defined before using filter
-  if (!inventory) {
+  // Fetch data from the backend API
+  useEffect(() => {
+    const fetchLowStockProducts = async () => {
+      try {
+        const response = await axios.get(
+          "http://127.0.0.1:8000/items/lowStock/"
+        ); // API URL for low stock products
+        setLowStockProducts(response.data); // Set the fetched data to state
+      } catch (err) {
+        setError("Error fetching low stock products."); // Handle errors
+      } finally {
+        setLoading(false); // Set loading to false after data fetch is complete
+      }
+    };
+
+    fetchLowStockProducts(); // Call the fetch function
+  }, []);
+
+  // Show loading or error message if applicable
+  if (loading) {
     return <p>Loading inventory data...</p>;
   }
 
-  // Get a list of low-stock products and their quantities
-  const lowStockProducts = inventory
-    .filter((item) => item.PROD_INV_QTY_ON_HAND <= lowStockThreshold) // Filter low stock items
-    .map((item) => {
-      const product = productData.PRODUCT.find((p) => p.PROD_ID === item.PROD_ID);
-      return product
-        ? { id: item.PROD_ID, name: product.PROD_NAME, quantity: item.PROD_INV_QTY_ON_HAND }
-        : null;
-    })
-    .filter(Boolean) // Remove any nulls
-    .sort((a, b) => a.quantity - b.quantity); // Sort by quantity ascending
+  if (error) {
+    return <p>{error}</p>;
+  }
 
-  const headers = ["Product Name", "Number of Stocks"]; // Table headers
-  const data = lowStockProducts.map(({ name, quantity }) => [name, quantity]); // Format data for the table
+  const headers = ["Product Name", "Quantity on Hand"]; // Table headers
+  const data = lowStockProducts.map(({ PROD_NAME, PROD_QOH }) => [
+    PROD_NAME,
+    PROD_QOH,
+  ]); // Format data for the table
 
   return (
     <DashboardTable
       title="Lowest Stocks"
       headers={headers}
       data={data}
-      onRowClick={(id) => (window.location.href = `/admin/inventory/${id}`)} // Navigate to specific product's inventory page
+      onRowClick={(id) => (window.location.href = `/staff/inventory/${id}`)} // Navigate to specific product's inventory page
     />
   );
 };

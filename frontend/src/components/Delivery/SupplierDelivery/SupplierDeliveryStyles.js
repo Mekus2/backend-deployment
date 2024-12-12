@@ -105,20 +105,18 @@ export const ModalFooter = styled.div`
 export const StatusButton = styled.button`
   background-color: ${colors.primary};
   color: white;
-  padding: 10px;
+  padding: 5px 10px;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
+  font-size: 14px;
+  border-radius: 5px;
+  margin-left: 10px;
 
   &:hover {
-    background-color: ${colors.primaryDark};
-  }
-
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
+    background-color: ${colors.primaryHover};
   }
 `;
+
 
 export const InputContainer = styled.div`
   display: flex;

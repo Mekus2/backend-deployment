@@ -45,7 +45,8 @@ const SharedPriceHistoryPage = () => {
 
   const totalChanges = sortedPriceHistory.length;
 
-  const formatCurrency = (value) => `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  const formatCurrency = (value) =>
+    `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
 
   const tableData = sortedPriceHistory.map((entry) => {
     const productName = productMapping[entry.PROD_ID] || "Unknown Product";
@@ -55,14 +56,24 @@ const SharedPriceHistoryPage = () => {
       formatCurrency(entry.OLD_PRICE),
       formatCurrency(entry.NEW_PRICE),
       new Date(entry.CHANGE_DATE).toLocaleDateString(),
-      <Button onClick={() => handleDetailsClick(entry.PROD_ID)}>Details</Button>
+      <Button onClick={() => handleDetailsClick(entry.PROD_ID)}>
+        Details
+      </Button>,
     ];
   });
 
-  const headers = ["Product Name", "Old Price", "New Price", "Change Date", "Action"];
+  const headers = [
+    "Product Name",
+    "Old Price",
+    "New Price",
+    "Change Date",
+    "Action",
+  ];
 
   const handleDetailsClick = (prodId) => {
-    const productHistory = PRICE_HISTORY_DATA.filter((entry) => entry.PROD_ID === prodId);
+    const productHistory = PRICE_HISTORY_DATA.filter(
+      (entry) => entry.PROD_ID === prodId
+    );
     setSelectedProductHistory(productHistory);
   };
 
@@ -72,6 +83,13 @@ const SharedPriceHistoryPage = () => {
 
   return (
     <>
+      <CardsContainer>
+        <ReportCard
+          label="Total Price Changes"
+          value={`${totalChanges} Changes`}
+          icon={<FaHistory />}
+        />
+      </CardsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter name or prices..."
@@ -97,14 +115,6 @@ const SharedPriceHistoryPage = () => {
           </label>
         </DateContainer>
       </Controls>
-
-      <CardsContainer>
-        <ReportCard
-          label="Total Price Changes"
-          value={`${totalChanges} Changes`}
-          icon={<FaHistory />}
-        />
-      </CardsContainer>
 
       <ReportContent>
         <Table headers={headers} rows={tableData} />

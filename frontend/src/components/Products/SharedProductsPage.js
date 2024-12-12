@@ -5,7 +5,7 @@ import { fetchProductList } from "../../api/ProductApi";
 import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
 import CardTotalProducts from "../CardsData/CardTotalProducts";
-import CardTotalCategories from "../CardsData/CardTotalCategories";
+//import CardTotalCategories from "../CardsData/CardTotalCategories";
 import Button from "../Layout/Button";
 import AddProductModal from "./AddProductModal";
 import ProductDetailsModal from "./ProductDetailsModal";
@@ -13,7 +13,6 @@ import { FaPlus } from "react-icons/fa";
 import { colors } from "../../colors";
 import { fetchCategory } from "../../api/CategoryApi";
 import axios from "axios";
-import Loading from "../Layout/Loading"; // Import the Loading component
 
 const SharedProductsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,7 +31,7 @@ const SharedProductsPage = () => {
     const loadProductsAndCategories = async () => {
       try {
         // Fetch products
-        const fetchedProducts = await fetchProductList();
+        const fetchedProducts = (await fetchProductList()).results;
         console.log("fetchedProducts:", fetchedProducts);
         setProducts(fetchedProducts);
 
@@ -44,10 +43,8 @@ const SharedProductsPage = () => {
         // Get unique category codes
         const uncachedCategoryCodes = [
           ...new Set(
-            filteredProducts.map((product) =>
-              product.PROD_DETAILS?.PROD_CAT_CODE !== null
-                ? product.PROD_DETAILS?.PROD_CAT_CODE
-                : null
+            filteredProducts.map(
+              (product) => product.PROD_DETAILS["PROD_CAT_CODE"]
             )
           ),
         ];
@@ -72,15 +69,15 @@ const SharedProductsPage = () => {
           );
 
           const unit = productDetail.PROD_DETAILS_UNIT || "N/A";
-          const brand = productDetail.PROD_DETAILS_BRAND || "N/A";
+          const brand = productDetail.PROD_DETAILS_SUPPLIER || "N/A";
           const price = parseFloat(productDetail.PROD_DETAILS_PRICE);
 
           return [
-            <img
-              src={product.PROD_IMAGE}
-              alt={product.PROD_NAME}
-              style={{ width: "50px", height: "auto" }}
-            />,
+            // <img
+            //   src={product.PROD_IMAGE}
+            //   alt={product.PROD_NAME}
+            //   style={{ width: "50px", height: "auto" }}
+            // />,
             product.PROD_NAME,
             category ? category.PROD_CAT_NAME : "N/A",
             unit,
@@ -100,9 +97,8 @@ const SharedProductsPage = () => {
         setLoading(false);
         console.log("rowsData:", rowsData);
       } catch (err) {
-        setError("Error fetching products or categories", err);
+        setError("Error fetching products or categories");
         setLoading(false);
-        console.error("Error fetching products", err);
       }
     };
 
@@ -138,11 +134,11 @@ const SharedProductsPage = () => {
   const handleCardClick = () => {
     let path;
     if (location.pathname.includes("/superadmin")) {
-      path = "/superadmin/categories";
-    } else if (location.pathname.includes("/admin")) {
       path = "/admin/categories";
-    } else if (location.pathname.includes("/staff")) {
+    } else if (location.pathname.includes("/admin")) {
       path = "/staff/categories";
+    } else if (location.pathname.includes("/staff")) {
+      path = "/prevstaff/categories";
     } else {
       alert("Access denied");
       return;
@@ -159,11 +155,11 @@ const SharedProductsPage = () => {
   }
 
   const headers = [
-    "Image",
+    // "Image",
     "Product Name",
     "Category",
     "Unit",
-    "Brand",
+    "Supplier",
     "Price",
     "Actions",
   ];
@@ -186,7 +182,7 @@ const SharedProductsPage = () => {
       <AnalyticsContainer>
         <CardTotalProducts />
         <ClickableCard onClick={handleCardClick}>
-          <CardTotalCategories />
+          {/* <CardTotalCategories /> */}
         </ClickableCard>
       </AnalyticsContainer>
       <Table headers={headers} rows={rows} />

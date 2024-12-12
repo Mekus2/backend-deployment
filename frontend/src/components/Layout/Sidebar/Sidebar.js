@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { useLocation, NavLink } from "react-router-dom";
+import { useLocation, NavLink, useNavigate } from "react-router-dom"; // Import useNavigate
 import { TbChevronDown } from "react-icons/tb";
 import philvetsLogo from "../../../assets/philvets.png";
-import { adminSidebarItems, staffSidebarItems, superadminSidebarItems } from "./sidebarItems"; // Imported superadmin items
+import {
+  adminSidebarItems,
+  staffSidebarItems,
+} from "./sidebarItems";
 import { TbLogout2 } from "react-icons/tb";
 
 // Centralized theme object for colors (move this if it's defined elsewhere)
@@ -17,6 +20,7 @@ const theme = {
 };
 
 const Sidebar = ({ isOpen, onClose, userRole }) => {
+  const navigate = useNavigate(); // Initialize navigate
   const sidebarRef = useRef(null);
   const location = useLocation(); // Get the current location
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -34,16 +38,14 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
     };
   }, [onClose]);
 
-  // Determine sidebar items based on userRole and location
   const getSidebarItems = () => {
-    if (location.pathname.startsWith("/superadmin")) {
-      return superadminSidebarItems;
-    } else if (location.pathname.startsWith("/admin")) {
+    if (location.pathname.startsWith("/admin")) {
       return adminSidebarItems;
     } else {
       return staffSidebarItems;
     }
   };
+  
 
   const sidebarItems = getSidebarItems();
 
@@ -62,6 +64,20 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
     setOpenDropdown(openDropdown === index ? null : index); // Toggle only on click
   };
 
+  const handleSignOut = () => {
+    localStorage.clear(); // Clear all stored user-related data
+    sessionStorage.clear(); // Clear session storage if used
+    console.log("User signed out. Tokens cleared.");
+  
+    // Prevent accessing the previous pages by replacing the history state
+    window.history.replaceState({}, document.title, "/login");
+  
+    // Navigate to the login page
+    navigate("/login", { replace: true }); // 'replace: true' will ensure that the login page replaces the current page in the history stack
+  };
+  
+
+
   return (
     <SidebarContainer ref={sidebarRef} isOpen={isOpen}>
       <SidebarHeader>
@@ -79,7 +95,11 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
               <SidebarLink
                 as={item.dropdown ? "div" : NavLink} // Use div for parent dropdown items
                 to={item.dropdown ? "#" : item.link}
-                className={!item.dropdown && location.pathname === item.link ? "active" : ""}
+                className={
+                  !item.dropdown && location.pathname === item.link
+                    ? "active"
+                    : ""
+                }
                 onClick={() => {
                   if (item.dropdown) {
                     handleDropdownToggle(index); // Toggle dropdown
@@ -106,7 +126,9 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
                         `dropdown-item ${isActive ? "active" : ""}`
                       }
                     >
-                      {subItem.icon && <subItem.icon size={15} className="icon" />}
+                      {subItem.icon && (
+                        <subItem.icon size={15} className="icon" />
+                      )}
                       <span className="dropdown-label">{subItem.label}</span>
                     </NavLink>
                   ))}
@@ -120,13 +142,12 @@ const Sidebar = ({ isOpen, onClose, userRole }) => {
       <SidebarFooter>
         <SidebarLink to="/login">
           <TbLogout2 size={20} className="icon" />
-          <span className="label">Logout</span>
+          <span className="label" onClick={handleSignOut}>Logout</span>
         </SidebarLink>
       </SidebarFooter>
     </SidebarContainer>
   );
 };
-
 
 // Styled Components (make sure 'theme' is in scope)
 const SidebarContainer = styled.div`
@@ -247,14 +268,19 @@ const ChevronIconContainer = styled.div`
 `;
 
 const DropdownContainer = styled.div`
-  padding-left: 10px; /* Indent dropdown items */
+  padding: 2px; /* Indent dropdown items */
+  border-radius: 4px;
   margin-top: 4px;
-  
+  margin-bottom: 4px;
+  margin-left: 10px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+
   .dropdown-item {
     display: flex;
     align-items: center;
     padding: 6px;
-    margin-bottom: 4px;
+    margin: 4px;
     border-radius: 4px;
     color: ${theme.text}; /* Keep text color black for dropdown items */
     text-decoration: none;

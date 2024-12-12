@@ -7,7 +7,7 @@ npx cypress open
 npx cypress run
 
 - Run specific file (e.g AdminDashboard.cy.js file)
-npx cypress run --spec "cypress/e2e/admin/AdminDashboard.cy.js"
+npx cypress run --spec "cypress/e2e/staff/AdminDashboard.cy.js"
 
 - To run all test files from a specific folder:
 npx cypress run --spec "cypress/integration/folder_name/*.cy.js"   
@@ -28,7 +28,7 @@ describe('Page Links Navigation Tests', () => {
 
   beforeEach(() => {
     // Visit the target page
-    cy.visit('http://localhost:3000/admin/dashboard');
+    cy.visit('http://localhost:3000/staff/dashboard');
   });
 
   it('Should navigate to the correct page when [Component or Link Name] is clicked', () => {

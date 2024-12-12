@@ -2,11 +2,16 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import logo from "../assets/roundlogo.png";
-import loginbg from "../assets/loginbg.jpg";
+import loginbg from "../assets/loginbg.png";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { sendOtp, verifyOtp, resetPassword, resendOtp } from "../api/ForgotPasswordApi";
+import {
+  sendOtp,
+  verifyOtp,
+  resetPassword,
+  resendOtp,
+} from "../api/ForgotPasswordApi";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -67,10 +72,14 @@ const ForgotPassword = () => {
     try {
       await resetPassword(otp, newPassword);
       setPasswordResetSuccess(true);
-      notifySuccess("Your password has been reset successfully! You can now log in.");
+      notifySuccess(
+        "Your password has been reset successfully! You can now log in."
+      );
       localStorage.removeItem("forgotPasswordEmail");
     } catch (error) {
-      const errorMessage = error.response?.data?.detail || "An error occurred while resetting your password. Please try again.";
+      const errorMessage =
+        error.response?.data?.detail ||
+        "An error occurred while resetting your password. Please try again.";
       setError(errorMessage);
     }
   };
@@ -86,13 +95,29 @@ const ForgotPassword = () => {
 
   return (
     <BackgroundContainer>
-      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <FormContainer>
         <LogoContainer>
           <Logo src={logo} alt="Logo" />
         </LogoContainer>
         <Title>
-          {passwordResetSuccess ? "Password Reset Successful" : otpVerified ? "Reset Your Password" : otpSent ? "Enter Your OTP" : "Forgot Your Password?"}
+          {passwordResetSuccess
+            ? "Password Reset Successful"
+            : otpVerified
+            ? "Reset Your Password"
+            : otpSent
+            ? "Enter Your OTP"
+            : "Forgot Your Password?"}
         </Title>
         <InstructionText>
           {passwordResetSuccess
@@ -146,7 +171,9 @@ const ForgotPassword = () => {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                   />
-                  <TogglePasswordVisibility onClick={() => setShowPassword(!showPassword)}>
+                  <TogglePasswordVisibility
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </TogglePasswordVisibility>
                 </PasswordContainer>
@@ -157,7 +184,9 @@ const ForgotPassword = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                   />
-                  <TogglePasswordVisibility onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  <TogglePasswordVisibility
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                   </TogglePasswordVisibility>
                 </PasswordContainer>
@@ -243,7 +272,7 @@ const Input = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #007B83;
+    border-color: #007b83;
   }
 
   &::placeholder {

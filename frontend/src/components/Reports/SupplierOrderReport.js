@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ReportBody from "./ReportBody";
-import PURCHASE_ORDERS from "../../data/SupplierOrderData";
+import PURCHASE_ORDR from "../../data/SuppOrderData"; // Corrected import
 import generatePDF from "./GeneratePdf";
 import generateExcel from "./GenerateExcel";
 import PreviewModal from "./PreviewModal";
@@ -17,61 +17,64 @@ const SupplierOrderReport = () => {
   const matchesSearchTerm = (order) => {
     const searchStr = searchTerm.toLowerCase();
     return (
-      order.PURCHASE_ORDER_ID.toString().toLowerCase().includes(searchStr) ||
-      order.SUPPLIER_ID.toString().toLowerCase().includes(searchStr) ||
-      order.USER_ID.toString().toLowerCase().includes(searchStr) ||
-      order.PURCHASE_ORDER_STATUS.toLowerCase().includes(searchStr) ||
+      order.SUPPLIER_NAME.toLowerCase().includes(searchStr) ||
       order.PURCHASE_ORDER_DATE.toLowerCase().includes(searchStr) ||
-      order.PURCHASE_ORDER_TOT_QTY.toString()
-        .toLowerCase()
-        .includes(searchStr) ||
-      order.PURCHASE_ORDER_TOTAL.toString().toLowerCase().includes(searchStr)
+      order.PURCHASE_ORDER_QTY.toString().includes(searchStr) ||
+      order.PURCHASE_ORDER_COST.toString().includes(searchStr) ||
+      order.PURCHASE_ORDER_REVENUE.toString().includes(searchStr) ||
+      order.PURCHASE_ORDER_DISCOUNT.toString().includes(searchStr)
     );
   };
 
-  // Filter and sort orders based on search term and date range
-  const filteredOrders = PURCHASE_ORDERS.filter((order) => {
-    const matchesDateRange =
-      (!startDate ||
-        new Date(order.PURCHASE_ORDER_DATE) >= new Date(startDate)) &&
-      (!endDate || new Date(order.PURCHASE_ORDER_DATE) <= new Date(endDate));
-    return matchesSearchTerm(order) && matchesDateRange;
-  }).sort(
-    (a, b) => new Date(b.PURCHASE_ORDER_DATE) - new Date(a.PURCHASE_ORDER_DATE)
-  ); // Sort by date descending
+  // Ensure PURCHASE_ORDR is an array before using filter
+  const filteredOrders = Array.isArray(PURCHASE_ORDR)
+    ? PURCHASE_ORDR.filter((order) => {
+        const matchesDateRange =
+          (!startDate ||
+            new Date(order.PURCHASE_ORDER_DATE) >= new Date(startDate)) &&
+          (!endDate ||
+            new Date(order.PURCHASE_ORDER_DATE) <= new Date(endDate));
+        return matchesSearchTerm(order) && matchesDateRange;
+      }).sort(
+        (a, b) =>
+          new Date(b.PURCHASE_ORDER_DATE) - new Date(a.PURCHASE_ORDER_DATE)
+      )
+    : []; // Fallback to empty array if it's not an array
 
   const totalOrders = filteredOrders.length;
 
   // Calculate total order value (as negative)
   const totalOrderValue = -filteredOrders.reduce(
-    (acc, order) => acc + (order.PURCHASE_ORDER_TOTAL || 0),
+    (acc, order) => acc + (order.PURCHASE_ORDER_REVENUE || 0),
     0
   );
 
-  // Map the filtered orders to display only the necessary fields
-  const tableData = filteredOrders.map((order) => [
-    order.PURCHASE_ORDER_ID,
-    order.SUPPLIER_ID,
-    order.USER_ID,
-    order.PURCHASE_ORDER_STATUS,
-    order.PURCHASE_ORDER_DATE,
-    order.PURCHASE_ORDER_TOT_QTY,
-    `₱${(-Math.abs(order.PURCHASE_ORDER_TOTAL)).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`,
-  ]);
+  // Map the filtered orders to display necessary fields and calculate gross profit
+  const tableData = filteredOrders.map((order) => {
+    const grossProfit =
+      order.PURCHASE_ORDER_REVENUE -
+      order.PURCHASE_ORDER_COST -
+      order.PURCHASE_ORDER_DISCOUNT;
+    return [
+      order.SUPPLIER_NAME, // CUSTOMER
+      order.PURCHASE_ORDER_DATE, // DATE
+      `₱${order.PURCHASE_ORDER_COST.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`, // COST
+      `₱${order.PURCHASE_ORDER_REVENUE.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`, // REVENUE
+      `₱${grossProfit.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`, // GROSS PROFIT
+    ];
+  });
 
   // Updated header to match the requested fields
-  const header = [
-    "Order ID",
-    "Supplier ID",
-    "User ID",
-    "Status",
-    "Order Date",
-    "Quantity",
-    "Order Amount",
-  ];
+  const header = ["Supplier", "Order Date", "Cost", "Revenue", "Gross Profit"];
 
   const handlePreviewPDF = () => {
     const pdfData = generatePDF(
@@ -99,7 +102,7 @@ const SupplierOrderReport = () => {
   const handleDownloadPDF = () => {
     const link = document.createElement("a");
     link.href = pdfContent;
-    link.download = "purchase_order_report.pdf";
+    link.download = "supplier_order_report.pdf";
     link.click();
     setIsModalOpen(false);
   };
@@ -111,11 +114,11 @@ const SupplierOrderReport = () => {
         tableData,
         totalOrders,
         totalOrderValue
-      ); // Ensure this returns the Blob
+      );
       const url = URL.createObjectURL(excelBlobData);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "purchase_order_report.xlsx";
+      a.download = "supplier_order_report.xlsx";
       a.click();
       URL.revokeObjectURL(url);
       setIsModalOpen(false);
@@ -137,7 +140,7 @@ const SupplierOrderReport = () => {
         headers={header}
         rows={tableData}
         totalOrders={totalOrders}
-        totalOrderValue={totalOrderValue} // Pass the total as negative
+        totalOrderValue={totalOrderValue}
         onDownloadPDF={handlePreviewPDF}
         onPreviewExcel={handlePreviewExcel}
       />

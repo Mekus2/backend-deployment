@@ -1,7 +1,7 @@
 describe("Profile Page Visibility Tests", () => {
   const profiles = [
-    { role: "admin", imgAlt: "Admin Profile" },
-    { role: "staff", imgAlt: "Staff Profile" },
+    { role: "staff", imgAlt: "Admin Profile" },
+    { role: "prevstaff", imgAlt: "Staff Profile" },
     { role: "superadmin", imgAlt: "Superadmin Profile" }, // Added superadmin
   ]; // Define profile roles and image alt text for each role
 

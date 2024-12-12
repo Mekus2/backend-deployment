@@ -1,39 +1,105 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, useNavigate } from 'react-router-dom'; 
 import styled from 'styled-components';
-import { useUserRole } from '../context/UserContext'; // Import useUserRole to set the role
-import { loginUser } from '../api/LoginApi'; // Import the loginUser function
+import { useUserRole } from '../context/UserContext'; 
+import { loginUser } from '../api/LoginApi'; 
 import logo from '../assets/roundlogo.png';
-import loginbg from '../assets/loginbg.jpg';
+import loginbg from '../assets/loginbg.png';
+
+// Import icons from react-icons
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
-  const { setRole } = useUserRole(); // Access setRole from context
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [isLoading, setIsLoading] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const { setRole } = useUserRole(); 
+  const navigate = useNavigate(); 
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(''); // Reset error state
-    setIsLoading(true); // Set loading to true
+    setError('');
+    setIsLoading(true); 
 
     try {
       const credentials = { username, password };
-      const data = await loginUser(credentials); // Call the login API
+      const data = await loginUser(credentials); 
+      await logLoginEvent();
 
-      // Use the returned data
-      setRole(data.type); // Set role based on API response
-      navigate(`/${data.type}/dashboard`); // Redirect based on role using navigate
+      if (password === "Password@123") {
+        navigate('/change-password'); 
+      } else {
+        setRole(data.type); 
+        navigate(`/${data.type}/dashboard`); 
+      }
     } catch (err) {
-      // Handle error responses
-      setError(err.detail || 'Login failed'); // Display detailed error message from the response
-      console.error('Login failed:', err); // Log the error for debugging
+      setError(err.detail || 'Login failed');
+      console.error('Login failed:', err); 
     } finally {
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
     }
   };
+
+  // Prevent form submission when toggling password visibility
+  const handlePasswordToggle = (e) => {
+    e.preventDefault(); // Prevent form submission when clicking the toggle button
+    setShowPassword(!showPassword);
+  };
+
+  const logLoginEvent = async () => {
+    const userId = localStorage.getItem("user_id");
+  
+    if (!userId) {
+      console.error("User ID is not available in localStorage.");
+      return;
+    }
+  
+    try {
+      // Fetch user details by user ID
+      const userResponse = await fetch(`http://127.0.0.1:8000/account/logs/${userId}/`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!userResponse.ok) {
+        console.error("Failed to fetch user details.");
+        return;
+      }
+  
+      const userData = await userResponse.json();
+      const { first_name, last_name } = userData;
+  
+      // Construct the log payload
+      const logPayload = {
+        LLOG_TYPE: "User logs",
+        LOG_DESCRIPTION: `User '${first_name} ${last_name}' logged in successfully.`,
+        USER_ID: userId,
+      };
+  
+      // Log the event
+      const logResponse = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(logPayload),
+      });
+  
+      if (logResponse.ok) {
+        console.log("Login event logged successfully.");
+      } else {
+        const errorData = await logResponse.json();
+        console.error("Failed to log login event:", errorData);
+      }
+    } catch (error) {
+      console.error("Error logging login event:", error);
+    }
+  };
+  
 
   return (
     <BackgroundContainer>
@@ -43,26 +109,31 @@ const LoginPage = () => {
         </LogoContainer>
         <Title>Login to your account</Title>
         {error && <ErrorMessage>{error}</ErrorMessage>}
-        <form onSubmit={handleLogin}>
+        <Form onSubmit={handleLogin}>
           <Input
             type="text"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
-          <Input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <PasswordContainer>
+            <Input
+              type={showPassword ? "text" : "password"}  // Toggle password visibility
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <PasswordToggleButton onClick={handlePasswordToggle}>
+              {showPassword ? <FaEye /> : <FaEyeSlash />}  {/* Use FaEye and FaEyeSlash */}
+            </PasswordToggleButton>
+          </PasswordContainer>
           <Link to="/forgot-password">
             <ForgotPasswordText>Forgot password?</ForgotPasswordText>
           </Link>
           <LoginButton type="submit" disabled={isLoading}>
             {isLoading ? 'Logging In...' : 'Login'}
           </LoginButton>
-        </form>
+        </Form>
       </FormContainer>
     </BackgroundContainer>
   );
@@ -88,35 +159,30 @@ const FormContainer = styled.div`
   padding: 30px;
   border-radius: 15px;
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;  /* Adjust max width */
   box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
-
-  @media (min-width: 768px) {
-    padding: 40px;
-    max-width: 450px;
-  }
 `;
 
 const LogoContainer = styled.div`
   position: absolute;
-  top: -60px;
+  top: -90px;
   display: flex;
   justify-content: center;
   width: 100%;
 `;
 
 const Logo = styled.img`
-  width: 140px;
+  width: 170px;
 
   @media (min-width: 768px) {
-    width: 150px;
+    width: 180px;
   }
 `;
 
 const Title = styled.h1`
   font-size: 24px;
   font-weight: bold;
-  margin: 70px 0 20px 0;
+  margin: 60px 0 -5px 0;
   text-align: center;
 
   @media (min-width: 768px) {
@@ -125,8 +191,8 @@ const Title = styled.h1`
 `;
 
 const Input = styled.input`
-  width: 100%;
-  padding: 12px;
+  width: 100%;  /* Ensures the input takes up full width inside the form */
+  padding: 14px;  
   margin-bottom: 15px;
   border: 2px solid #000;
   border-radius: 10px;
@@ -139,7 +205,24 @@ const Input = styled.input`
 
   &::placeholder {
     color: #aaa;
+    font-size: 16px;
   }
+`;
+
+const PasswordContainer = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const PasswordToggleButton = styled.button`
+  position: absolute;
+  right: 10px;
+  top: 40%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
 `;
 
 const ForgotPasswordText = styled.p`
@@ -151,6 +234,7 @@ const ForgotPasswordText = styled.p`
   &:hover {
     text-decoration: underline;
     cursor: pointer;
+    color: darkgray;
   }
 `;
 
@@ -176,9 +260,14 @@ const LoginButton = styled.button`
   }
 `;
 
+const Form = styled.form`
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
+`;
+
 const ErrorMessage = styled.p`
   color: red;
-  margin-bottom: 15px;
 `;
 
 export default LoginPage;

@@ -3,6 +3,9 @@ from .views import (
     SalesOrderListCreateAPIView,
     SalesOrderDetailsAPIView,
     SalesOrderRetrieveUpdateAPIView,
+    GetPendingTotalView,
+    TransferToOutboundDelivery,
+    SalesOrderUpdateAPIView,
 )
 
 urlpatterns = [
@@ -16,5 +19,16 @@ urlpatterns = [
         "<int:pk>/details/",
         SalesOrderDetailsAPIView.as_view(),
         name="sales-order-details",
+    ),
+    path("total-orders", GetPendingTotalView.as_view(), name="get-total-orders"),
+    path(
+        "<int:sales_order_id>/accept/",
+        TransferToOutboundDelivery.as_view(),
+        name="accept-sales-order",
+    ),
+    path(
+        "update/<int:sales_order_id>",
+        SalesOrderUpdateAPIView.as_view(),
+        name="update-sales-order",
     ),
 ]

@@ -1,28 +1,45 @@
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Modal from "../../Layout/Modal";
-import { colors } from "../../../colors";
 import Button from "../../Layout/Button"; // Ensure you import the Button component
-
-// Import api functions
+import EditCustomerOrderModal from "./EditCustomerOrderModal"; // Import the Edit Modal
 import { fetchOrderDetailsById } from "../../../api/fetchCustomerOrders";
 import { addNewCustomerDelivery } from "../../../api/CustomerDeliveryApi";
+import {
+  Table,
+  TableWrapper,
+  TableHeader,
+  TableRow,
+  TableCell,
+  Section,
+  TotalSummary,
+  TotalItem,
+  HighlightedTotal,
+  ButtonGroup,
+} from "../OrderStyles";
 
 const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   const abortControllerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const userId = localStorage.getItem("user_id");
+  const [orderStatus, setOrderStatus] = useState("");
+
+  const handleUpdateOrder = () => {
+    setIsEditModalOpen(true); // Open the edit modal
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false); // Close the edit modal
+  };
 
   useEffect(() => {
     const fetchDetails = async () => {
-      // Abort any existing request before starting a new one
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
-
-      // Create a new AbortController instance for the current request
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
@@ -30,18 +47,16 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
         setLoading(true);
         setError(null);
         try {
-          console.log(`Fetching details for Order ID: ${order.SALES_ORDER_ID}`); // Debug line
           const details = await fetchOrderDetailsById(
             order.SALES_ORDER_ID,
             controller.signal
           );
-          console.log("Received Details:", details); // Debug line
           setOrderDetails(details);
+          setOrderStatus(order.SALES_ORDER_STATUS); // Use setOrderStatus to update the state
         } catch (err) {
           if (err.name === "AbortError") {
-            console.log("Fetch aborted"); // Request was canceled
+            console.log("Fetch aborted");
           } else {
-            console.error("Failed to fetch order details:", err); // Improved debug line for errors
             setError("Failed to fetch order details.");
           }
         } finally {
@@ -51,8 +66,6 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
     };
 
     fetchDetails();
-
-    // Clean-up function to abort any ongoing fetch when the component unmounts or order changes
     return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -61,60 +74,75 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   }, [order, userRole]);
 
   const formatCurrency = (amount) => {
-    const numericAmount = parseFloat(amount); // Convert to a number if possible
-
-    if (
-      isNaN(numericAmount) ||
-      numericAmount === undefined ||
-      numericAmount === null
-    ) {
-      return "₱0.00"; // Default value if input is undefined, null, or not a number
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) {
+      return "₱0.00";
     }
-    return `₱${numericAmount.toFixed(2)}`; // Format to two decimal places
+    return `₱${numericAmount.toFixed(2)}`;
   };
 
-  // const orderDetails = order.ORDER_DETAILS || [];
   if (loading) return <p>Loading...</p>;
   if (error) return <p>{error}</p>;
-  if (!orderDetails) return null; // Early return if no order details
+  if (!orderDetails) return null;
   if (!order) return null;
 
   const totalQuantity = orderDetails.reduce(
-    (total, detail) => total + (detail.SALES_ORDER_QTY || 0),
+    (total, detail) => total + (detail.SALES_ORDER_LINE_QTY || 0),
     0
   );
 
-  const totalAmount = orderDetails.reduce(
-    (total, detail) => total + (detail.SALES_ORDER_LINE_TOTAL || 0),
+  const calculateLineTotal = (line) => {
+    const price = parseFloat(line.SALES_ORDER_LINE_PRICE) || 0;
+    const quantity = parseInt(line.SALES_ORDER_LINE_QTY) || 0;
+    const discount = parseFloat(line.SALES_ORDER_LINE_DISCOUNT) || 0;
+
+    // Calculate total: (Qty * Price) - (Qty * Price * Discount)
+    const total = price * quantity * (1 - discount / 100);
+    return total.toFixed(2); // Ensure it's returned as a string with two decimals
+  };
+
+  const totalAmount = orderDetails.reduce((total, detail) => {
+    const lineTotal = calculateLineTotal(detail);
+    return total + parseFloat(lineTotal);
+  }, 0);
+
+  const totalDiscount = orderDetails.reduce(
+    (total, detail) =>
+      total +
+      (parseFloat(detail.SALES_ORDER_LINE_PRICE) *
+        parseInt(detail.SALES_ORDER_LINE_QTY) *
+        (parseFloat(detail.SALES_ORDER_LINE_DISCOUNT) / 100) || 0),
     0
   );
 
-  // Handlers for the buttons
   const handleAcceptOrder = async () => {
-    // Logic to accept the order
-    const newOrderDelivery = {
+    const newDelivery = {
       SALES_ORDER_ID: order.SALES_ORDER_ID,
+      CLIENT_ID: order.CLIENT_ID,
       OUTBOUND_DEL_CUSTOMER_NAME: order.SALES_ORDER_CLIENT_NAME,
       OUTBOUND_DEL_DLVRY_OPTION: order.SALES_ORDER_DLVRY_OPTION,
+      OUTBOUND_DEL_TOTAL_PRICE: order.SALES_ORDER_TOTAL_PRICE,
       OUTBOUND_DEL_CITY: order.SALES_ORDER_CLIENT_CITY,
       OUTBOUND_DEL_PROVINCE: order.SALES_ORDER_CLIENT_PROVINCE,
+      OUTBOUND_DEL_ACCPTD_BY_USERNAME: localStorage.getItem("user_first_name"),
       OUTBOUND_DEL_ACCPTD_BY_USER: userId,
       details: orderDetails.map((detail) => ({
+        OUTBOUND_DETAILS_PROD_ID: detail.SALES_ORDER_PROD_ID,
         OUTBOUND_DETAILS_PROD_NAME: detail.SALES_ORDER_PROD_NAME,
-        OUTBOUND_DETAILS_PROD_QTY: detail.SALES_ORDER_LINE_QTY,
-        OUTBOUND_DETAILS_LINE_PRICE: detail.SALES_ORDER_LINE_PRICE,
+        OUTBOUND_DETAILS_PROD_QTY_ORDERED: detail.SALES_ORDER_LINE_QTY,
+        OUTBOUND_DETAILS_LINE_DISCOUNT: detail.SALES_ORDER_LINE_DISCOUNT,
+        OUTBOUND_DETAILS_SELL_PRICE: detail.SALES_ORDER_LINE_PRICE,
+        OUTBOUND_DETAIL_LINE_TOTAL: detail.SALES_ORDER_LINE_TOTAL,
       })),
     };
     try {
-      const response = await addNewCustomerDelivery(newOrderDelivery);
+      const response = await addNewCustomerDelivery(newDelivery);
       if (response) {
-        console.info("New Customer Delivery created:", response);
         alert("Customer delivery accepted");
       } else {
         alert("Customer delivery rejected");
       }
     } catch (err) {
-      console.error("Error accepting the order:", err);
       alert("An error occurred while accepting the order.");
     } finally {
       onClose();
@@ -123,179 +151,137 @@ const CustomerOrderDetailsModal = ({ order, onClose, userRole }) => {
   };
 
   const handleCancelOrder = () => {
-    // Logic to cancel the order
     console.log("Order cancelled");
-    onClose(); // Close modal after action
+    onClose();
   };
 
-  // Conditionally render the Accept and Cancel buttons if status is "Pending" and role is either admin or superadmin
-  const canModifyOrder =
-    order.SALES_ORDER_STATUS === "Pending" &&
-    (userRole === "admin" || userRole === "superadmin");
-
   return (
-    <Modal
-      title="Customer Order Details"
-      status={order.SALES_ORDER_STATUS}
-      onClose={onClose}
-    >
-      <Section>
-        <p>
-          <strong>Order ID: </strong> {(" ", order.SALES_ORDER_ID)}
-        </p>
-        <p>
-          <strong>Order Created Date:</strong>{" "}
-          {(() => {
-            const date = new Date(order.SALES_ORDER_DATE_CREATED);
-            if (!isNaN(date)) {
-              const day = String(date.getDate()).padStart(2, "0");
-              const month = String(date.getMonth() + 1).padStart(2, "0");
-              const year = date.getFullYear();
-              return `${month}/${day}/${year}`;
-            }
-            return "Invalid Date";
-          })()}
-        </p>
-        {/* <p>
-          <strong>Delivery Date:</strong>{" "}
-          {order.SALES_ORDER_DLVRY_DATE || "N/A"}
-        </p> */}
-        <p>
-          <strong>Discount:</strong>{" "}
-          {formatCurrency(order.SALES_ORDER_TOTAL_DISCOUNT || 0)}
-        </p>
-        <p>
-          <strong>Delivery Option:</strong>{" "}
-          {order.SALES_ORDER_DLVRY_OPTION || "N/A"}
-        </p>
-        <p>
-          <strong>Client :</strong> {order.SALES_ORDER_CLIENT_NAME}
-        </p>
-        <p>
-          <strong>City:</strong> {order.SALES_ORDER_CLIENT_CITY}
-        </p>
-        <p>
-          <strong>Province:</strong> {order.SALES_ORDER_CLIENT_PROVINCE}
-        </p>
-      </Section>
-      <Section>
-        <TableWrapper>
-          <Table>
-            <thead>
-              <tr>
-                <TableHeader>Product Name</TableHeader>
-                <TableHeader>Quantity</TableHeader>
-                <TableHeader>Price</TableHeader>
-                <TableHeader>Total</TableHeader>
-              </tr>
-            </thead>
-            <tbody>
-              {orderDetails.length > 0 ? (
-                orderDetails.map((detail, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      {detail.SALES_ORDER_PROD_NAME || "Unknown Product"}
-                    </TableCell>
-                    <TableCell>{detail.SALES_ORDER_LINE_QTY || 0}</TableCell>
-                    <TableCell>
-                      {formatCurrency(detail.SALES_ORDER_LINE_PRICE || 0)}
-                    </TableCell>
-                    <TableCell>
-                      {formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)}
+    <>
+      <Modal
+        title="Customer Order Details"
+        status={order.SALES_ORDER_STATUS}
+        onClose={onClose}
+      >
+        <Section>
+          <p>
+            <strong>Order ID: </strong> {order.SALES_ORDER_ID}
+          </p>
+          <p>
+            <strong>Order Created Date:</strong>{" "}
+            {(() => {
+              const date = new Date(order.SALES_ORDER_DATE_CREATED);
+              if (!isNaN(date)) {
+                const day = String(date.getDate()).padStart(2, "0");
+                const month = String(date.getMonth() + 1).padStart(2, "0");
+                const year = date.getFullYear();
+                return `${month}/${day}/${year}`;
+              }
+              return "Invalid Date";
+            })()}
+          </p>
+          <p>
+            <strong>Delivery Option:</strong> {order.SALES_ORDER_DLVRY_OPTION}
+          </p>
+          <p>
+            <strong>Client:</strong> {order.SALES_ORDER_CLIENT_NAME}
+          </p>
+          <p>
+            <strong>City:</strong> {order.SALES_ORDER_CLIENT_CITY}
+          </p>
+          <p>
+            <strong>Province:</strong> {order.SALES_ORDER_CLIENT_PROVINCE}
+          </p>
+        </Section>
+
+        <Section>
+          <TableWrapper>
+            <Table>
+              <thead>
+                <tr>
+                  <TableHeader>Product Name</TableHeader>
+                  <TableHeader>Quantity</TableHeader>
+                  <TableHeader>Purchase Price</TableHeader>
+                  <TableHeader>Sell Price</TableHeader>
+                  <TableHeader>Discount</TableHeader>
+                  <TableHeader>Total</TableHeader>
+                </tr>
+              </thead>
+              <tbody>
+                {orderDetails.length > 0 ? (
+                  orderDetails.map((detail, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        {detail.SALES_ORDER_PROD_NAME || "Unknown Product"}
+                      </TableCell>
+                      <TableCell>{detail.SALES_ORDER_LINE_QTY || 0}</TableCell>
+                      <TableCell>
+                        {formatCurrency(
+                          detail.SALES_ORDER_LINE_PURCHASE_PRICE || 0
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrency(detail.SALES_ORDER_LINE_PRICE || 0)}
+                      </TableCell>
+                      <TableCell>{`${
+                        detail.SALES_ORDER_LINE_DISCOUNT || "0"
+                      }%`}</TableCell>
+                      <TableCell>
+                        {formatCurrency(detail.SALES_ORDER_LINE_TOTAL || 0)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      No order details available.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={4}>No order details available.</TableCell>
-                </TableRow>
-              )}
-            </tbody>
-          </Table>
-        </TableWrapper>
+                )}
+              </tbody>
+            </Table>
+          </TableWrapper>
+        </Section>
+
         <TotalSummary>
           <TotalItem>
             <strong>Total Quantity:</strong> {totalQuantity}
           </TotalItem>
           <TotalItem>
-            <strong>Total Amount:</strong>{" "}
-            <HighlightedTotal>{formatCurrency(totalAmount)}</HighlightedTotal>
+            <strong>Total Discount:</strong> {formatCurrency(totalDiscount)}
           </TotalItem>
+          <HighlightedTotal>
+            <strong>Total Amount:</strong> {formatCurrency(totalAmount)}
+          </HighlightedTotal>
         </TotalSummary>
-      </Section>
 
-      {/* Conditionally render the Accept and Cancel buttons if the user has permission */}
-      {canModifyOrder && (
         <ButtonGroup>
-          <Button variant="red" onClick={handleCancelOrder}>
-            Cancel Order
-          </Button>
-          <Button variant="primary" onClick={handleAcceptOrder}>
-            Accept Order
-          </Button>
+          {orderStatus !== "Completed" && (
+            <>
+              {orderStatus !== "Accepted" && (
+                <Button variant="red" onClick={handleCancelOrder}>
+                  Cancel Order
+                </Button>
+              )}
+              {userRole !== "staff" && (
+                <Button variant="green" onClick={handleUpdateOrder}>
+                  Update Order
+                </Button>
+              )}
+              {orderStatus !== "Accepted" && (
+                <Button variant="primary" onClick={handleAcceptOrder}>
+                  Accept Order
+                </Button>
+              )}
+            </>
+          )}
         </ButtonGroup>
+      </Modal>
+
+      {isEditModalOpen && (
+        <EditCustomerOrderModal order={order} onClose={handleCloseEditModal} />
       )}
-    </Modal>
+    </>
   );
 };
-
-// Styled Components
-const Section = styled.div`
-  margin-bottom: 20px;
-`;
-
-const TableWrapper = styled.div`
-  overflow-x: auto;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-`;
-
-const TableHeader = styled.th`
-  background-color: ${colors.primary};
-  color: white;
-  padding: 12px;
-  text-align: center;
-  font-size: 16px;
-`;
-
-const TableRow = styled.tr`
-  &:nth-child(even) {
-    background-color: #f9f9f9;
-  }
-`;
-
-const TableCell = styled.td`
-  text-align: center;
-  padding: 8px;
-  font-size: 14px;
-  border-bottom: 1px solid #ddd;
-`;
-
-const TotalSummary = styled.div`
-  display: flex;
-  flex-direction: column; /* Stack items vertically */
-  align-items: flex-end; /* Align items to the right */
-  margin-top: 20px;
-  font-weight: bold;
-`;
-
-const TotalItem = styled.p`
-  margin: 5px 0; /* Add some margin for spacing */
-`;
-
-const HighlightedTotal = styled.span`
-  color: green; /* Highlight total amount in green */
-  font-size: 16px;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  justify-content: flex-end; /* Align buttons to the right */
-  margin-top: 20px; /* Space above the buttons */
-  gap: 10px; /* Optional: add some space between buttons */
-`;
 
 export default CustomerOrderDetailsModal;

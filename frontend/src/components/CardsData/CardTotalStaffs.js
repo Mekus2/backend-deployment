@@ -32,7 +32,7 @@ const CardTotalStaffs = () => {
   if (loading) {
     return (
       <CardContainer>
-        <Card label="Staff" value="Loading..." icon={<FaUsers />} />
+        <Card label="Users" value="Loading..." icon={<FaUsers />} />
       </CardContainer>
     );
   }
@@ -41,7 +41,7 @@ const CardTotalStaffs = () => {
   if (error) {
     return (
       <CardContainer>
-        <Card label="Staff" value={error} icon={<FaUsers />} />
+        <Card label="Users" value={error} icon={<FaUsers />} />
       </CardContainer>
     );
   }
@@ -49,7 +49,7 @@ const CardTotalStaffs = () => {
   // Return the total staff count if data is fetched successfully
   return (
     <CardContainer>
-      <Card label="Staff" value={totalStaff} icon={<FaUsers />} />
+      <Card label="Users" value={totalStaff} icon={<FaUsers />} />
     </CardContainer>
   );
 };

@@ -4,6 +4,7 @@ from Admin.Order.Sales_Order.models import SalesOrder
 from Admin.Order.Purchase.models import PurchaseOrder
 from Admin.Supplier.models import Supplier
 from Admin.Product.models import Product
+from Admin.Customer.models import Clients
 from django.conf import settings
 from django.utils.text import slugify
 from django.utils import timezone
@@ -18,27 +19,32 @@ class OutboundDelivery(models.Model):
         ("Cancelled", "Cancelled"),
         ("Pending", "Pending"),
         ("Delivered", "Delivered"),
+        ("Received", "Received"),
     ]
 
     OUTBOUND_DEL_ID = models.AutoField(primary_key=True)
     SALES_ORDER_ID = models.ForeignKey(SalesOrder, on_delete=models.CASCADE)
-    OUTBOUND_DEL_SHIPPED_DATE = models.DateTimeField(
-        auto_now=True, null=True, blank=True
-    )
-    OUTBOUND_DEL_CSTMR_RCVD_DATE = models.DateTimeField(
-        auto_now=True, null=True, blank=True
-    )
+    OUTBOUND_DEL_SHIPPED_DATE = models.DateTimeField(null=True, blank=True)
+    OUTBOUND_DEL_CSTMR_RCVD_DATE = models.DateTimeField(null=True, blank=True)
+    CLIENT_ID = models.ForeignKey(
+        Clients, on_delete=models.SET_NULL, null=True
+    )  # Customer ID
     OUTBOUND_DEL_CUSTOMER_NAME = models.CharField(max_length=60, null=False)
     OUTBOUND_DEL_TOTAL_PRICE = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
-    OUTBOUNND_DEL_DISCOUNT = models.DecimalField(
+    OUTBOUND_DEL_DISCOUNT = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
     OUTBOUND_DEL_STATUS = models.CharField(
         max_length=15, choices=DELIVERY_STATUS_CHOICES, default="Pending"
     )
-    OUTBOUND_DEL_DLVRD_QTY = models.PositiveIntegerField(null=False, default=0)
+    OUTBOUND_DEL_TOTAL_ORDERED_QTY = models.PositiveIntegerField(
+        null=False, default=0
+    )  # Qty based on sales order
+    OUTBOUND_DEL_DLVRD_QTY = models.PositiveIntegerField(
+        null=False, default=0
+    )  # Accepted Qty
     OUTBOUND_DEL_DLVRY_OPTION = models.CharField(
         max_length=30, null=False, blank=False, default="Standard Delivery"
     )
@@ -46,11 +52,13 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_PROVINCE = models.CharField(max_length=30, null=True, blank=False)
     OUTBOUND_DEL_CREATED = models.DateTimeField(auto_now_add=True)
     OUTBOUND_DEL_DATEUPDATED = models.DateTimeField(auto_now=True)
+    OUTBOUND_DEL_ACCPTD_BY_USERNAME = models.CharField(
+        max_length=60, null=False, default="Staff"
+    )
     OUTBOUND_DEL_ACCPTD_BY_USER = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        null=False,
-        related_name="customer_deliveries_created",
+        null=True,
     )
 
     def __str__(self):
@@ -62,13 +70,47 @@ class OutboundDelivery(models.Model):
         verbose_name_plural = "Outbound Deliveries"
 
 
+def update_status(self, new_status):
+    """
+    Updates the delivery status to a new status if it is a valid status.
+    Records the time the status was updated to 'Delivered' or 'Received'.
+    """
+    if new_status in dict(self.DELIVERY_STATUS_CHOICES):
+        self.OUTBOUND_DEL_STATUS = new_status
+
+        # If the status is "Delivered" or "Received", record the time
+        if new_status == "Delivered" or new_status == "Received":
+            self.OUTBOUND_DEL_RECEIVED_DATE = timezone.now()
+
+        self.save()  # Save the model after updating the status
+        return True
+    return False  # Return False if the status is invalid
+
+
 class OutboundDeliveryDetails(models.Model):
     OUTBOUND_DEL_DETAIL_ID = models.AutoField(primary_key=True)
-    OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
+    OUTBOUND_DEL_ID = models.ForeignKey(
+        OutboundDelivery, on_delete=models.CASCADE, related_name="outbound_details"
+    )
+    OUTBOUND_DETAILS_PROD_ID = models.ForeignKey(
+        Product, on_delete=models.CASCADE, null=True
+    )
     OUTBOUND_DETAILS_PROD_NAME = models.CharField(max_length=100, null=False)
-    OUTBOUND_DETAILS_PROD_QTY = models.PositiveIntegerField(null=False, default="0")
-    OUTBOUND_DETAILS_LINE_PRICE = models.DecimalField(
+    OUTBOUND_DETAILS_PROD_QTY_ORDERED = models.PositiveIntegerField(
+        null=False, default=0
+    )
+    OUTBOUND_DETAILS_PROD_QTY_ACCEPTED = models.PositiveIntegerField(
+        null=False, default=0
+    )
+    OUTBOUND_DETAILS_PROD_QTY_DEFECT = models.PositiveIntegerField(
+        null=False, default=0
+    )
+    OUTBOUND_DETAILS_LINE_DISCOUNT = models.FloatField(null=True, default=0)
+    OUTBOUND_DETAILS_SELL_PRICE = models.DecimalField(
         null=False, max_digits=10, decimal_places=2, default=0
+    )
+    OUTBOUND_DETAIL_LINE_TOTAL = models.DecimalField(
+        null=True, max_digits=10, decimal_places=2, default=0
     )
 
     def __str__(self):
@@ -109,7 +151,7 @@ class InboundDelivery(models.Model):
     )
     INBOUND_DEL_RCVD_BY_USER_NAME = models.CharField(max_length=60, null=True)
     INBOUND_DEL_ORDER_APPRVDBY_USER = models.CharField(
-        max_length=60, null=False, default="Admin"
+        max_length=60, null=False, default="Staff"
     )
 
     def __str__(self):
@@ -135,14 +177,13 @@ class InboundDeliveryDetails(models.Model):
         max_digits=10, decimal_places=2, default=0
     )
     INBOUND_DEL_DETAIL_ORDERED_QTY = models.PositiveIntegerField(null=False, default=0)
-    INBOUND_DEL_DETAIL_LINE_QTY = models.PositiveIntegerField(null=False, default=0)
+    INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT = models.PositiveIntegerField(
+        null=True, default=0
+    )
     INBOUND_DEL_DETAIL_LINE_QTY_DEFECT = models.PositiveIntegerField(
-        null=False, default=0
+        null=True, default=0
     )
     INBOUND_DEL_DETAIL_PROD_EXP_DATE = models.DateField(null=True, blank=True)
-    INBOUND_DEL_DETAIL_BATCH_ID = models.CharField(
-        max_length=30, null=True, blank=True, editable=False
-    )
 
     # def save(self, *args, **kwargs):
     #     if not self.INBOUND_DEL_DETAIL_BATCH_ID:

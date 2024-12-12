@@ -10,7 +10,7 @@ from .models import User
 from Admin.AdminPermission import IsAdminUser
 from Admin.authentication import CookieJWTAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
+import re
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = [CookieJWTAuthentication]
@@ -24,33 +24,47 @@ class RegisterView(APIView):
 
 class UserListView(APIView):
     authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [AllowAny]  # Override here to bypass authentication for testing
+    permission_classes = [AllowAny]  # Adjust permissions as needed
 
     def get(self, request, user_id=None):
+        # Check the isactive query parameter, default is active users
+        is_active = request.query_params.get('isactive', 'true').lower() == 'true'
+
         if user_id is not None:
+            # Fetch a specific user by id and isActive status, excluding superadmins
             try:
-                user = User.objects.get(id=user_id, isActive=True)
-                serializer = UserSerializer(user)
-                return Response(serializer.data)
+                user = User.objects.get(id=user_id, isActive=is_active)
+                # Exclude superadmin users by accType
+                if user.accType != 'superadmin':
+                    serializer = UserSerializer(user)
+                    return Response(serializer.data)
+                else:
+                    return Response({'error': 'Cannot fetch details for superadmin user.'}, status=status.HTTP_403_FORBIDDEN)
             except User.DoesNotExist:
-                return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-        
-        users = User.objects.filter(isActive=True)
+                return Response(
+                    {'error': f"User not found with id={user_id} and isActive={is_active}"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        # Fetch all users based on isActive status, excluding superadmins
+        users = User.objects.filter(isActive=is_active).exclude(accType='superadmin')
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
-    
+
     def put(self, request, user_id=None):
         if user_id is not None:
+            # Update specific user
             try:
                 user = User.objects.get(id=user_id)
             except User.DoesNotExist:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
             
-            serializer = UserSerializer(user, data=request.data, partial=True)  # partial=True allows partial updates
+            serializer = UserSerializer(user, data=request.data, partial=True)  # Allow partial updates
             if serializer.is_valid():
-                serializer.save()  # Save the updated user data
+                serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
         return Response({'error': 'User ID is required for update'}, status=status.HTTP_400_BAD_REQUEST)
 
 class UpdateUserView(APIView):
@@ -110,6 +124,32 @@ class ChangePasswordView(APIView):
         if not user.check_password(old_password):
             return Response({'error': 'Old password is incorrect.'},
                             status=status.HTTP_400_BAD_REQUEST)
+
+        # Hash and set the new password
+        user.password = make_password(new_password)
+        user.save()
+
+        return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
+
+class ChangePassword(APIView):
+    permission_classes = [AllowAny]  # Adjust the permission if needed
+    authentication_classes = [CookieJWTAuthentication]  # If using JWT-based authentication via cookies
+    
+    def put(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        
+        # Get the new password from the request data
+        new_password = request.data.get("new_password")
+        confirm_password = request.data.get("confirm_password")
+
+        # Validate that the new passwords match
+        if new_password != confirm_password:
+            return Response({'error': 'Passwords do not match.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validate password strength if needed (you can adjust the pattern based on your policy)
+        password_regex = r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+        if not re.match(password_regex, new_password):
+            return Response({'error': 'Password does not meet the required criteria.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Hash and set the new password
         user.password = make_password(new_password)
@@ -191,7 +231,50 @@ class UserListExcludeSuperAdminView(APIView):
         except Exception as e:
             # Handle errors (e.g., database errors, etc.)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+class DeactivatedUserListView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]  # Adjust permissions as necessary, e.g., `IsAdminUser`.
+
+    def get(self, request):
+        """
+        Handle GET request to return a list of deactivated users.
+        """ 
+        try:
+            # Query all users where isActive is False
+            deactivated_users = User.objects.filter(isActive=False)
+
+            # Serialize the users
+            serializer = UserSerializer(deactivated_users, many=True)
+
+            # Return the serialized data in the response
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle errors (e.g., database errors)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+class ActivatedUserListView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]  # Adjust permissions as necessary, e.g., `IsAdminUser`.
+
+    def get(self, request):
+        """
+        Handle GET request to return a list of deactivated users.
+        """ 
+        try:
+            # Query all users where isActive is False
+            deactivated_users = User.objects.filter(isActive=True)
+
+            # Serialize the users
+            serializer = UserSerializer(deactivated_users, many=True)
+
+            # Return the serialized data in the response
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            # Handle errors (e.g., database errors)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class DeactivateUserView(APIView):
     authentication_classes = [CookieJWTAuthentication]
@@ -227,3 +310,41 @@ class ReactivateUserView(APIView):
         user.save()
 
         return Response({'message': 'User has been reactivated successfully'}, status=status.HTTP_200_OK)
+
+
+class UserDetailView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny] 
+
+    def get(self, request, user_id):
+        # Fetch the user by ID or return 404 if not found
+        user = get_object_or_404(User, id=user_id)
+
+        # Serialize user data
+        serializer = UserSerializer(user)
+
+        # Return serialized data
+        return Response(serializer.data, status=200)
+    
+
+class UserLogs(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, user_id=None):
+        if user_id is not None:
+            # Fetch a specific user by s
+            try:
+                user = User.objects.get(id=user_id)
+                serializer = UserSerializer(user)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except User.DoesNotExist:
+                return Response(
+                    {'error': f"User not found with id={user_id}"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        # Fetch all users without any conditions
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

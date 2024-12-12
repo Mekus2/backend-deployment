@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import Modal from "../Layout/Modal";
 import styled from "styled-components";
 import Button from "../Layout/Button";
+import { notify } from "../Layout/CustomToast";
 
-const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
+const SupplierDetailsModal = ({ supplier, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedSupplier, setEditedSupplier] = useState(supplier || {});
   const [errors, setErrors] = useState({});
@@ -17,20 +18,14 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
     if (!editedSupplier.Supp_Company_Name) {
       newErrors.Supp_Company_Name = "Company name is required";
     }
-    if (!editedSupplier.Supp_Company_Num) {
-      newErrors.Supp_Company_Num = "Company number is required";
+    if (!editedSupplier.Supp_Company_Num || !/^\d{11}$/.test(editedSupplier.Supp_Company_Num)) {
+      newErrors.Supp_Company_Num = "Company number must be 11 digits and start with '0'";
     }
     if (!editedSupplier.Supp_Contact_Pname) {
       newErrors.Supp_Contact_Pname = "Contact name is required";
     }
-    if (!editedSupplier.Supp_Contact_Num) {
-      newErrors.Supp_Contact_Num
-      = "Contact number is required";
-    } else if (!/^0\d{10}$/.test(editedSupplier.Supp_Contact_Num
-    )) {
-      newErrors.Supp_Contact_Num
-      =
-        "Phone number must be 11 digits and start with '0'";
+    if (!editedSupplier.Supp_Contact_Num || !/^\d{11}$/.test(editedSupplier.Supp_Contact_Num)) {
+      newErrors.Supp_Contact_Num = "Contact number must be 11 digits and start with '0'";
     }
 
     setErrors(newErrors);
@@ -57,7 +52,8 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
               body: JSON.stringify(updatedSupplier),
             }
           );
-          console.log('updated:', updatedSupplier );
+          console.log('updated:', updatedSupplier);
+          notify.success("Customer details updated succesfully!");
 
           if (!response.ok) {
             const errorData = await response.json();
@@ -66,6 +62,7 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
             );
           } else {
             alert("Supplier details saved successfully!");
+            await logUserCreation(supplier, updatedSupplier);
             setIsEditing(false);
             onClose();
           }
@@ -87,31 +84,75 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
     }
   };
 
-  const handleRemove = () => {
-    const confirmRemoval = window.confirm(
-      "Are you sure you want to remove this supplier?"
-    );
-    if (confirmRemoval) {
-      onRemove(supplier.SUPP_ID);
-      onClose();
+  const logUserCreation = async (oldSupplier, updatedSupplier) => {
+    // Fetch the user_id from localStorage
+    const userId = localStorage.getItem("user_id");
+
+    // Prepare the fields for logging changes
+    const changes = [];
+    const fieldsToCheck = [
+      { field: "Supp_Company_Name", label: "Company Name" },
+      { field: "Supp_Company_Num", label: "Company Number" },
+      { field: "Supp_Contact_Pname", label: "Contact Person Name" },
+      { field: "Supp_Contact_Num", label: "Contact Person Number" },
+    ];
+
+    fieldsToCheck.forEach(({ field, label }) => {
+      if (oldSupplier[field] !== updatedSupplier[field]) {
+        changes.push(
+          `${label} changed from "${oldSupplier[field] || "N/A"}" to "${
+            updatedSupplier[field] || "N/A"
+          }"`
+        );
+      }
+    });
+
+    // Prepare the log payload
+    const logPayload = {
+      LLOG_TYPE: "User logs",
+      LOG_DESCRIPTION: `Updated Supplier details:\n${changes.join("\n")}`,
+      USER_ID: userId,
+    };
+
+    try {
+      // Send the log data to the backend
+      const response = await fetch("http://127.0.0.1:8000/logs/logs/", {
+        method: "POST",
+        body: JSON.stringify(logPayload),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        console.log("Supplier log successfully created:", logPayload);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to create log:", errorData);
+      }
+    } catch (error) {
+      console.error("Error logging user changes:", error);
     }
   };
 
-  const handlePhoneNumberChange = (e) => {
-    const value = e.target.value;
-    if (/^[0-9]*$/.test(value) && value.length <= 11) {
+  // Custom handler to ensure the number is always 11 digits and starts with '0'
+  const handleNumberChange = (field) => (e) => {
+    let value = e.target.value;
+    // Allow only numeric input and restrict the length to 11 digits
+    if (/^\d*$/.test(value) && value.length <= 11) {
+      if (!value.startsWith("0") && value.length > 0) {
+        value = "0" + value;
+      }
       setEditedSupplier({
         ...editedSupplier,
-        Supp_Contact_Num: value,
+        [field]: value,
       });
     }
   };
 
   return (
     <Modal
-      title={
-        isEditing ? `Edit ${supplier.Supp_Company_Name}` : "Supplier Details"
-      }
+      title={isEditing ? `Edit ${supplier.Supp_Company_Name}` : "Supplier Details"}
       onClose={onClose}
     >
       {isEditing ? (
@@ -129,25 +170,17 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
                   })
                 }
               />
-              {errors.Supp_Company_Name && (
-                <Error>{errors.Supp_Company_Name}</Error>
-              )}
+              {errors.Supp_Company_Name && <Error>{errors.Supp_Company_Name}</Error>}
             </DetailItem>
             <DetailItem>
               <Label>Company Number:</Label>
               <Input
                 type="text"
                 value={editedSupplier.Supp_Company_Num || ""}
-                onChange={(e) =>
-                  setEditedSupplier({
-                    ...editedSupplier,
-                    Supp_Company_Num: e.target.value,
-                  })
-                }
+                onChange={handleNumberChange("Supp_Company_Num")}
+                maxLength="11"
               />
-              {errors.Supp_Company_Num && (
-                <Error>{errors.Supp_Company_Num}</Error>
-              )}
+              {errors.Supp_Company_Num && <Error>{errors.Supp_Company_Num}</Error>}
             </DetailItem>
             <DetailItem>
               <Label>Contact Name:</Label>
@@ -161,20 +194,17 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
                   })
                 }
               />
-              {errors.Supp_Contact_Name && (
-                <Error>{errors.Supp_Contact_Name}</Error>
-              )}
+              {errors.Supp_Contact_Pname && <Error>{errors.Supp_Contact_Pname}</Error>}
             </DetailItem>
             <DetailItem>
               <Label>Contact Number:</Label>
               <Input
                 type="tel"
                 value={editedSupplier.Supp_Contact_Num || ""}
-                onChange={handlePhoneNumberChange}
+                onChange={handleNumberChange("Supp_Contact_Num")}
+                maxLength="11"
               />
-              {errors.Supp_Contact_Num && (
-                <Error>{errors.Supp_Contact_Num}</Error>
-              )}
+              {errors.Supp_Contact_Num && <Error>{errors.Supp_Contact_Num}</Error>}
             </DetailItem>
           </Details>
           <ButtonGroup>
@@ -203,13 +233,10 @@ const SupplierDetailsModal = ({ supplier, onClose, onRemove }) => {
             </Detail>
             <Detail>
               <DetailLabel>Contact Number:</DetailLabel>{" "}
-              {supplier.Supp_Contact_Num  || "N/A"}
+              {supplier.Supp_Contact_Num || "N/A"}
             </Detail>
           </Section>
           <ButtonGroup>
-            <Button variant="red" onClick={handleRemove}>
-              Remove
-            </Button>
             <Button variant="primary" onClick={handleEdit}>
               Edit
             </Button>

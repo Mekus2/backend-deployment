@@ -73,7 +73,8 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
     }
 
     orderDetails.forEach((detail, index) => {
-      if (!detail.productName) {
+      const productName = inputStates[index] || detail.productName || "";
+      if (!productName.trim()) {
         newErrors[`productName${index}`] = true;
       }
     });
@@ -104,13 +105,19 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
   };
 
   const handlePhoneNumberChange = (setterFunction, value) => {
+    // Remove all non-numeric characters
     let sanitizedValue = value.replace(/[^0-9]/g, "");
-    if (sanitizedValue.length > 11) {
-      sanitizedValue = sanitizedValue.slice(0, 11);
-    }
+
+    // Ensure the value starts with '0' if not empty and limit it to 11 digits
     if (sanitizedValue && sanitizedValue[0] !== "0") {
       sanitizedValue = "0" + sanitizedValue.slice(0, 10);
     }
+
+    if (sanitizedValue.length > 11) {
+      sanitizedValue = sanitizedValue.slice(0, 11); // Truncate to 11 digits
+    }
+
+    // Update the state with the sanitized value
     setterFunction(sanitizedValue);
   };
 
@@ -152,67 +159,66 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
       </Field>
       <Field>
         <Label>
-          Supplier Name{" "}
+          Supplier Details{" "}
           {errors.supplierCompanyName && (
             <span style={{ color: "red" }}>*</span>
           )}
-        </Label>
-        <Input
-          value={supplierCompanyName}
-          onChange={(e) => {
-            setSupplierCompanyName(e.target.value);
-            clearError("supplierCompanyName");
-          }}
-          placeholder="Supplier Name"
-          disabled={!editable}
-        />
-      </Field>
-      <Field>
-        <Label>
-          Supplier Contact Number{" "}
           {errors.supplierCompanyNum && <span style={{ color: "red" }}>*</span>}
         </Label>
-        <Input
-          value={supplierCompanyNum}
-          onChange={(e) => {
-            handlePhoneNumberChange(setSupplierCompanyNum, e.target.value);
-            clearError("supplierCompanyNum");
-          }}
-          placeholder="Supplier Contact Number"
-          disabled={!editable}
-        />
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Input
+            value={supplierCompanyName}
+            onChange={(e) => {
+              setSupplierCompanyName(e.target.value);
+              clearError("supplierCompanyName");
+            }}
+            placeholder="Supplier Name"
+            style={{ flex: 1 }}
+            disabled={!editable}
+          />
+          <Input
+            value={supplierCompanyNum}
+            onChange={(e) => {
+              handlePhoneNumberChange(setSupplierCompanyNum, e.target.value);
+              clearError("supplierCompanyNum");
+            }}
+            placeholder="Supplier Contact Number"
+            style={{ flex: 1 }}
+            disabled={!editable}
+          />
+        </div>
       </Field>
+
       <Field>
         <Label>
-          Contact Person{" "}
+          Contact Person Details{" "}
           {errors.contactPersonName && <span style={{ color: "red" }}>*</span>}
-        </Label>
-        <Input
-          value={contactPersonName}
-          onChange={(e) => {
-            setContactPersonName(e.target.value);
-            clearError("contactPersonName");
-          }}
-          placeholder="Contact Person Name"
-          disabled={!editable}
-        />
-      </Field>
-      <Field>
-        <Label>
-          Contact Number{" "}
           {errors.contactPersonNumber && (
             <span style={{ color: "red" }}>*</span>
           )}
         </Label>
-        <Input
-          value={contactPersonNumber}
-          onChange={(e) => {
-            handlePhoneNumberChange(setContactPersonNumber, e.target.value);
-            clearError("contactPersonNumber");
-          }}
-          placeholder="Contact Person Number"
-          disabled={!editable}
-        />
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Input
+            value={contactPersonName}
+            onChange={(e) => {
+              setContactPersonName(e.target.value);
+              clearError("contactPersonName");
+            }}
+            placeholder="Contact Person Name"
+            style={{ flex: 1 }}
+            disabled={!editable}
+          />
+          <Input
+            value={contactPersonNumber}
+            onChange={(e) => {
+              handlePhoneNumberChange(setContactPersonNumber, e.target.value);
+              clearError("contactPersonNumber");
+            }}
+            placeholder="Contact Person Number"
+            style={{ flex: 1 }}
+            disabled={!editable}
+          />
+        </div>
       </Field>
 
       <OrderDetailsSection>
@@ -234,13 +240,14 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                       display: "inline-block",
                       width: "calc(100% - 20px)",
                     }}
-                    value={inputStates[index] || ""}
+                    value={inputStates[index] || ""} // Controlled input value
                     onChange={(e) => {
+                      const userInput = e.target.value;
                       setInputStates((prevStates) => ({
                         ...prevStates,
-                        [index]: e.target.value,
+                        [index]: userInput,
                       }));
-                      handleProductInputChange(index, e.target.value);
+                      handleProductInputChange(index, userInput); // Trigger search and manual input handling
                       clearError(`productName${index}`);
                     }}
                     placeholder="Product Name"
@@ -248,9 +255,10 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                   {errors[`productName${index}`] && (
                     <span style={{ color: "red", marginLeft: "5px" }}>*</span>
                   )}
-                  {productSearch && index === currentEditingIndex && (
-                    <SuggestionsContainer>
-                      {filteredProducts.length > 0 && (
+                  {productSearch &&
+                    index === currentEditingIndex &&
+                    filteredProducts.length > 0 && (
+                      <SuggestionsContainer>
                         <SuggestionsList>
                           {filteredProducts.map((product) => (
                             <SuggestionItem
@@ -260,16 +268,15 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
                                   ...prevStates,
                                   [index]: product.PROD_NAME,
                                 }));
-                                handleProductSelect(index, product);
+                                handleProductSelect(index, product); // Select the product from suggestions
                               }}
                             >
                               {product.PROD_NAME}
                             </SuggestionItem>
                           ))}
                         </SuggestionsList>
-                      )}
-                    </SuggestionsContainer>
-                  )}
+                      </SuggestionsContainer>
+                    )}
                 </td>
                 <td>
                   <QuantityInput
@@ -289,13 +296,15 @@ const AddSupplierOrderModal = ({ onClose, onSave }) => {
             ))}
           </tbody>
         </Table>
-        <Button onClick={handleAddProduct} style={{ marginTop: "10px" }}>
-          Add Product
-        </Button>
+        <div style={{ textAlign: "right", marginTop: "10px" }}>
+          <Button onClick={handleAddProduct}>Add Product</Button>
+        </div>
 
         <TotalSection>
-          <TotalRow>
-            <TotalLabel>Total Quantity</TotalLabel>
+          <TotalRow
+            style={{ display: "flex", alignItems: "left", marginLeft: "780px" }}
+          >
+            <TotalLabel>Total Quantity: </TotalLabel>
             <TotalValue>{totalQuantity}</TotalValue>
           </TotalRow>
         </TotalSection>

@@ -3,104 +3,32 @@
 import {
   TbLayoutDashboard,
   TbTruckDelivery,
-  TbChevronRight,
   TbUserDollar,
   TbBasketDollar,
-  TbTruckReturn,
+  TbChevronRight,
   TbHistory,
   TbFileReport,
 } from "react-icons/tb";
 import { MdOutlineInventory2, MdOutlineShoppingCart } from "react-icons/md";
-import { LuWarehouse, LuBox } from "react-icons/lu";
+import { LuBox } from "react-icons/lu";
 import { GrGroup } from "react-icons/gr";
 
 // Sidebar Items for SuperAdmin
-export const superadminSidebarItems = [
+export const adminSidebarItems = [
   {
     icon: TbLayoutDashboard,
     label: "Dashboard",
-    link: "/superadmin/dashboard",
+    link: "/admin/dashboard",
   },
   {
     icon: MdOutlineShoppingCart,
     label: "Order",
     dropdown: [
-      {
-        icon: TbChevronRight,
-        label: "Request",
-        link: "/superadmin/request-order",
-      },
-      {
-        icon: TbChevronRight,
-        label: "Customer",
-        link: "/superadmin/customer-order",
-      },
-      {
-        icon: TbChevronRight,
-        label: "Supplier",
-        link: "/superadmin/purchase-order",
-      },
-    ],
-  },
-  {
-    icon: TbTruckDelivery,
-    label: "Delivery",
-    dropdown: [
-      {
-        icon: TbChevronRight,
-        label: "Customer",
-        link: "/superadmin/customer-delivery",
-      },
-      {
-        icon: TbChevronRight,
-        label: "Supplier",
-        link: "/superadmin/supplier-delivery",
-      },
-    ],
-  },
-  {
-    icon: LuBox,
-    label: "Product",
-    dropdown: [
-      {
-        icon: TbChevronRight,
-        label: "Product",
-        link: "/superadmin/products",
-      },
-      {
-        icon: TbChevronRight,
-        label: "Categories",
-        link: "/superadmin/categories",
-      },
-      {
-        icon: TbChevronRight,
-        label: "Price History",
-        link: "/superadmin/price-history",
-      },
-    ],
-  },
-  { icon: MdOutlineInventory2, label: "Inventory", link: "/superadmin/inventory" },
-  { icon: LuWarehouse, label: "Supplier", link: "/superadmin/suppliers" },
-  { icon: TbUserDollar, label: "Customer", link: "/superadmin/customers" },
-  { icon: GrGroup, label: "User", link: "/superadmin/users" },
-  { icon: TbBasketDollar, label: "Sales", link: "/superadmin/sales" },
-  { icon: TbTruckReturn, label: "Return", link: "/superadmin/returns" },
-  { icon: TbHistory, label: "Logs", link: "/superadmin/logs" },
-  { icon: TbFileReport, label: "Report", link: "/superadmin/reports" },
-];
-
-// Sidebar Items for Admin
-export const adminSidebarItems = [
-  { icon: TbLayoutDashboard, label: "Dashboard", link: "/admin/dashboard" },
-  {
-    icon: MdOutlineShoppingCart,
-    label: "Order",
-    dropdown: [
-      {
-        icon: TbChevronRight,
-        label: "Requests",
-        link: "/admin/request-order",
-      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Request",
+      //   link: "/admin/request-order",
+      // },
       {
         icon: TbChevronRight,
         label: "Customer",
@@ -127,6 +55,7 @@ export const adminSidebarItems = [
         label: "Supplier",
         link: "/admin/supplier-delivery",
       },
+      { icon: TbChevronRight, label: "Issues", link: "/admin/issues" },
     ],
   },
   {
@@ -140,38 +69,185 @@ export const adminSidebarItems = [
       },
       {
         icon: TbChevronRight,
-        label: "Categories",
-        link: "/admin/categories",
+        label: "Inventory",
+        link: "/admin/inventory",
+      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Categories",
+      //   link: "/admin/categories",
+      // },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Price History",
+      //   link: "/admin/price-history",
+      // },
+    ],
+  },
+
+  {
+    icon: GrGroup,
+    label: "Management",
+    dropdown: [
+      {
+        icon: TbChevronRight,
+        label: "Customer",
+        link: "/admin/customers",
       },
       {
         icon: TbChevronRight,
-        label: "Price History",
-        link: "/admin/price-history",
+        label: "Supplier",
+        link: "/admin/suppliers",
+      },
+      {
+        icon: TbChevronRight,
+        label: "User",
+        link: "/admin/users",
       },
     ],
   },
-  { icon: MdOutlineInventory2, label: "Inventory", link: "/admin/inventory" },
-  { icon: LuWarehouse, label: "Supplier", link: "/admin/suppliers" },
-  { icon: TbUserDollar, label: "Customer", link: "/admin/customers" },
-  { icon: GrGroup, label: "Staff", link: "/admin/users" },
   { icon: TbBasketDollar, label: "Sales", link: "/admin/sales" },
-  { icon: TbTruckReturn, label: "Return", link: "/admin/returns" },
   { icon: TbHistory, label: "Logs", link: "/admin/logs" },
-  { icon: TbFileReport, label: "Report", link: "/admin/reports" },
+  // { icon: TbFileReport, label: "Report", link: "/admin/reports" },
+  {
+    icon: TbFileReport,
+    label: "Reports",
+    dropdown: [
+      {
+        icon: TbChevronRight,
+        label: "Daily Report",
+        link: "/admin/reports",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Expiration Report",
+        link: "/admin/expiration-reports",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Stock Report",
+        link: "/admin/stock-reports",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Expiry",
+        link: "/admin/users",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Deficit Product",
+        link: "/admin/users",
+      },
+    ],
+  },
 ];
 
-// Sidebar Items for Staff
+// Sidebar Items for Admin
 export const staffSidebarItems = [
   { icon: TbLayoutDashboard, label: "Dashboard", link: "/staff/dashboard" },
   {
     icon: MdOutlineShoppingCart,
     label: "Order",
     dropdown: [
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Requests",
+      //   link: "/staff/request-order",
+      // },
       {
         icon: TbChevronRight,
-        label: "Request",
-        link: "/staff/request-order",
+        label: "Customer",
+        link: "/staff/customer-order",
       },
+      {
+        icon: TbChevronRight,
+        label: "Supplier",
+        link: "/staff/purchase-order",
+      },
+    ],
+  },
+  {
+    icon: TbTruckDelivery,
+    label: "Delivery",
+    dropdown: [
+      {
+        icon: TbChevronRight,
+        label: "Customer",
+        link: "/staff/customer-delivery",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Supplier",
+        link: "/staff/supplier-delivery",
+      },
+      { icon: TbChevronRight, label: "Issues", link: "/staff/issues" },
+    ],
+  },
+  {
+    icon: LuBox,
+    label: "Product",
+    dropdown: [
+      {
+        icon: TbChevronRight,
+        label: "Product",
+        link: "/staff/products",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Inventory",
+        link: "/staff/inventory",
+      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Categories",
+      //   link: "/staff/categories",
+      // },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Price History",
+      //   link: "/staff/price-history",
+      // },
+    ],
+  },
+
+  {
+    icon: GrGroup,
+    label: "Management",
+    dropdown: [
+      {
+        icon: TbChevronRight,
+        label: "Customer",
+        link: "/staff/customers",
+      },
+      {
+        icon: TbChevronRight,
+        label: "Supplier",
+        link: "/staff/suppliers",
+      },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "PrevStaff",
+      //   link: "/staff/users",
+      // },
+    ],
+  },
+
+  { icon: TbHistory, label: "Logs", link: "/staff/logs" },
+  // { icon: TbFileReport, label: "Report", link: "/staff/reports" },
+];
+
+// Sidebar Items for Staff
+export const prevstaffSidebarItems = [
+  { icon: TbLayoutDashboard, label: "Dashboard", link: "/staff/dashboard" },
+  {
+    icon: MdOutlineShoppingCart,
+    label: "Order",
+    dropdown: [
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Request",
+      //   link: "/staff/request-order",
+      // },
       {
         icon: TbChevronRight,
         label: "Customer",
@@ -188,6 +264,7 @@ export const staffSidebarItems = [
         label: "Customer",
         link: "/staff/customer-delivery",
       },
+      { icon: TbChevronRight, label: "Issues", link: "/staff/issues" },
     ],
   },
   {
@@ -199,15 +276,19 @@ export const staffSidebarItems = [
         label: "Product",
         link: "/staff/products",
       },
+      // {
+      //   icon: TbChevronRight,
+      //   label: "Categories",
+      //   link: "/staff/categories",
+      // },
       {
-        icon: TbChevronRight,
-        label: "Categories",
-        link: "/staff/categories",
+        icon: MdOutlineInventory2,
+        label: "Inventory",
+        link: "/staff/inventory",
       },
     ],
   },
-  { icon: MdOutlineInventory2, label: "Inventory", link: "/staff/inventory" },
+
   { icon: TbUserDollar, label: "Customer", link: "/staff/customers" },
-  { icon: TbTruckReturn, label: "Return", link: "/staff/returns" },
-  { icon: TbFileReport, label: "Report", link: "/staff/reports" },
+  // { icon: TbFileReport, label: "Report", link: "/staff/reports" },
 ];

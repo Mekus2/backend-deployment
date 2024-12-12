@@ -1,7 +1,7 @@
 describe("Admin Sales Tests", () => {
   beforeEach(() => {
     // Visit the Admin Sales page
-    cy.visit("http://localhost:3000/admin/sales");
+    cy.visit("http://localhost:3000/staff/sales");
   });
 
   const searchTerms = ["INV001", "C001", "Courier"];

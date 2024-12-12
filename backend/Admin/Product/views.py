@@ -1,10 +1,12 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions
 from Admin.authentication import CookieJWTAuthentication
 from django.db.models import Q
+from django.db.models import F
 from .models import ProductCategory, ProductDetails, Product
 from .serializers import (
     ProductCategorySerializer,
@@ -26,13 +28,15 @@ class ProductDetailsManager(APIView):
                 serializer = ProductDetailsSerializer(details)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             except ProductDetails.DoesNotExist:
-                return Response({"error": "Details not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"error": "Details not found."}, status=status.HTTP_404_NOT_FOUND
+                )
 
         # If no `pk` is provided, return all records
         queryset = ProductDetails.objects.all()
         serializer = ProductDetailsSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-       
+
     def put(self, request, pk=None):
         if pk:
             try:
@@ -40,29 +44,78 @@ class ProductDetailsManager(APIView):
                 product_details = ProductDetails.objects.get(pk=pk)
 
                 # Serialize the ProductDetails instance to accept update data
-                serializer = ProductDetailsSerializer(product_details, data=request.data, partial=False)
+                serializer = ProductDetailsSerializer(
+                    product_details, data=request.data, partial=False
+                )
 
                 if serializer.is_valid():
                     serializer.save()  # Save the updated ProductDetails instance
                     return Response(serializer.data, status=status.HTTP_200_OK)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             except ProductDetails.DoesNotExist:
-                return Response({"detail": "ProductDetails not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"detail": "ProductDetails not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+
+class ProductPagination(PageNumberPagination):
+    """
+    Custom pagination class for Product List.
+    """
+
+    page_size = 10  # Number of products per page
+    page_size_query_param = "page_size"
+    max_page_size = 100
 
 
 class ProductListManager(APIView):
     # authentication_classes = [CookieJWTAuthentication]
     permission_classes = [permissions.AllowAny]
 
+    # def get(self, request, pk=None):
+    #     if pk:
+    #         product = get_object_or_404(Product, pk=pk)
+    #         serializer = ProductReadSerializer(product)
+    #         return Response(serializer.data)
+
+    #     queryset = Product.objects.all().order_by("-pk")
+    #     serializer = ProductReadSerializer(queryset, many=True)
+    #     return Response(serializer.data)
+
+    # Testing Pagination Query
     def get(self, request, pk=None):
+        """
+        Handles fetching a single product or a paginated list of products with optional search functionality.
+        """
         if pk:
+            # Fetch a single product by primary key
             product = get_object_or_404(Product, pk=pk)
             serializer = ProductReadSerializer(product)
             return Response(serializer.data)
 
+        # Retrieve search term from query parameters
+        search_term = request.query_params.get("search", "").strip()
+
+        # Build the base queryset
         queryset = Product.objects.all().order_by("-pk")
-        serializer = ProductReadSerializer(queryset, many=True)
-        return Response(serializer.data)
+
+        # Apply search filter if a search term is provided
+        if search_term:
+            queryset = queryset.filter(
+                Q(PROD_NAME__icontains=search_term)  # Search by product name
+                | Q(
+                    PROD_DETAILS_CODE__PROD_DETAILS_SUPPLIER__icontains=search_term
+                )  # Search by supplier in ProductDetails
+            )
+
+        # Paginate the queryset
+        paginator = ProductPagination()
+        paginated_queryset = paginator.paginate_queryset(queryset, request)
+
+        # Serialize the data
+        serializer = ProductReadSerializer(paginated_queryset, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
     def put(self, request, pk):
         # Update a product by primary key
@@ -87,8 +140,10 @@ class ProductCategoryManager(APIView):
                 serializer = ProductCategorySerializer(category)
                 return Response(serializer.data)
             except ProductCategory.DoesNotExist:
-                return Response({"error": "Category not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+                return Response(
+                    {"error": "Category not found."}, status=status.HTTP_404_NOT_FOUND
+                )
+
         # If no pk is provided, return all categories
         queryset = ProductCategory.objects.all()
         serializer = ProductCategorySerializer(queryset, many=True)
@@ -106,7 +161,9 @@ class ProductCategoryManager(APIView):
             # Get the category instance to update
             category = ProductCategory.objects.get(pk=pk)
         except ProductCategory.DoesNotExist:
-            return Response({"error": "Category not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Category not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         # Deserialize and update the instance
         serializer = ProductCategorySerializer(
@@ -133,7 +190,6 @@ class ProductCategoryManager(APIView):
         )  # Return success message
 
 
-
 class ProductCategoryFilterView(APIView):
     # authentication_classes = [CookieJWTAuthentication]
     permission_classes = [permissions.AllowAny]
@@ -151,7 +207,9 @@ class ProductCategoryFilterView(APIView):
             queryset = queryset.filter(PROD_CAT_NAME__icontains=prod_cat_name)
 
         if prod_cat_subcategory:
-            queryset = queryset.filter(PROD_CAT_SUBCATEGORY__icontains=prod_cat_subcategory)
+            queryset = queryset.filter(
+                PROD_CAT_SUBCATEGORY__icontains=prod_cat_subcategory
+            )
 
         serializer = ProductCategorySerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -228,7 +286,9 @@ class ProductDetailsManager(APIView):  # noqa:F811
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        serializer = ProductDetailsSerializer(product_detail, data=request.data, partial=True)
+        serializer = ProductDetailsSerializer(
+            product_detail, data=request.data, partial=True
+        )
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -263,19 +323,46 @@ class ProductSearchView(APIView):
         # Serialize the filtered product list
         serializer = ProductReadSerializer(products, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
 class ProductCountView(APIView):
     authenticaton_classes = [CookieJWTAuthentication]
-    permission_classes = [permissions.AllowAny]  # Optional: limit access to authenticated users
+    permission_classes = [
+        permissions.AllowAny
+    ]  # Optional: limit access to authenticated users
 
     def get(self, request):
         total_products = Product.objects.count()
-        return Response({ total_products})
-    
+        return Response({total_products})
+
+
 class CategoryCountView(APIView):
-    authentication_classes  = [CookieJWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
         total_categories = ProductCategory.objects.count()
         return Response({total_categories})
+
+
+class LowStockProductsView(APIView):
+    """
+    API View to return products with QOH <= Reorder Level
+    """
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        try:
+            # Correct filter to use the model field `PROD_RO_LEVEL`
+            low_stock_products = Product.objects.filter(PROD_QOH__lte=F('PROD_RO_LEVEL'))
+
+            # Serialize the filtered products
+            serializer = ProductSerializer(low_stock_products, many=True)
+
+            # Return the serialized data
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

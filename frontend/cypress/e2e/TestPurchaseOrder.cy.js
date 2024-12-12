@@ -1,11 +1,11 @@
-const roles = ["admin", "superadmin"]; // Only include 'admin' role
+const roles = ["staff", "superadmin"]; // Only include 'admin' role
 
 roles.forEach((role) => {
   describe(`${
     role.charAt(0).toUpperCase() + role.slice(1)
   } Orders Tests`, () => {
     beforeEach(() => {
-      cy.visit(`http://localhost:3000/admin/orders/purchase-order`);
+      cy.visit(`http://localhost:3000/staff/orders/purchase-order`);
     });
 
     const searchTerms = ["Completed", "Pending", "Cancelled"];

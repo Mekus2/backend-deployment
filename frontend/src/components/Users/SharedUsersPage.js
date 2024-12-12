@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import styled from "styled-components";
 import { colors } from "../../colors";
 import AddUserModal from "../../components/Users/AddUserModal";
@@ -7,8 +7,7 @@ import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
 import Button from "../../components/Layout/Button";
 import Card from "../../components/Layout/Card";
-import { FaPlus } from "react-icons/fa";
-import { fetchStaff } from "../../api/StaffApi";
+import { FaPlus, FaUsers } from "react-icons/fa";
 import axios from "axios";
 import profilePic from "../../assets/profile.png";
 import Loading from "../../components/Layout/Loading"; // Add your Loading component
@@ -22,84 +21,99 @@ const SharedUsersPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [imageUrls, setImageUrls] = useState({});
   const [showInactive, setShowInactive] = useState(false);
-  const [loading, setLoading] = useState(true); // Loading state
+  const [loading, setLoading] = useState(true);
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:8000/account/users/?isactive=${!showInactive}`
+      );
+      const data = response.data;
+
+      // Fetch user images
+      const newImageUrls = {};
+      for (const member of data) {
+        try {
+          const imageResponse = await axios.get(
+            `http://127.0.0.1:8000/account/users/${member.id}/image/`
+          );
+          const imageUrl = imageResponse.data.image_url;
+          newImageUrls[member.id] = imageUrl || profilePic;
+        } catch (error) {
+          console.error("Failed to fetch image for user:", member.id);
+          newImageUrls[member.id] = profilePic;
+        }
+      }
+      setImageUrls(newImageUrls);
+      setStaffData(data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [showInactive]); // Re-fetch data when toggling active/inactive state
 
   useEffect(() => {
     const storedUserType = localStorage.getItem("user_type");
     setUserType(storedUserType);
 
-    fetchStaff()
-      .then((data) => {
-        setStaffData(data);
-        const fetchImages = async () => {
-          const newImageUrls = {};
-          for (const member of data) {
-            try {
-              const imageResponse = await axios.get(
-                `http://127.0.0.1:8000/account/users/${member.id}/image/`
-              );
-              const imageUrl = imageResponse.data.image_url;
-              newImageUrls[member.id] = imageUrl || profilePic;
-            } catch (error) {
-              console.error("Failed to fetch image for user:", member.id);
-              newImageUrls[member.id] = profilePic;
-            }
-          }
-          setImageUrls(newImageUrls);
-          setLoading(false); // Set loading to false once data is ready
-        };
-
-        fetchImages();
-      })
-      .catch((error) => {
-        console.error(error);
-        setLoading(false); // Stop loading if there is an error
-      });
-  }, []);
-
-  const filteredStaff = staffData.filter((member) => {
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    const isActiveFilter = showInactive
-      ? member.USER_ISACTIVE
-      : !member.USER_ISACTIVE;
-
-    return (
-      isActiveFilter &&
-      (member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
-        member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
-        member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
-        member.username.toLowerCase().includes(lowerCaseSearchTerm))
-    );
-  });
+    fetchUsers();
+  }, [fetchUsers]); // Added fetchUsers to the dependency array
 
   const handleAddUser = (newUser) => {
     setStaffData((prevData) => [...prevData, newUser]);
   };
 
-  const handleActivateDeactivateUser = (id) => {
-    setStaffData((prevData) =>
-      prevData.map((member) =>
-        member.id === id
-          ? { ...member, USER_ISACTIVE: !member.USER_ISACTIVE }
-          : member
-      )
-    );
+  const handleActivateDeactivateUser = async (id) => {
+    try {
+      await axios.put(`http://127.0.0.1:8000/account/users/${id}/`, {
+        isActive: !showInactive, // Toggle the user's active state
+      });
+      fetchUsers(); // Refresh the data
+    } catch (error) {
+      console.error("Error updating user status:", error);
+    }
   };
 
   const openDetailsModal = async (user) => {
     try {
+      // Fetch user details directly based on the user ID using the new URL
       const response = await axios.get(
-        `http://127.0.0.1:8000/account/users/${user.id}/`
+        `http://127.0.0.1:8000/account/details/${user.id}/` // Updated URL for fetching user details
       );
-      console.log("API Response:", response.data);
-      setSelectedUser(response.data);
-      setIsDetailsModalOpen(true);
+
+      // Include the isActive field along with the other user details
+      setSelectedUser({ ...response.data, isActive: user.isActive }); // Add isActive field to the selected user
+      setIsDetailsModalOpen(true); // Open the details modal
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Error fetching user data:", error); // Handle any errors that occur
     }
   };
 
   const headers = ["Image", "Name", "Role", "Actions"];
+
+  const filteredStaff = staffData.filter((member) => {
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    const matchesSearchTerm =
+      member.first_name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      member.last_name.toLowerCase().includes(lowerCaseSearchTerm) ||
+      member.accType.toLowerCase().includes(lowerCaseSearchTerm) ||
+      member.username.toLowerCase().includes(lowerCaseSearchTerm);
+
+    // If the user is admin, show only staff
+    if (userType === "admin") {
+      return matchesSearchTerm && member.accType.toLowerCase() === "prevstaff";
+    }
+
+    // If the user is superadmin, show both staff and admin
+    if (userType === "superadmin") {
+      return matchesSearchTerm;
+    }
+
+    // Default case (for staff or any other case)
+    return matchesSearchTerm && member.accType.toLowerCase() === "prevstaff";
+  });
 
   const rows = filteredStaff.map((member) => [
     <ImageContainer key={member.id}>
@@ -121,16 +135,44 @@ const SharedUsersPage = () => {
     </Button>,
   ]);
 
+  // Count the number of admins and staff if the user is a superadmin
+  const adminCount = staffData.filter(
+    (member) => member.accType.toLowerCase() === "staff"
+  ).length;
+  const staffCount = staffData.filter(
+    (member) => member.accType.toLowerCase() === "prevstaff"
+  ).length;
+
   if (loading) {
     return <Loading />; // Show loading spinner while fetching data
   }
 
   return (
     <>
+      <AnalyticsContainer>
+        {/* Show Staff card for both admin and superadmin */}
+        {(userType === "staff" || userType === "superadmin") && (
+          <Card
+            label="PrevStaff"
+            value={`${staffCount}`}
+            bgColor={colors.primary}
+            icon={<FaUsers />}
+          />
+        )}
+        {/* Show Admin card only for superadmin */}
+        {userType === "superadmin" && (
+          <Card
+            label="Staff"
+            value={`${adminCount}`}
+            bgColor={colors.primary}
+            icon={<FaUsers />}
+          />
+        )}
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder={`Search / Filter ${
-            userType === "admin" ? "staff..." : "users..."
+            userType === "staff" ? "staff..." : "users..."
           }`}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -152,16 +194,7 @@ const SharedUsersPage = () => {
           </Button>
         </ButtonGroup>
       </Controls>
-      <AnalyticsContainer>
-        {(userType === "admin" || userType === "superadmin") && (
-          <Card
-            label="Users"
-            value={`${filteredStaff.length}`}
-            bgColor={colors.primary}
-            icon={<FaPlus />}
-          />
-        )}
-      </AnalyticsContainer>
+
       <Table headers={headers} rows={rows} />
       {isAddModalOpen && (
         <AddUserModal

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Modal from "../../Layout/Modal";
 import Button from "../../Layout/Button";
+import styled from "styled-components";
 import { IoCloseCircle } from "react-icons/io5";
 import {
   Field,
@@ -24,7 +25,6 @@ import {
 } from "../OrderStyles";
 import { FaPlus } from "react-icons/fa";
 import useAddCustomerOrderModal from "../../../hooks/useAddCustomerOrderModal";
-import { calculateLineTotal } from "../../../utils/CalculationUtils";
 import { notify } from "../../Layout/CustomToast"; // Import the toast notification utility
 import "../../../styles.css";
 
@@ -36,6 +36,8 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     setClientCity,
     clientProvince,
     setClientProvince,
+    clientNumber,
+    setClientNumber,
     deliveryOption,
     setDeliveryOption,
     paymentTerms,
@@ -59,7 +61,6 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     handleAddClient,
     totalQuantity,
     totalValue,
-    totalDiscount,
     setOrderDetails,
   } = useAddCustomerOrderModal(onSave, onClose);
 
@@ -74,6 +75,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     if (!clientProvince) newErrors.clientProvince = true;
     if (!deliveryOption) newErrors.deliveryOption = true;
     if (!paymentTerms) newErrors.paymentTerms = true;
+    if (!clientNumber) newErrors.clientNumber = true;
 
     orderDetails.forEach((detail, index) => {
       if (!detail.productName) {
@@ -105,24 +107,64 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
       [field]: undefined,
     }));
   };
+  const handleAddProductWithValidation = () => {
+    // Check if any product name field is empty
+    const hasEmptyProductName = orderDetails.some(
+      (detail) => !detail.productName
+    );
 
+    if (hasEmptyProductName) {
+      notify.error(
+        "Please fill in all product names before adding a new product."
+      ); // Show an error notification
+      return;
+    }
+
+    // Call the original handleAddProduct function to add a new product
+    handleAddProduct();
+  };
   const handleAddClientWithNotification = () => {
     handleAddClient();
-    notify.success("You can now add a new client!"); // Add Client toast notification
+    notify.success("You can now add a new customer!"); // Add Client toast notification
   };
+  const handleClientNumberChange = (value) => {
+    // Remove non-numeric characters
+    let sanitizedValue = value.replace(/\D/g, "");
 
+    // Ensure it starts with '0' and is no longer than 11 digits
+    if (sanitizedValue.length > 0 && !sanitizedValue.startsWith("0")) {
+      sanitizedValue = "0" + sanitizedValue;
+    }
+    if (sanitizedValue.length > 11) {
+      sanitizedValue = sanitizedValue.slice(0, 11);
+    }
+
+    setClientNumber(sanitizedValue);
+    clearError("clientNumber");
+  };
+  const calculateLineTotal = (orderDetail) => {
+    const price = parseFloat(orderDetail.price) || 0;
+    const quantity = parseInt(orderDetail.quantity, 10) || 0;
+    const discount = parseFloat(orderDetail.discount) || 0;
+  
+    const totalWithoutDiscount = price * quantity;
+    const discountValue = (totalWithoutDiscount * discount) / 100;
+  
+    return totalWithoutDiscount - discountValue;
+  };
+  
   return (
     <Modal title="Add Customer Order" onClose={onClose}>
       <Field>
-        <Label>Client Search</Label>
+        <Label>Customer Search</Label>
         <SupplierSearchContainer>
           <Input
             value={clientSearch}
             onChange={(e) => handleClientInputChange(e.target.value)}
-            placeholder="Search Client"
+            placeholder="Search Customer"
           />
           <PIconButton onClick={handleAddClientWithNotification}>
-            <FaPlus className="icon" /> Client
+            <FaPlus className="icon" /> Customer
           </PIconButton>
         </SupplierSearchContainer>
         {clientSearch && filteredClients.length > 0 && (
@@ -143,18 +185,28 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
 
       <Field>
         <Label>
-          Client Name{" "}
+          Customer Details{" "}
           {errors.clientName && <span style={{ color: "red" }}>*</span>}
         </Label>
-        <Input
-          value={clientName}
-          onChange={(e) => {
-            setClientName(e.target.value);
-            clearError("clientName");
-          }}
-          placeholder="Client Name"
-          disabled={!editable}
-        />
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Input
+            value={clientName}
+            onChange={(e) => {
+              setClientName(e.target.value);
+              clearError("clientName");
+            }}
+            placeholder="Customer Name"
+            disabled={!editable}
+            style={{ flex: 1 }}
+          />
+          <Input
+            value={clientNumber}
+            onChange={(e) => handleClientNumberChange(e.target.value)}
+            placeholder="Customer Number"
+            disabled={!editable}
+            style={{ flex: 1 }}
+          />
+        </div>
       </Field>
 
       <Field>
@@ -191,42 +243,40 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
 
       <Field>
         <Label>
-          Delivery Option{" "}
+          Order Preferences{" "}
           {errors.deliveryOption && <span style={{ color: "red" }}>*</span>}
         </Label>
-        <Select
-          value={deliveryOption}
-          onChange={(e) => {
-            setDeliveryOption(e.target.value);
-            clearError("deliveryOption");
-          }}
-        >
-          <option value="">Select Delivery Option</option>
-          <option value="pickup">Pickup</option>
-          <option value="lbc">LBC</option>
-          <option value="jnt">J&T Express</option>
-          <option value="grab">Grab Express</option>
-          <option value="courier">Courier Service</option>
-        </Select>
-      </Field>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <Select
+            value={deliveryOption}
+            onChange={(e) => {
+              setDeliveryOption(e.target.value);
+              clearError("deliveryOption");
+            }}
+            style={{ flex: 1 }}
+          >
+            <option value="">Select Delivery Option</option>
+            <option value="pickup">Pickup</option>
+            <option value="lbc">LBC</option>
+            <option value="jnt">J&T Express</option>
+            <option value="grab">Grab Express</option>
+            <option value="courier">Courier Service</option>
+          </Select>
 
-      <Field>
-        <Label>
-          Payment Terms{" "}
-          {errors.paymentTerms && <span style={{ color: "red" }}>*</span>}
-        </Label>
-        <Select
-          value={paymentTerms}
-          onChange={(e) => {
-            setPaymentTerms(e.target.value);
-            clearError("paymentTerms");
-          }}
-        >
-          <option value="">Select Payment Terms</option>
-          <option value="cod">Cash on Delivery (COD)</option>
-          <option value="gcash">GCash</option>
-          <option value="installment">Installment</option>
-        </Select>
+          <Select
+            value={paymentTerms}
+            onChange={(e) => {
+              setPaymentTerms(e.target.value);
+              clearError("paymentTerms");
+            }}
+            style={{ flex: 1 }}
+          >
+            <option value="">Select Payment Terms</option>
+            <option value="cod">Cash on Delivery (COD)</option>
+            <option value="gcash">GCash</option>
+            <option value="installment">Installment</option>
+          </Select>
+        </div>
       </Field>
 
       <OrderDetailsSection>
@@ -234,12 +284,13 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
         <Table>
           <thead>
             <tr>
-              <th>Product Name</th>
-              <th>Quantity</th>
-              <th>Price</th>
-              <th>Discount</th>
-              <th>Total</th>
-              <th></th>
+              <th style={{ minWidth: "300px", width: "auto" }}>Product Name</th>
+              <th style={{ minWidth: "100px", width: "auto" }}>Qty</th>
+              {/* <th>Purchase Price</th> New column for Purchase Price */}
+              <th style={{ minWidth: "150px", width: "auto" }}>Sell Price</th>
+              <th style={{ minWidth: "100px", width: "auto" }}>Discount (%)</th>
+              <th style={{ minWidth: "100px", width: "auto" }}>Total</th>
+              <th style={{ minWidth: "20px", width: "auto" }}></th>
             </tr>
           </thead>
           <tbody>
@@ -249,7 +300,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                   <Input
                     style={{
                       display: "inline-block",
-                      width: "calc(100% - 10px)",
+                      width: "100%",
                     }}
                     value={inputStates[index] || ""}
                     onChange={(e) => {
@@ -270,6 +321,7 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                         right: "-10px", // Adjust as needed for spacing
                         top: "50%",
                         transform: "translateY(-50%)",
+                        width: "100%",
                       }}
                     >
                       *
@@ -298,42 +350,107 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
                     </SuggestionsContainer>
                   )}
                 </td>
-
                 <td>
                   <QuantityInput
                     type="number"
+                    style={{
+                      textAlign: "center", // Centering the input
+                    }}
                     value={orderDetail.quantity}
-                    onChange={(e) =>
-                      handleQuantityChange(index, parseInt(e.target.value, 10))
-                    }
-                  />
-                </td>
-                <td>
-                  <Input
-                    type="number"
-                    value={orderDetail.price}
-                    onChange={(e) =>
-                      handlePriceChange(index, parseFloat(e.target.value))
-                    }
-                    placeholder="Price"
-                  />
-                </td>
-                <td>
-                  <Input
-                    type="number"
-                    value={orderDetail.discountValue}
                     onChange={(e) => {
-                      const value = parseFloat(e.target.value) || 0;
+                      const quantity = parseInt(e.target.value, 10);
+                      handleQuantityChange(
+                        index,
+                        isNaN(quantity) ? 0 : quantity
+                      );
+                    }}
+                    placeholder="Quantity"
+                  />
+                </td>
+
+                {/* Purchase Price Input */}
+                {/* <td>
+                  <Input
+                    type="number"
+                    style={{ textAlign: "center" }}
+                    value={orderDetail.purchasePrice || ""}
+                    onChange={(e) => {
                       const updatedOrderDetails = [...orderDetails];
                       updatedOrderDetails[index] = {
                         ...updatedOrderDetails[index],
-                        discountValue: value,
+                        purchasePrice: parseFloat(e.target.value) || 0, // Ensure number input
+                      };
+                      setOrderDetails(updatedOrderDetails);
+                    }}
+                    placeholder="Purchase Price"
+                  />
+                </td> */}
+
+                <td>
+                  <Input
+                    type="text"
+                    value={orderDetail.price || ""}
+                    onChange={(e) => {
+                      let value = e.target.value;
+
+                      // Remove non-numeric characters except `.`
+                      value = value.replace(/[^0-9.]/g, "");
+
+                      // Prevent multiple leading zeros
+                      if (value.startsWith("0") && !value.startsWith("0.")) {
+                        value = value.replace(/^0+/, "");
+                      }
+
+                      // Ensure only one `.` is allowed
+                      if (value.split(".").length > 2) {
+                        value = value.substring(0, value.lastIndexOf("."));
+                      }
+
+                      const updatedOrderDetails = [...orderDetails];
+                      updatedOrderDetails[index] = {
+                        ...updatedOrderDetails[index],
+                        price: value, // Keep the current cleaned input as string
+                      };
+                      setOrderDetails(updatedOrderDetails);
+                    }}
+                    onBlur={() => {
+                      const updatedOrderDetails = [...orderDetails];
+                      let price = orderDetail.price;
+
+                      // Convert to fixed decimal if valid, otherwise keep it as an empty string
+                      if (price && !isNaN(price)) {
+                        price = parseFloat(price).toFixed(2);
+                      } else {
+                        price = ""; // Reset invalid input
+                      }
+
+                      updatedOrderDetails[index] = {
+                        ...updatedOrderDetails[index],
+                        price: price,
+                      };
+                      setOrderDetails(updatedOrderDetails);
+                    }}
+                    style={{ textAlign: "center", width: "100%" }}
+                    placeholder="Sell Price"
+                  />
+                </td>
+                <td>
+                  <Input
+                    type="number"
+                    style={{ textAlign: "center" }}
+                    value={orderDetail.discount || ""}
+                    onChange={(e) => {
+                      const updatedOrderDetails = [...orderDetails];
+                      updatedOrderDetails[index] = {
+                        ...updatedOrderDetails[index],
+                        discount: parseFloat(e.target.value) || 0, // Ensure number input
                       };
                       setOrderDetails(updatedOrderDetails);
                     }}
                     placeholder="Discount"
                   />
                 </td>
+
                 <td>₱{calculateLineTotal(orderDetail).toFixed(2)}</td>
                 <td>
                   <DeleteButton onClick={() => handleRemoveProduct(index)}>
@@ -344,27 +461,39 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
             ))}
           </tbody>
         </Table>
+        <div style={{ textAlign: "right", marginTop: "10px" }}>
+          <Button onClick={handleAddProductWithValidation}>Add Product</Button>
+        </div>
+        <TotalSummary>
+          <TotalItem>
+            <strong>Total Quantity:</strong> {totalQuantity}
+          </TotalItem>
 
-        <Button onClick={handleAddProduct}>Add Product</Button>
+          <TotalItem>
+            <strong>Total Discount: </strong>
+            <HighlightedDiscount style={{ color: "red" }}>
+              ₱
+              {orderDetails
+                .reduce((acc, detail) => {
+                  // Calculate the discount based on the line's price, discount, and quantity
+                  const discountValue =
+                    (((parseFloat(detail.price) || 0) *
+                      (parseFloat(detail.discount) || 0)) /
+                      100) *
+                    (parseInt(detail.quantity, 10) || 0);
+                  return acc + discountValue;
+                }, 0)
+                .toFixed(2)}
+            </HighlightedDiscount>
+          </TotalItem>
 
-        <TotalSection>
-          <TotalRow>
-            <TotalLabel>Total Quantity</TotalLabel>
-            <TotalValue>{totalQuantity}</TotalValue>
-          </TotalRow>
-          <TotalRow>
-            <TotalLabel>Total Discount</TotalLabel>
-            <TotalValue style={{ color: "#ff5757" }}>
-              ₱{(totalDiscount || 0).toFixed(2)}
-            </TotalValue>
-          </TotalRow>
-          <TotalRow>
-            <TotalLabel>Total Value</TotalLabel>
-            <TotalValue style={{ color: "#1DBA0B" }}>
+          <TotalItem>
+            <strong>Total Revenue: </strong>
+            <HighlightedTotal style={{ color: "#1DBA0B" }}>
               ₱{totalValue.toFixed(2)}
-            </TotalValue>
-          </TotalRow>
-        </TotalSection>
+            </HighlightedTotal>
+          </TotalItem>
+        </TotalSummary>
       </OrderDetailsSection>
 
       <ButtonGroup>
@@ -378,5 +507,29 @@ const AddCustomerOrderModal = ({ onClose, onSave }) => {
     </Modal>
   );
 };
+
+
+const TotalSummary = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 20px;
+  font-weight: bold;
+`;
+
+const TotalItem = styled.p`
+  margin: 5px 0;
+  font-size: 14px;
+`;
+
+const HighlightedTotal = styled.span`
+  color: #1DBA0B;
+  font-size: 16px;
+`;
+
+const HighlightedDiscount = styled.span`
+  color: red;
+  font-size: 16px;
+`;
 
 export default AddCustomerOrderModal;

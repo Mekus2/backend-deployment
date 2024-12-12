@@ -11,11 +11,13 @@ import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import { colors } from "../../colors";
 import { fetchSuppliers } from "../../api/SupplierApi"; // Import the fetchSuppliers function
 import axios from "axios"; // Import axios for making requests
+import Loading from "../../components/Layout/Loading"; // Import Loading component
 
 const SharedSuppliersPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [suppliers, setSuppliers] = useState([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true); // Loading state
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -32,6 +34,8 @@ const SharedSuppliersPage = () => {
         setFilteredSuppliers(data);
       } catch (error) {
         console.error("Failed to fetch suppliers", error);
+      } finally {
+        setIsLoading(false); // Stop loading when data is fetched
       }
     };
     fetchData();
@@ -42,15 +46,13 @@ const SharedSuppliersPage = () => {
     setSearchTerm(value);
     const filtered = suppliers.filter((supplier) => {
       if (!value) return true;
-      return (
-        supplier.SUPP_COMPANY_NAME?.toLowerCase().includes(value) ||
-        supplier.SUPP_COMPANY_NUM.includes(value) ||
-        supplier.SUPP_CONTACT_NAME?.toLowerCase().includes(value) ||
-        supplier.SUPP_CONTACT_PHNUM.includes(value)
+      return Object.values(supplier).some(
+        (field) => field && field.toString().toLowerCase().includes(value)
       );
     });
     setFilteredSuppliers(filtered);
   };
+  
 
   const openAddSupplierModal = () => {
     setShowAddModal(true);
@@ -58,8 +60,10 @@ const SharedSuppliersPage = () => {
 
   const openDetailsModal = async (supplier) => {
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/supplier/suppliers/${supplier.id}/`);
-      console.log('API RESPONSE:', response.data);
+      const response = await axios.get(
+        `http://127.0.0.1:8000/supplier/suppliers/${supplier.id}/`
+      );
+      console.log("API RESPONSE:", response.data);
       setSelectedSupplier(response.data);
       setShowDetailsModal(true);
     } catch (error) {
@@ -118,8 +122,15 @@ const SharedSuppliersPage = () => {
     </ActionButton>,
   ]);
 
+  if (isLoading) {
+    return <Loading />; // Display Loading component while fetching data
+  }
+
   return (
     <>
+      <SummarySection>
+        <CardTotalSuppliers />
+      </SummarySection>
       <Controls>
         <SearchBar
           placeholder="Search / Filter supplier..."
@@ -130,9 +141,6 @@ const SharedSuppliersPage = () => {
           <FaPlus className="icon" /> Supplier
         </StyledButton>
       </Controls>
-      <SummarySection>
-        <CardTotalSuppliers />
-      </SummarySection>
       <Table
         headers={headers.map((header, index) => (
           <TableHeader

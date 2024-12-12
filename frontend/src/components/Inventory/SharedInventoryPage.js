@@ -1,38 +1,52 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import SearchBar from "../Layout/SearchBar";
 import Table from "../Layout/Table";
 import CardTotalProducts from "../CardsData/CardTotalProducts";
 import CardLowStocks from "../CardsData/CardLowStocks";
 import InventoryDetailsModal from "../Inventory/InventoryDetailsModal";
-import productData from "../../data/ProductData"; // Ensure the path is correct
+import axios from "axios";
 import Button from "../Layout/Button";
 
 const SharedInventoryPage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // State for search term
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [inventoryData, setInventoryData] = useState([]); // State to store inventory data
+  const [loading, setLoading] = useState(false); // State to handle loading
+  const [error, setError] = useState(null); // State to handle errors
 
-  const filteredInventory = productData.PRODUCT_INVENTORY.filter((item) => {
-    const product = productData.PRODUCT.find(p => p.PROD_ID === item.PROD_ID);
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    return (
-      product.PROD_NAME.toLowerCase().includes(lowerCaseSearchTerm) ||
-      item.PROD_INV_BATCH_NO.toLowerCase().includes(lowerCaseSearchTerm) ||
-      item.PROD_INV_QTY_ON_HAND.toString().includes(lowerCaseSearchTerm) ||
-      product.PROD_IMAGE.toLowerCase().includes(lowerCaseSearchTerm) || // Include image search
-      item.PROD_INV_EXP_DATE.toLowerCase().includes(lowerCaseSearchTerm) // Include expiry date search
-    );
-  });
+  // Fetch inventory data when the search term changes
+  useEffect(() => {
+    const fetchInventory = async () => {
+      setLoading(true); // Start loading
+      setError(null); // Reset error state
+      try {
+        const url = searchTerm
+          ? `http://127.0.0.1:8000/inventory/search/?PRODUCT_NAME=${searchTerm}`
+          : `http://127.0.0.1:8000/inventory/list/`;
+        const response = await axios.get(url);
+        setInventoryData(response.data); // Store the fetched inventory data
+      } catch (err) {
+        console.error("Error fetching inventory data:", err);
+        setError("Inventory data not found.");
+      } finally {
+        setLoading(false); // Stop loading
+      }
+    };
+    fetchInventory();
+  }, [searchTerm]); // Re-run whenever the search term changes
 
-  // Sort the filtered inventory by expiry date (ascending)
-  const sortedInventory = [...filteredInventory].sort((a, b) => 
-    new Date(a.PROD_INV_EXP_DATE) - new Date(b.PROD_INV_EXP_DATE)
-  );
-
-  const handleDetailClick = (item) => {
-    setSelectedItem(item);
-    setShowDetailModal(true);
+  const handleDetailClick = async (item) => {
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:8000/inventory/list/${item.INVENTORY_ID}/`
+      );
+      setSelectedItem(response.data);
+      setShowDetailModal(true);
+    } catch (error) {
+      console.error("Error fetching inventory details:", error);
+    }
   };
 
   const closeModal = () => {
@@ -40,24 +54,22 @@ const SharedInventoryPage = () => {
     setSelectedItem(null);
   };
 
-  const headers = ["Image", "Name", "Batch No", "Quantity on Hand", "Expiry Date", "Action"];
+  const headers = ["Name", "Batch No", "Quantity on Hand", "Expiry Date", "Action"];
 
-  const rows = sortedInventory.map((item) => {
-    const product = productData.PRODUCT.find(p => p.PROD_ID === item.PROD_ID);
-    return [
-      <ImageContainer>
-        <img src={product.PROD_IMAGE} alt={product.PROD_NAME} width="50" height="50" />
-      </ImageContainer>,
-      product.PROD_NAME,
-      item.PROD_INV_BATCH_NO,
-      item.PROD_INV_QTY_ON_HAND,
-      item.PROD_INV_EXP_DATE, // Added expiry date
-      <Button onClick={() => handleDetailClick(item)}>Details</Button>,
-    ];
-  });
+  const rows = inventoryData.map((item) => [
+    item.PRODUCT_NAME,
+    item.BATCH_ID,
+    item.QUANTITY_ON_HAND,
+    item.EXPIRY_DATE,
+    <Button onClick={() => handleDetailClick(item)}>Details</Button>,
+  ]);
 
   return (
     <>
+      <AnalyticsContainer>
+        <CardTotalProducts />
+        <CardLowStocks />
+      </AnalyticsContainer>
       <Controls>
         <SearchBar
           placeholder="Search / Filter inventory..."
@@ -65,11 +77,13 @@ const SharedInventoryPage = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </Controls>
-      <AnalyticsContainer>
-        <CardTotalProducts />
-        <CardLowStocks />
-      </AnalyticsContainer>
-      <Table headers={headers} rows={rows} />
+      {loading ? (
+        <p>Loading inventory...</p>
+      ) : error ? (
+        <p>{error}</p>
+      ) : (
+        <Table headers={headers} rows={rows} />
+      )}
       {showDetailModal && selectedItem && (
         <InventoryDetailsModal item={selectedItem} onClose={closeModal} />
       )}
@@ -90,14 +104,6 @@ const AnalyticsContainer = styled.div`
   gap: 16px;
   margin-bottom: 16px;
   padding: 0 1px;
-`;
-
-// Styled component for centering the image
-const ImageContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 50px; // Ensure the height matches the image height
 `;
 
 export default SharedInventoryPage;

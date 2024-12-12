@@ -44,7 +44,7 @@ const CardTotalSales = () => {
   return (
     <CardContainer>
       <Card
-        label="All Time Sales" // Updated label
+        label="Gross Profit" // Updated label
         value={formatCurrency(totalSalesAllTime)} // Display the total sales amount with formatting
         icon={<FaDollarSign />} // Add the sales icon
       />

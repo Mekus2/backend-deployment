@@ -1,43 +1,90 @@
-import React from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import { colors } from "../../colors";
 import { IoCloseCircle } from "react-icons/io5";
+import Button from "../Layout/Button"; // Assuming Button is located at this path
 
 // Utility function to format numbers as currency
-const formatCurrency = (amount) => `₱${amount.toFixed(2)}`;
+const formatCurrency = (value) => {
+  // Ensure the value is a valid number
+  const numberValue = typeof value === "number" && !isNaN(value) ? value : 0;
+  return `₱${numberValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+};
 
-const SalesDetailsModal = ({ sale = {}, onClose }) => {
+const SalesDetailsModal = ({ sale, onClose }) => {
+  console.log("Received Sales detail:", sale);
+  const [amountPaid, setAmountPaid] = useState(
+    sale.SALES_INV_AMOUNT_PAID || ""
+  );
+  const [paymentTerms, setPaymentTerms] = useState(
+    sale.SALES_INV_PYMNT_TERMS || ""
+  );
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
-  const calculateSubTotal = () => {
-    if (!sale.orderDetails) return 0;
-    return sale.orderDetails.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+  const handleAmountPaidChange = (value) => {
+    const sanitizedValue = value === "0" ? "" : value; // Remove default zero
+    setAmountPaid(sanitizedValue);
+    setHasChanges(true);
   };
 
-  const calculateTotalAfterDiscount = () => {
-    const subTotal = calculateSubTotal();
-    if (!sale.discount) return subTotal;
-    if (typeof sale.discount === "string" && sale.discount.includes("%")) {
-      const discountPercentage = parseFloat(sale.discount) / 100;
-      return subTotal - subTotal * discountPercentage;
-    } else {
-      return subTotal - parseFloat(sale.discount);
+  const handlePaymentTermsChange = (value) => {
+    setPaymentTerms(value);
+    setHasChanges(true);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!amountPaid || isNaN(amountPaid)) {
+      alert("Please enter a valid amount paid.");
+      return;
     }
+
+    const updatedInvoiceData = {
+      SALES_INV_AMOUNT_PAID: amountPaid,
+      SALES_INV_PYMNT_TERMS: paymentTerms,
+    };
+
+    try {
+      let invoice_Id = sale.SALES_INV_ID;
+      // Send a PATCH request to update the sales invoice on the server
+      const response = await fetch(
+        `http://localhost:8000/sales/${invoice_Id}/payment`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedInvoiceData),
+        }
+      );
+
+      if (response.ok) {
+        const updatedSale = await response.json();
+        console.log("Invoice updated:", updatedSale);
+
+        // Optionally update local state or notify the user
+        alert("Invoice successfully updated.");
+        onClose(); // Close the modal after saving
+      } else {
+        alert("Failed to update the invoice.");
+      }
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      alert("An error occurred while updating the invoice.");
+    }
+
+    setHasChanges(false);
   };
 
-  const calculateTotalQuantity = () => {
-    if (!sale.orderDetails) return 0;
-    return sale.orderDetails.reduce(
-      (total, item) => total + item.quantity,
-      0
-    );
+  const handleEditModeToggle = () => {
+    setIsEditMode(!isEditMode);
+    setHasChanges(false);
   };
 
   return (
@@ -47,78 +94,109 @@ const SalesDetailsModal = ({ sale = {}, onClose }) => {
           <IoCloseCircle color="#ff5757" size={24} />
         </CloseButton>
 
-        <Title>Sales Details</Title>
+        <Title>Sales Invoice</Title>
 
+        {/* Invoice Details Section */}
         <DetailsContainer>
-          <Column align="left">
-            <FormGroup>
-              <Label>Invoice ID:</Label>
-              <Value>{sale.SALES_INV_ID || ""}</Value>
-            </FormGroup>
-            <FormGroup>
-              <Label>Date/Time:</Label>
-              <Value>{sale.SALES_INV_DATETIME || ""}</Value>
-            </FormGroup>
-            <FormGroup>
-              <Label>Client ID:</Label>
-              <Value>{sale.CLIENT_ID || ""}</Value>
-            </FormGroup>
-          </Column>
-
-          <Column align="right">
-            <FormGroup>
-              <Label>Status:</Label>
-              <Status status={sale.status || "Unknown"}>
-                {sale.status || "Unknown"}
-                <CompletedDate>{sale.completedDate || ""}</CompletedDate>
-              </Status>
-            </FormGroup>
-          </Column>
+          <DetailsColumn>
+            <Detail>
+              <strong>Invoice ID:</strong> {sale.SALES_INV_ID || "N/A"}
+            </Detail>
+            <Detail>
+              <strong>Delivery ID:</strong> {sale.OUTBOUND_DEL_ID || "N/A"}
+            </Detail>
+          </DetailsColumn>
+          <DetailsColumn>
+            <Detail>
+              <strong>Customer Name:</strong> {sale.CLIENT_NAME || "N/A"}
+            </Detail>
+            <Detail>
+              <strong>Payment Status:</strong>{" "}
+              {sale.SALES_INV_PYMNT_STATUS || "N/A"}
+            </Detail>
+          </DetailsColumn>
+          <DetailsColumn>
+            <Detail>
+              <strong>Balance:</strong> {sale.SALES_INV_AMOUNT_BALANCE || 0}
+            </Detail>
+            <Detail>
+              <strong>Payment Terms (Days):</strong>
+            </Detail>
+            <Detail>
+              <StyledInput
+                type="number"
+                value={paymentTerms}
+                onChange={(e) => handlePaymentTermsChange(e.target.value)}
+                disabled={!isEditMode}
+              />
+              {isEditMode}
+            </Detail>
+          </DetailsColumn>
         </DetailsContainer>
 
-        <FormGroup>
-          <DescriptionBox>
-            <p>{sale.description || "No description available."}</p>
-          </DescriptionBox>
-        </FormGroup> 
-        
+        {/* Product Details Table */}
         <ProductTable>
           <thead>
             <tr>
               <TableHeader>Product Name</TableHeader>
-              <TableHeader>Quantity</TableHeader>
-              <TableHeader>Price</TableHeader>
+              <TableHeader>Qty</TableHeader>
+              <TableHeader>Sell Price</TableHeader>
+              <TableHeader>Purchase Price</TableHeader>
+              <TableHeader>Total</TableHeader>
             </tr>
           </thead>
           <tbody>
-            {(sale.orderDetails || []).map((item, index) => (
-              <TableRow key={index}>
-                <TableCell>{item.productName || ""}</TableCell>
-                <TableCell>{item.quantity || 0}</TableCell>
-                <TableCell>{formatCurrency(item.price || 0)}</TableCell>
-              </TableRow>
-            ))}
+            {/* Static Table Data */}
+            <TableRow>
+              <TableCell>Product A</TableCell>
+              <TableCell>2</TableCell>
+              <TableCell>{formatCurrency(500)}</TableCell>
+              <TableCell>{formatCurrency(300)}</TableCell>
+              <TableCell>{formatCurrency(1000)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Product B</TableCell>
+              <TableCell>1</TableCell>
+              <TableCell>{formatCurrency(700)}</TableCell>
+              <TableCell>{formatCurrency(400)}</TableCell>
+              <TableCell>{formatCurrency(700)}</TableCell>
+            </TableRow>
           </tbody>
         </ProductTable>
 
-        <FormSection>
-          <FormGroup>
-            <Label>Order Sub Total:</Label>
-            <Value>{formatCurrency(calculateSubTotal())}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Total Quantity:</Label>
-            <Value>{calculateTotalQuantity()}</Value>
-          </FormGroup>
-          <FormGroup>
-            <Label>Discount:</Label>
-            <Discount>{sale.discount || ""}</Discount>
-          </FormGroup>
-          <FormGroup>
-            <Label>Order Total:</Label>
-            <Total>{formatCurrency(calculateTotalAfterDiscount())}</Total>
-          </FormGroup>
-        </FormSection>
+        {/* Summary Section */}
+        <SummarySection>
+          <GrandTotal>
+            <strong>Grand Total:</strong> {formatCurrency(1700)}
+          </GrandTotal>
+
+          {/* Amount Paid Section */}
+          <AmountPaidContainer>
+            <Label>
+              <strong>Amount Paid:</strong>
+            </Label>
+            <StyledInput
+              type="number"
+              value={amountPaid}
+              onChange={(e) => handleAmountPaidChange(e.target.value)}
+              disabled={!isEditMode}
+            />
+          </AmountPaidContainer>
+        </SummarySection>
+
+        {/* Update Invoice Button */}
+        <SaveButtonContainer>
+          {isEditMode ? (
+            <Button onClick={handleSaveChanges}>Save Changes</Button>
+          ) : (
+            <Button
+              onClick={handleEditModeToggle}
+              style={{ backgroundColor: "#1DBA0B" }}
+            >
+              Update Invoice
+            </Button>
+          )}
+        </SaveButtonContainer>
       </Modal>
     </Backdrop>
   );
@@ -142,7 +220,7 @@ const Modal = styled.div`
   background: white;
   border-radius: 8px;
   width: 80%;
-  max-width: 600px;
+  max-width: 700px;
   padding: 20px;
   box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
   position: relative;
@@ -159,9 +237,11 @@ const CloseButton = styled.button`
   cursor: pointer;
 `;
 
-const Title = styled.h2`
-  text-align: center;
+const Title = styled.h1`
+  text-align: left;
   margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 1.8rem;
 `;
 
 const DetailsContainer = styled.div`
@@ -170,67 +250,22 @@ const DetailsContainer = styled.div`
   margin-bottom: 20px;
 `;
 
-const Column = styled.div`
-  width: 48%;
-  text-align: ${(props) => props.align || "left"};
+const DetailsColumn = styled.div`
+  flex: 1;
+  padding: 0 10px;
+  text-align: left;
 `;
 
-const FormGroup = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-`;
-
-const Label = styled.div`
-  font-weight: bold;
-  color: black;
-`;
-
-const Value = styled.div`
-  color: ${colors.text};
-`;
-
-const Discount = styled.div`
-  color: #ff5757;
-  font-weight: bold;
-`;
-
-const Total = styled.div`
-  font-size: 18px;
-  font-weight: bold;
-  color: #1dba0b;
-`;
-
-const Status = styled.span`
-  background-color: ${(props) =>
-    props.status === "Approved" ||
-    props.status === "Received" ||
-    props.status === "Delivered"
-      ? "#1DBA0B"
-      : props.status === "Shipped"
-      ? "#f08400"
-      : props.status === "Cancelled"
-      ? "#ff5757"
-      : "gray"};
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
-`;
-
-const CompletedDate = styled.div`
-  font-size: 11px;
-  opacity: 0.7;
-  text-align: right;
+const Detail = styled.div`
+  margin-bottom: 10px;
+  font-size: 0.9rem;
 `;
 
 const ProductTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   text-align: center;
-  margin-top: 15px;
-  margin-bottom: 20px;
+  margin: 15px 0;
 `;
 
 const TableHeader = styled.th`
@@ -251,19 +286,46 @@ const TableCell = styled.td`
   border-bottom: 1px solid #ddd;
 `;
 
-const FormSection = styled.div`
+const SummarySection = styled.div`
+  text-align: right;
   margin-top: 20px;
 `;
 
-const DescriptionBox = styled.div`
-  border: 1px solid #3b3b3bf7;
-  border-radius: 4px;
-  padding: 10px;
-  max-height: 100px;
-  overflow-y: auto;
-  width: 100%;
-  text-align: left;
-  background: #f9f9f9;
+const GrandTotal = styled.div`
+  font-size: 1rem;
+`;
+
+const AmountPaidContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: 10px;
+`;
+
+const Label = styled.div`
+  margin-right: 10px;
+`;
+
+const StyledInput = styled.input`
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  text-align: center;
+  width: 150px;
+  font-size: 14px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0px 0px 6px rgba(0, 123, 255, 0.5);
+  }
+`;
+
+const SaveButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
 `;
 
 export default SalesDetailsModal;

@@ -170,8 +170,8 @@ const EditUserModal = ({ staff, onClose, onSave }) => {
               value={acctype}
               onChange={(e) => setAcctype(e.target.value)}
             >
-              <option value="Staff">Staff</option>
-              <option value="Admin">Admin</option>
+              <option value="PrevStaff">Staff</option>
+              <option value="Staff">Admin</option>
             </Select>
           </Field>
           <Field>
