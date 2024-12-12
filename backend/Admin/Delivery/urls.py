@@ -12,6 +12,9 @@ from .views import (
     CompleteOutboundDeliveryAPI,
     DeliveredOutboundDeliveryView,
     InboundDeliveryTodayAPIView,
+    InboundDeliveryDateRangeAPIView,
+    OutboundDeliveryTodayAPIView,
+    OutboundDeliveryDateRangeAPIView,
 )
 
 urlpatterns = [
@@ -83,6 +86,23 @@ urlpatterns = [
         "supplier/date",
         InboundDeliveryTodayAPIView.as_view(),
         name="Delivered",
+    ),
+    path(
+        "supplier/dateRange/",
+        InboundDeliveryDateRangeAPIView.as_view(),
+        name="supplier-delivery-date-range",  # A new name for the date range filter
+    ),
+
+     #REPORT CUSTOMER
+    path(
+        "customer/date",
+        OutboundDeliveryTodayAPIView.as_view(),
+        name="Delivered",
+    ),
+    path(
+        "customer/dateRange/",
+        OutboundDeliveryDateRangeAPIView.as_view(),
+        name="supplier-delivery-date-range",  # A new name for the date range filter
     ),
 
     

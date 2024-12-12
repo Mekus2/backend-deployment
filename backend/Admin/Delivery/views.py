@@ -719,7 +719,7 @@ class InboundDeliveryTodayAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class InboundDeliveryDateRangeAPIView(APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.AllowAny] 
     
     def get(self, request, *args, **kwargs):
         # Get the 'start_date' and 'end_date' from the request query parameters
@@ -747,5 +747,63 @@ class InboundDeliveryDateRangeAPIView(APIView):
 
         # Serialize the data
         serializer = InboundDeliverySerializer(inbound_deliveries, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+#FOR OUTBOUND DELIVERY REPORT
+class OutboundDeliveryTodayAPIView(APIView):
+    permission_classes = [permissions.AllowAny]  # Modify permissions as needed
+    
+    def get(self, request, *args, **kwargs):
+        # Get the latest date from OUTBOUND_DEL_CREATED
+        latest_date = (
+            OutboundDelivery.objects.order_by("-OUTBOUND_DEL_CREATED")
+            .values_list("OUTBOUND_DEL_CREATED__date", flat=True)
+            .first()
+        )
+
+        if not latest_date:
+            return Response({"message": "No data available"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Filter OutboundDeliveries by the latest date
+        outbound_deliveries_latest = OutboundDelivery.objects.filter(
+            OUTBOUND_DEL_CREATED__date=latest_date
+        )
+
+        # Serialize the data
+        serializer = OutboundDeliverySerializer(outbound_deliveries_latest, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class OutboundDeliveryDateRangeAPIView(APIView):
+    permission_classes = [permissions.AllowAny]  # Modify permissions as needed
+
+    def get(self, request, *args, **kwargs):
+        # Get the 'start_date' and 'end_date' from the request query parameters
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        # Validate the provided dates
+        if not start_date or not end_date:
+            return Response({"message": "Both start_date and end_date are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Convert string dates to date objects
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            return Response({"message": "Invalid date format. Please use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Filter OutboundDeliveries by the date range
+        outbound_deliveries = OutboundDelivery.objects.filter(
+            OUTBOUND_DEL_CREATED__date__range=[start_date, end_date]
+        )
+
+        if not outbound_deliveries:
+            return Response({"message": "No data found for the given date range."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serialize the data
+        serializer = OutboundDeliverySerializer(outbound_deliveries, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
