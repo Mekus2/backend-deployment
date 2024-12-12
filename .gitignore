@@ -75,6 +75,7 @@ pip-log.txt
 .env.test.local
 .env.production.local
 
+frontend/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
