@@ -135,6 +135,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Frontend URL
     "http://127.0.0.1:3000",
+    "https://frontend-deployment-lzr02tyuf-mekus2s-projects.vercel.app/",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
