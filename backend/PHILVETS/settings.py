@@ -31,7 +31,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
-CSRF_TRUSTED_ORIGINS = ["https://backend-deployment-production-92b6.up.railway.app/"]
+# CSRF_TRUSTED_ORIGINS = ["https://backend-deployment-production-92b6.up.railway.app/"]
+CSRF_TRUSTED_ORIGINS = ["https://*.railway.app"]
 
 
 # Application definition
