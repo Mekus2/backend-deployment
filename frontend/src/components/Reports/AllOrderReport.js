@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from "react";
-import ReportBody from "./ReportBody"; // Ensure you have this component
-import { generatePDF, generateExcel } from "./GenerateAllOrdersExport"; // Import the combined export functions
-import PreviewAllOrderModal from "./PreviewAllOrderModal"; // Updated import
 import styled from "styled-components";
+import { generatePDF, generateExcel } from "./GenerateAllOrdersExport";
+import PreviewAllOrderModal from "./PreviewAllOrderModal";
 import axios from "axios"; // For API calls
+import Table from "../Layout/Table";
+import SearchBar from "../Layout/SearchBar";
+import Button from "../Layout/Button";
+import ReportCard from "../Layout/ReportCard";
+import { FaShoppingCart, FaDollarSign } from "react-icons/fa";
 
 const AllOrderReport = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -19,25 +23,20 @@ const AllOrderReport = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-  
-        // Fetch both viewDaily and currentStock data
+
         const [viewDailyResponse, currentStockResponse] = await Promise.all([
           axios.get("http://127.0.0.1:8000/report/viewdaily/"),
           axios.get("http://127.0.0.1:8000/report/current/"),
         ]);
-  
-        const viewDailyData = viewDailyResponse.data;
-        const currentStockData = currentStockResponse.data;   
-        
-        console.log('opening stock:', viewDailyResponse.data);
-        console.log('current stock:', currentStockResponse.data);
 
-        // Map current stock to its corresponding product in the daily data
+        const viewDailyData = viewDailyResponse.data;
+        const currentStockData = currentStockResponse.data;
+
         const combinedData = viewDailyData.map((daily) => {
           const currentStock = currentStockData.find(
             (current) => current.product_name === daily.product_name
-          )?.current_stock || 0; // Default to 0 if not found
-        
+          )?.current_stock || 0;
+
           return {
             product: daily.product_name,
             date: daily.date,
@@ -45,49 +44,57 @@ const AllOrderReport = () => {
             currentStock: currentStock,
           };
         });
-        
-  
-        setTableData(combinedData); // Set combined data in table
+
+        setTableData(combinedData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, []);
 
-  // // Format number with currency and thousand separators
-  // const formatCurrency = (value) => {
-  //   return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-  // };
+  const header = ["Product", "Date", "Opening Stock", "Current Stock"];
+// Handle PDF Preview
+const handlePreviewPDF = async () => {
+  const validTableData = tableData.map((row) => [
+    row.product || "N/A", // Fallback value if undefined
+    row.date || "N/A", // Fallback value if undefined
+    row.openingStock || 0, // Fallback value if undefined
+    row.currentStock || 0, // Fallback value if undefined
+  ]);
 
-  const header = [
-    "Product",
-    "Date",
-    "Opening Stock",
-    "Current Stock",
-  ];
+  try {
+    const pdfData = await generatePDF(header, validTableData);
+    setPdfContent(pdfData); // Set the generated PDF content
+    setExcelData(null); // Clear any Excel data
+    setIsModalOpen(true); // Open preview modal
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+  }
+};
 
-  // const handlePreviewPDF = async () => {
-  //   const pdfData = await generatePDF(header, tableData);
-  //   setPdfContent(pdfData);
-  //   setExcelData(null);
-  //   setIsModalOpen(true);
-  // };
+// Handle Excel Preview
+const handlePreviewExcel = async () => {
+  const validTableData = tableData.map((row) => [
+    row.product || "N/A", // Fallback value if undefined
+    row.date || "N/A", // Fallback value if undefined
+    row.openingStock || 0, // Fallback value if undefined
+    row.currentStock || 0, // Fallback value if undefined
+  ]);
 
-  // const handlePreviewExcel = async () => {
-  //   const excelBlobData = await generateExcel(header, tableData);
-  //   const url = URL.createObjectURL(excelBlobData);
-  //   setExcelData({
-  //     header,
-  //     rows: tableData,
-  //     url,
-  //   });
-  //   setPdfContent("");
-  //   setIsModalOpen(true);
-  // };
+  try {
+    const excelData = await generateExcel(header, validTableData);
+    setExcelData(excelData); // Set the generated Excel data
+    setPdfContent(null); // Clear any PDF content
+    setIsModalOpen(true); // Open preview modal
+  } catch (error) {
+    console.error("Error generating Excel:", error);
+  }
+};
+
 
   const handleDownloadPDF = () => {
     const link = document.createElement("a");
@@ -98,7 +105,7 @@ const AllOrderReport = () => {
   };
 
   const handleDownloadExcel = () => {
-    if (!excelData) return; // Ensure there is data to download
+    if (!excelData) return;
     const link = document.createElement("a");
     link.href = excelData.url;
     link.download = "DailyReport.xlsx";
@@ -106,43 +113,80 @@ const AllOrderReport = () => {
     setIsModalOpen(false);
   };
 
+  const formatDate = (dateString) => {
+    const options = { year: "numeric", month: "2-digit", day: "2-digit" };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
   return (
     <>
-      {/* <CardContainer>
-        <Card>
-          <CardTitle>Total Products</CardTitle>
-          <CardValue color="#f08400">{tableData.length}</CardValue>
-        </Card>
-      </CardContainer> */}
+      <CardsContainer>
+        <ReportCard
+          label="Total Products"
+          value={`${tableData.length} Products`}
+          startDate={startDate ? formatDate(startDate) : ""}
+          endDate={endDate ? formatDate(endDate) : ""}
+          icon={<FaShoppingCart />}
+        />
+        <ReportCard
+          label="Order Value"
+          value={`₱${tableData.reduce((acc, row) => acc + (row.gross || 0), 0).toFixed(2)}`}
+          startDate={startDate ? formatDate(startDate) : ""}
+          endDate={endDate ? formatDate(endDate) : ""}
+          icon={<FaDollarSign />}
+        />
+      </CardsContainer>
+
+      <Controls>
+        <SearchBar
+          placeholder="Search reports..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <DateContainer>
+          <label>
+            Start Date:
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </label>
+          <label>
+            End Date:
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </label>
+        </DateContainer>
+      </Controls>
 
       {loading ? (
         <p>Loading...</p>
       ) : (
-        <ReportBody
-          title="Stock Report"
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
-          headers={header}
-          rows={tableData.map((row) => [
-            row.product,
-            row.date,
-            row.openingStock,
-            row.currentStock,
-            // row.gross,
-          ])}
-        //  totalOrders={tableData.length}
-          totalOrderValue={tableData.reduce(
-            (acc, row) => acc + row.gross,
-            0
-          )} // Calculate total gross
-          // onDownloadPDF={handlePreviewPDF}
-          // onPreviewExcel={handlePreviewExcel}
-        />
+        <ReportContent>
+          <Table
+            headers={header}
+            rows={tableData.map((row) => [
+              row.product,
+              row.date,
+              row.openingStock,
+              row.currentStock,
+            ])}
+          />
+        </ReportContent>
       )}
+
+      {/* <DownloadButtons>
+        <Button variant="primary" onClick={handlePreviewPDF}>
+          Preview PDF
+        </Button>
+        <Button variant="primary" onClick={handlePreviewExcel}>
+          Preview Excel
+        </Button>
+      </DownloadButtons> */}
 
       <PreviewAllOrderModal
         isOpen={isModalOpen}
@@ -156,35 +200,65 @@ const AllOrderReport = () => {
   );
 };
 
-// Styled components for the cards
-const CardContainer = styled.div`
+// Styled Components
+const CardsContainer = styled.div`
   display: flex;
-  flex-wrap: wrap; /* Allow the cards to wrap when they don't fit */
-  justify-content: space-between; /* Distribute space between the cards */
+  flex-wrap: wrap;
+  justify-content: flex-start;
   margin-bottom: 10px;
 `;
 
-const Card = styled.div`
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
+const Controls = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+`;
+
+const DateContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+
+  label {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+  }
+
+  input {
+    margin-left: 0.5rem;
+    padding: 0.3rem;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+  }
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    margin-top: 0;
+
+    label {
+      margin-left: 1rem;
+    }
+  }
+`;
+
+const ReportContent = styled.div`
+  background-color: #f9f9f9;
   border-radius: 8px;
-  padding: 10px;
-  flex: 1 1 300px; /* Grow and shrink with a base size of 300px */
-  min-width: 250px; /* Set minimum width for cards */
-  margin: 5px; /* Add margin for spacing */
+  min-height: 200px;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 `;
 
-const CardTitle = styled.h3`
-  font-size: 18px;
-  margin-bottom: 10px;
-`;
-
-const CardValue = styled.p`
-  font-size: 24px;
-  font-weight: bold;
-  color: ${(props) => props.color || "#4caf50"};
+const DownloadButtons = styled.div`
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
 `;
 
 export default AllOrderReport;

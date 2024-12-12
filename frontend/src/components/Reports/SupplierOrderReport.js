@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import ReportBody from "./ReportBody";
+import styled from "styled-components";
+import SearchBar from "../Layout/SearchBar";
+import Table from "../Layout/Table";
+import Button from "../Layout/Button";
+import ReportCard from "../Layout/ReportCard";
+import { FaTruck, FaDollarSign } from "react-icons/fa";
 import generatePDF from "./GeneratePdf";
 import generateExcel from "./GenerateExcel";
 import PreviewModal from "./PreviewModal";
@@ -11,33 +16,30 @@ const SupplierOrderReport = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfContent, setPdfContent] = useState("");
   const [excelData, setExcelData] = useState(null);
-  const [orders, setOrders] = useState([]); // State for holding orders data
+  const [orders, setOrders] = useState([]);
 
-  // Fetch data from the API
- // Fetch data from the API
-useEffect(() => {
-  const fetchOrders = async () => {
-    if (!startDate || !endDate) return; // Prevent fetching when dates are not set
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!startDate || !endDate) return;
 
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/delivery/supplier/dateRange/?start_date=${startDate}&end_date=${endDate}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setOrders(data); // Assuming the API response is an array of orders
-      } else {
-        console.error("Failed to fetch orders data");
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/delivery/supplier/dateRange/?start_date=${startDate}&end_date=${endDate}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setOrders(data);
+        } else {
+          console.error("Failed to fetch orders data");
+        }
+      } catch (error) {
+        console.error("Error fetching orders data:", error);
       }
-    } catch (error) {
-      console.error("Error fetching orders data:", error);
-    }
-  };
+    };
 
-  fetchOrders();
-}, [startDate, endDate]); // Re-run fetch when startDate or endDate changes
+    fetchOrders();
+  }, [startDate, endDate]);
 
-  // Helper function to search in all fields
   const matchesSearchTerm = (order) => {
     const searchStr = searchTerm.toLowerCase();
     return (
@@ -49,69 +51,51 @@ useEffect(() => {
     );
   };
 
-  // Helper function to format statuses (capitalizing first letter)
-  const formatStatus = (status) => {
-    if (!status) return "Pending"; // Default to "Pending" if status is undefined or null
-    return status
-      .toLowerCase()
-      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
-  };
-
-  // Function to format the order date (display only the date)
   const formatDate = (dateString) => {
-    if (!dateString) return ""; // Handle null or undefined date
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString(); // Default format: MM/DD/YYYY
+    return date.toLocaleDateString();
   };
 
-  // Ensure orders is an array before using filter
   const filteredOrders = Array.isArray(orders)
-    ? orders.filter((order) => {
-        const matchesDateRange =
-          (!startDate ||
-            new Date(order.INBOUND_DEL_ORDER_DATE_CREATED) >= new Date(startDate)) &&
-          (!endDate ||
-            new Date(order.INBOUND_DEL_ORDER_DATE_CREATED) <= new Date(endDate));
-        return matchesSearchTerm(order) && matchesDateRange;
-      }).sort(
-        (a, b) =>
-          new Date(b.INBOUND_DEL_ORDER_DATE_CREATED) - new Date(a.INBOUND_DEL_ORDER_DATE_CREATED)
-      )
-    : []; // Fallback to empty array if it's not an array
+    ? orders
+        .filter((order) => {
+          const matchesDateRange =
+            (!startDate ||
+              new Date(order.INBOUND_DEL_ORDER_DATE_CREATED) >=
+                new Date(startDate)) &&
+            (!endDate ||
+              new Date(order.INBOUND_DEL_ORDER_DATE_CREATED) <= new Date(endDate));
+          return matchesSearchTerm(order) && matchesDateRange;
+        })
+        .sort(
+          (a, b) =>
+            new Date(b.INBOUND_DEL_ORDER_DATE_CREATED) -
+            new Date(a.INBOUND_DEL_ORDER_DATE_CREATED)
+        )
+    : [];
+
+  const header = ["Supplier", "Order Date", "Total Price", "Status"];
+
+  const tableData = filteredOrders.map((order) => [
+    order.INBOUND_DEL_SUPP_NAME,
+    formatDate(order.INBOUND_DEL_ORDER_DATE_CREATED),
+    `₱${parseFloat(order.INBOUND_DEL_TOTAL_PRICE).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`,
+    order.INBOUND_DEL_STATUS,
+  ]);
 
   const totalOrders = filteredOrders.length;
 
-  // Calculate total price (negative) for display
   const totalOrderValue = filteredOrders.reduce(
     (acc, order) => acc + parseFloat(order.INBOUND_DEL_TOTAL_PRICE || 0),
     0
   );
 
-  // Map the filtered orders to display necessary fields and calculate gross profit
-  const tableData = filteredOrders.map((order) => {
-    const grossProfit =
-      parseFloat(order.INBOUND_DEL_TOTAL_PRICE) - parseFloat(order.INBOUND_DEL_TOTAL_RCVD_QTY);
-    return [
-      order.INBOUND_DEL_SUPP_NAME, // Supplier
-      formatDate(order.INBOUND_DEL_ORDER_DATE_CREATED), // Order Date, formatted to show only date
-      `₱${parseFloat(order.INBOUND_DEL_TOTAL_PRICE).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`, // Total Price
-      order.INBOUND_DEL_STATUS, // Status
-    ];
-  });
-
-  // Updated header to match the requested fields
-  const header = ["Supplier", "Order Date", "Total Price", "Status"];
-
   const handlePreviewPDF = () => {
-    const pdfData = generatePDF(
-      header,
-      tableData,
-      totalOrders,
-      totalOrderValue
-    );
+    const pdfData = generatePDF(header, tableData, totalOrders, totalOrderValue);
     setPdfContent(pdfData);
     setExcelData(null);
     setIsModalOpen(true);
@@ -121,8 +105,8 @@ useEffect(() => {
     setExcelData({
       header,
       rows: tableData,
-      totalOrders, // Pass total orders
-      totalAmount: totalOrderValue, // Pass total amount as negative
+      totalOrders,
+      totalAmount: totalOrderValue,
     });
     setPdfContent("");
     setIsModalOpen(true);
@@ -158,21 +142,61 @@ useEffect(() => {
 
   return (
     <>
-      <ReportBody
-        title="Supplier Order Report"
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
-        headers={header}
-        rows={tableData}
-        totalOrders={totalOrders}
-        totalOrderValue={totalOrderValue}
-        onDownloadPDF={handlePreviewPDF}
-        onPreviewExcel={handlePreviewExcel}
-      />
+      <CardsContainer>
+        <ReportCard
+          label={`Total Orders`}
+          value={`${totalOrders} Orders`}
+          startDate={startDate ? formatDate(startDate) : ""}
+          endDate={endDate ? formatDate(endDate) : ""}
+          icon={<FaTruck />}
+        />
+        <ReportCard
+          label={`Order Value`}
+          value={`₱${totalOrderValue.toFixed(2)}`}
+          startDate={startDate ? formatDate(startDate) : ""}
+          endDate={endDate ? formatDate(endDate) : ""}
+          icon={<FaDollarSign />}
+        />
+      </CardsContainer>
+
+      <Controls>
+        <SearchBar
+          placeholder="Search reports..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <DateContainer>
+          <label>
+            Start Date:
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </label>
+          <label>
+            End Date:
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </label>
+        </DateContainer>
+      </Controls>
+
+      <ReportContent>
+        <Table headers={header} rows={tableData} />
+      </ReportContent>
+
+      <DownloadButtons>
+        <Button variant="primary" onClick={handlePreviewPDF}>
+          Preview PDF
+        </Button>
+        <Button variant="primary" onClick={handlePreviewExcel}>
+          Preview Excel
+        </Button>
+      </DownloadButtons>
 
       <PreviewModal
         isOpen={isModalOpen}
@@ -185,5 +209,69 @@ useEffect(() => {
     </>
   );
 };
+
+const Controls = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+`;
+
+const DateContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+
+  label {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+  }
+
+  input {
+    margin-left: 0.5rem;
+    padding: 0.3rem;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+  }
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    margin-top: 0;
+
+    label {
+      margin-left: 1rem;
+    }
+  }
+`;
+
+const CardsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
+`;
+
+const ReportContent = styled.div`
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  min-height: 200px;
+  text-align: center;
+`;
+
+const DownloadButtons = styled.div`
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+`;
 
 export default SupplierOrderReport;
