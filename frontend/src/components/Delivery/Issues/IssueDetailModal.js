@@ -5,15 +5,21 @@ import Button from "../../Layout/Button";
 import { colors } from "../../../colors";
 
 const SupplierCreateIssue = ({ orderDetails, onClose, onSubmit }) => {
-  const [updatedOrderDetails, setUpdatedOrderDetails] = useState(orderDetails);
+  const [updatedOrderDetails, setUpdatedOrderDetails] = useState(
+    orderDetails || []
+  );
   const [remarks, setRemarks] = useState("");
   const [issueType, setIssueType] = useState("");
   const [qtyAccepted, setQtyAccepted] = useState([]);
 
+  console.log("Received Order Details:", orderDetails);
+
   // Initialize qtyAccepted state based on the orderDetails length
   useEffect(() => {
     if (orderDetails && orderDetails.length > 0) {
-      setQtyAccepted(orderDetails.map(() => 0)); // Initialize qtyAccepted with 0 for each item
+      console.log("Initializing state with new orderDetails:", orderDetails);
+      setUpdatedOrderDetails(orderDetails);
+      setQtyAccepted(orderDetails.map(() => 0));
     }
   }, [orderDetails]); // Dependency on orderDetails
 
@@ -53,14 +59,18 @@ const SupplierCreateIssue = ({ orderDetails, onClose, onSubmit }) => {
 
   const calculateTotalDefectAmount = () => {
     return updatedOrderDetails.reduce(
-      (sum, item, index) => sum + (qtyAccepted[index] * item.INBOUND_DEL_DETAIL_LINE_PRICE),
+      (sum, item, index) =>
+        sum + qtyAccepted[index] * item.INBOUND_DEL_DETAIL_LINE_PRICE,
       0
     );
   };
 
   const calculateTotalOrderValue = () => {
     return updatedOrderDetails.reduce(
-      (sum, item) => sum + (item.INBOUND_DEL_DETAIL_ORDERED_QTY * item.INBOUND_DEL_DETAIL_LINE_PRICE),
+      (sum, item) =>
+        sum +
+        item.INBOUND_DEL_DETAIL_ORDERED_QTY *
+          item.INBOUND_DEL_DETAIL_LINE_PRICE,
       0
     );
   };
