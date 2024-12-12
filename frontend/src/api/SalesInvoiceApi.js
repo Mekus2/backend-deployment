@@ -1,3 +1,6 @@
+import axios from "axios";
+
+const BASE_URL = "http://127.0.0.1:8000";
 // Function to fetch sales invoices with search term and pagination
 export async function fetchSalesInvoices(
   searchTerm = "",
@@ -68,3 +71,30 @@ export async function updateInvoice(invoiceId, terms, amount, amountPaid) {
     throw error;
   }
 }
+
+export const FetchSalesReport = async ({
+  searchTermType,
+  searchTerm,
+  page = 1,
+}) => {
+  try {
+    // Build the query parameters for the API request based on searchTermType
+    const params = {
+      search_term_type: "customer", // The type of the search (e.g., "customer", "date", etc.)
+      search_term: searchTerm, // The actual value of the search (e.g., name, date, etc.)
+      page: page, // Page number for pagination
+    };
+
+    // Make the API call to the backend
+    const response = await axios.get(`${BASE_URL}/sales/sales-report/`, {
+      params,
+    });
+
+    // Return the response data
+    console.log("Fetched Reports Data:", response.data);
+    return response.data; // Assuming the backend response contains 'results' and 'count' fields
+  } catch (error) {
+    console.error("Error fetching sales report:", error);
+    throw error; // Propagate error to be handled in the calling component
+  }
+};

@@ -19,6 +19,8 @@ class SalesInvoice(models.Model):
     SALES_ORDER_DLVRY_OPTION = models.CharField(max_length=50)
     CLIENT_ID = models.ForeignKey(Clients, on_delete=models.CASCADE)
     CLIENT_NAME = models.CharField(max_length=255)
+    CLIENT_CITY = models.CharField(max_length=70, null=True)
+    CLIENT_PROVINCE = models.CharField(max_length=70, null=True)
     CLIENT_PHONENUM = models.CharField(max_length=20)
     SALES_INV_PYMNT_METHOD = models.CharField(max_length=50, null=True, blank=True)
     SALES_INV_PYMNT_TERMS = models.PositiveIntegerField(null=True, default=0)
@@ -53,32 +55,7 @@ class SalesInvoice(models.Model):
         max_digits=15, decimal_places=2, default=0.0
     )
 
-    def save(self, *args, **kwargs):
-        # Automatically generate the sales invoice ID (starts with INV01)
-        if not self.SALES_INV_ID:
-            last_invoice = SalesInvoice.objects.all().order_by("SALES_INV_ID").last()
-            if last_invoice:
-                last_inv_num = int(last_invoice.SALES_INV_ID[3:]) + 1
-                self.SALES_INV_ID = f"INV{last_inv_num:03d}"
-            else:
-                self.SALES_INV_ID = "INV001"
-
-        # Save the SalesInvoice first to generate a primary key
-        super().save(*args, **kwargs)
-
-        # Automatically calculate balance
-        self.SALES_INV_AMOUNT_BALANCE = (
-            self.SALES_INV_TOTAL_PRICE - self.SALES_INV_AMOUNT_PAID
-        )
-
-        # Set the payment status based on the balance and amount paid
-        if self.SALES_INV_AMOUNT_BALANCE == 0:
-            self.SALES_INV_PYMNT_STATUS = "Paid"
-        elif self.SALES_INV_AMOUNT_PAID == 0:
-            self.SALES_INV_PYMNT_STATUS = "Unpaid"
-        else:
-            self.SALES_INV_PYMNT_STATUS = "Partially Paid"
-
+    def calculate_totals(self):
         # Calculate total gross revenue and total gross income from related SalesInvoiceItems
         total_revenue = (
             self.sales_items.aggregate(
@@ -97,7 +74,36 @@ class SalesInvoice(models.Model):
         self.SALES_INV_TOTAL_GROSS_REVENUE = total_revenue
         self.SALES_INV_TOTAL_GROSS_INCOME = total_income
 
-        # Save again to update the gross revenue and income values
+    def save(self, *args, **kwargs):
+        # Automatically generate the sales invoice ID (starts with INV01)
+        if not self.SALES_INV_ID:
+            last_invoice = SalesInvoice.objects.all().order_by("SALES_INV_ID").last()
+            if last_invoice:
+                last_inv_num = int(last_invoice.SALES_INV_ID[3:]) + 1
+                self.SALES_INV_ID = f"INV{last_inv_num:03d}"
+            else:
+                self.SALES_INV_ID = "INV001"
+
+        # Calculate totals before saving
+        self.calculate_totals()
+
+        # Save the SalesInvoice first to generate a primary key
+        super().save(*args, **kwargs)
+
+        # Automatically calculate balance
+        self.SALES_INV_AMOUNT_BALANCE = (
+            self.SALES_INV_TOTAL_PRICE - self.SALES_INV_AMOUNT_PAID
+        )
+
+        # Set the payment status based on the balance and amount paid
+        if self.SALES_INV_AMOUNT_BALANCE == 0:
+            self.SALES_INV_PYMNT_STATUS = "Paid"
+        elif self.SALES_INV_AMOUNT_PAID == 0:
+            self.SALES_INV_PYMNT_STATUS = "Unpaid"
+        else:
+            self.SALES_INV_PYMNT_STATUS = "Partially Paid"
+
+        # Save again to persist the updated balance and payment status
         super().save(*args, **kwargs)
 
     class Meta:
