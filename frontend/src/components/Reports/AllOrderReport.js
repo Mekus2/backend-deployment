@@ -1,11 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReportBody from "./ReportBody"; // Ensure you have this component
-import { SALES_ORDR } from "../../data/CusOrderData"; // Import customer orders data
-import PURCHASE_ORDR from "../../data/SuppOrderData"; // Import purchase orders data as default export
-import { DAILY_REPORT } from "../../data/DailyReportData";
 import { generatePDF, generateExcel } from "./GenerateAllOrdersExport"; // Import the combined export functions
 import PreviewAllOrderModal from "./PreviewAllOrderModal"; // Updated import
 import styled from "styled-components";
+import axios from "axios"; // For API calls
 
 const AllOrderReport = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,151 +12,82 @@ const AllOrderReport = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfContent, setPdfContent] = useState("");
   const [excelData, setExcelData] = useState(null);
+  const [tableData, setTableData] = useState([]); // Table rows
+  const [loading, setLoading] = useState(true);
 
-  // // Combine customer and purchase orders
-  // const combinedOrders = [];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+  
+        // Fetch both viewDaily and currentStock data
+        const [viewDailyResponse, currentStockResponse] = await Promise.all([
+          axios.get("http://127.0.0.1:8000/report/viewdaily/"),
+          axios.get("http://127.0.0.1:8000/report/current/"),
+        ]);
+  
+        const viewDailyData = viewDailyResponse.data;
+        const currentStockData = currentStockResponse.data;   
+        
+        console.log('opening stock:', viewDailyResponse.data);
+        console.log('current stock:', currentStockResponse.data);
 
-  // // Process customer orders (Sales Orders)
-  // SALES_ORDR.forEach((order) => {
-  //   const grossProfit = order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST;
-  //   combinedOrders.push({
-  //     type: "Sales",
-  //     date: new Date(order.SALES_ORDER_DATE),
-  //     cost: order.SALES_ORDER_COST,
-  //     revenue: order.SALES_ORDER_REVENUE,
-  //     grossProfit,
-  //   });
-  // });
-
-  // // Process purchase orders (Supplier Orders)
-  // PURCHASE_ORDR.forEach((order) => {
-  //   const grossProfit =
-  //     order.PURCHASE_ORDER_REVENUE - order.PURCHASE_ORDER_COST;
-  //   combinedOrders.push({
-  //     type: "Purchase",          
-  //     date: new Date(order.PURCHASE_ORDER_DATE),
-  //     cost: order.PURCHASE_ORDER_COST,
-  //     revenue: order.PURCHASE_ORDER_REVENUE,
-  //     grossProfit,
-  //   });
-  // });
-
-  // Process daily reports 
-  const dailyOrders = DAILY_REPORT.map((report) => ({
-    type: "Daily",
-    date: new Date(), // Assuming the report is from today
-    productName: report.PRODUCT_NAME,
-    openingQty: report.OPENING_QTY,
-    soldQty: report.SOLD_QTY,
-    deliveredQty: report.DELIVERED_QTY,
-    totalQty: report.TOTAL_QTY,
-  }));
-
-  // Filter combined orders based on search term and date range
-  const filteredOrders = dailyOrders
-    .filter((order) => {
-      const matchesSearchTerm =
-        order.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.openingQty.toString().includes(searchTerm.toLowerCase()) ||
-        order.soldQty.toString().includes(searchTerm.toLowerCase()) ||
-        order.deliveredQty.toString().includes(searchTerm.toLowerCase()) ||
-        order.totalQty.toString().includes(searchTerm.toLowerCase());
-
-      const matchesDateRange =
-        (!startDate || order.date >= new Date(startDate)) &&
-        (!endDate || order.date <= new Date(endDate));
-
-      return matchesSearchTerm && matchesDateRange;
-    })
-    .sort((a, b) => b.date - a.date); // Sort by date descending
-
-  const totalOrders = filteredOrders.length;
-
-  // Calculate total quantities
-  const totalOpeningQty = filteredOrders.reduce(
-    (acc, order) => acc + order.openingQty,
-    0
-  );
-  const totalSoldQty = filteredOrders.reduce(
-    (acc, order) => acc + order.soldQty,
-    0
-  );
-  const totalDeliveredQty = filteredOrders.reduce(
-    (acc, order) => acc + order.deliveredQty,
-    0
-  );
-  const totalQty = filteredOrders.reduce(
-    (acc, order) => acc + order.totalQty,
-    0
-  );
-
-  // // Calculate total sales and expenses based on filtered orders
-  // const totalSales = filteredOrders.reduce(
-  //   (acc, order) => acc + (order.revenue > 0 ? order.revenue : 0),
-  //   0
-  // ); // Sum only sales from filtered orders
-
-  // const totalExpenses = filteredOrders.reduce(
-  //   (acc, order) => acc + (order.cost > 0 ? order.cost : 0),
-  //   0
-  // ); // Sum only expenses from filtered orders
-
-  // const netProfit = totalSales - totalExpenses; // Net profit from filtered orders
+        // Map current stock to its corresponding product in the daily data
+        const combinedData = viewDailyData.map((daily) => {
+          const currentStock = currentStockData.find(
+            (current) => current.product_name === daily.product_name
+          )?.current_stock || 0; // Default to 0 if not found
+        
+          return {
+            product: daily.product_name,
+            date: daily.date,
+            openingStock: daily.opening_stock,
+            currentStock: currentStock,
+          };
+        });
+        
+  
+        setTableData(combinedData); // Set combined data in table
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, []);
 
   // // Format number with currency and thousand separators
   // const formatCurrency = (value) => {
   //   return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   // };
 
-  // Map the filtered orders to display necessary fields
-  const tableData = filteredOrders.map((order) => [
-    order.productName || "N/A", 
-    order.openingQty || 0,     
-    order.soldQty || 0,        
-    order.deliveredQty || 0,   
-    order.totalQty || 0 
-  ]);
+  const header = [
+    "Product",
+    "Date",
+    "Opening Stock",
+    "Current Stock",
+  ];
 
-  const header = ["Product Name", "Opening Qty", "Sold Qty", "Delivered Qty", "Total Qty"];
+  // const handlePreviewPDF = async () => {
+  //   const pdfData = await generatePDF(header, tableData);
+  //   setPdfContent(pdfData);
+  //   setExcelData(null);
+  //   setIsModalOpen(true);
+  // };
 
-  const handlePreviewPDF = async () => {
-    const pdfData = await generatePDF(
-      header,
-      tableData,
-      totalOrders,
-      totalOpeningQty,
-      totalSoldQty,
-      totalDeliveredQty,
-      totalQty
-    );
-    setPdfContent(pdfData);
-    setExcelData(null);
-    setIsModalOpen(true);
-  };
-
-  const handlePreviewExcel = async () => {
-    const excelBlobData = await generateExcel(
-      header,
-      tableData,
-      totalOrders,
-      totalOpeningQty,
-      totalSoldQty,
-      totalDeliveredQty,
-      totalQty
-    );
-    const url = URL.createObjectURL(excelBlobData);
-    setExcelData({
-      header,
-      rows: tableData,
-      totalOpeningQty,
-      totalSoldQty,
-      totalDeliveredQty,
-      totalQty,
-      url,
-    });
-    setPdfContent("");
-    setIsModalOpen(true);
-  };
+  // const handlePreviewExcel = async () => {
+  //   const excelBlobData = await generateExcel(header, tableData);
+  //   const url = URL.createObjectURL(excelBlobData);
+  //   setExcelData({
+  //     header,
+  //     rows: tableData,
+  //     url,
+  //   });
+  //   setPdfContent("");
+  //   setIsModalOpen(true);
+  // };
 
   const handleDownloadPDF = () => {
     const link = document.createElement("a");
@@ -179,40 +108,41 @@ const AllOrderReport = () => {
 
   return (
     <>
-      <CardContainer>
+      {/* <CardContainer>
         <Card>
-          <CardTitle>Total Opening Qty</CardTitle>
-          <CardValue color="#f08400">{totalOpeningQty}</CardValue>
+          <CardTitle>Total Products</CardTitle>
+          <CardValue color="#f08400">{tableData.length}</CardValue>
         </Card>
-        <Card>
-          <CardTitle>Total Sold Qty</CardTitle>
-          <CardValue color="#ff5757">{totalSoldQty}</CardValue>
-        </Card>
-        <Card>
-          <CardTitle>Total Delivered Qty</CardTitle>
-          <CardValue color="#1DBA0B">{totalDeliveredQty}</CardValue>
-        </Card>
-        <Card>
-          <CardTitle>Total Qty</CardTitle>
-          <CardValue color="#4caf50">{totalQty}</CardValue>
-        </Card>
-      </CardContainer>
+      </CardContainer> */}
 
-      <ReportBody
-        title="All Order Report"
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
-        headers={header}
-        rows={tableData}
-        totalOrders={totalOrders}
-        totalOrderValue={totalQty} // Update to show total quantity
-        onDownloadPDF={handlePreviewPDF}
-        onPreviewExcel={handlePreviewExcel}
-      />
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <ReportBody
+          title="Stock Report"
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          headers={header}
+          rows={tableData.map((row) => [
+            row.product,
+            row.date,
+            row.openingStock,
+            row.currentStock,
+            // row.gross,
+          ])}
+        //  totalOrders={tableData.length}
+          totalOrderValue={tableData.reduce(
+            (acc, row) => acc + row.gross,
+            0
+          )} // Calculate total gross
+          // onDownloadPDF={handlePreviewPDF}
+          // onPreviewExcel={handlePreviewExcel}
+        />
+      )}
 
       <PreviewAllOrderModal
         isOpen={isModalOpen}
