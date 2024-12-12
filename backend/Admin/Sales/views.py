@@ -3,11 +3,14 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.filters import SearchFilter
+from rest_framework.pagination import PageNumberPagination
+
 from .models import SalesInvoice, SalesInvoiceItems
 from .serializers import SalesInvoiceSerializer
-from rest_framework.pagination import PageNumberPagination
-from django.db.models import Sum
+from django.db.models import Sum, Q, F
+
 from decimal import Decimal
+from datetime import datetime
 from .utils import recalculate_sales_invoice  # Import the utility function
 
 
@@ -82,3 +85,53 @@ class AddPaymentandTerms(APIView):
             return Response(
                 {"error": "Invoice not found."}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class SalesReportPagination(PageNumberPagination):
+    page_size = 20  # Set default page size to 20
+    page_size_query_param = "page_size"
+    max_page_size = 100  # Max limit for page size
+
+
+class SalesReportView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        search_term_type = request.GET.get("search_term_type", None)
+        search_term = request.GET.get("search_term", None)
+        page = request.GET.get("page", 1)  # noqa:F841
+
+        # Handle search filters
+        if search_term_type == "customer" and search_term:
+            invoices = SalesInvoice.objects.filter(CLIENT_NAME__icontains=search_term)
+        elif search_term_type == "date" and search_term:
+            # Ensure date is in the correct format (YYYY-MM-DD)
+            try:
+                search_date = datetime.strptime(search_term, "%Y-%m-%d").date()
+                invoices = SalesInvoice.objects.filter(
+                    SALES_INV_DATETIME__date=search_date
+                )
+            except ValueError:
+                return Response(
+                    {"error": "Invalid date format. Please use YYYY-MM-DD."}, status=400
+                )
+        elif search_term_type == "city" and search_term:
+            invoices = SalesInvoice.objects.filter(CLIENT_CITY__icontains=search_term)
+        elif search_term_type == "province" and search_term:
+            invoices = SalesInvoice.objects.filter(
+                CLIENT_PROVINCE__icontains=search_term
+            )
+        else:
+            # If no search term or term type, return all invoices (or apply some other default behavior)
+            invoices = SalesInvoice.objects.all()
+
+        # Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        result_page = paginator.paginate_queryset(invoices, request)
+
+        # Serialize the result
+        serializer = SalesInvoiceSerializer(result_page, many=True)
+
+        # Return the paginated response with serialized data
+        return paginator.get_paginated_response(serializer.data)

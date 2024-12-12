@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SALES_ORDR } from "../../data/CusOrderData"; // Importing the static data
 import ReportBody from "./ReportBody";
 import generatePDF from "./GeneratePdf";
 import generateExcel from "./GenerateExcel";
 import PreviewModal from "./PreviewModal";
+import { FetchSalesReport } from "../../api/SalesInvoiceApi";
+import { resolvePath } from "react-router-dom";
 
 // Utility function to format currency
 const formatCurrency = (amount) => {
@@ -13,64 +15,76 @@ const formatCurrency = (amount) => {
   })}`;
 };
 
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  if (isNaN(date)) return ""; // Return empty string if invalid date
+  return `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
+    .getDate()
+    .toString()
+    .padStart(2, "0")}/${date.getFullYear()}`;
+};
+
 const CustomerOrderReport = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchTermType, setSearchTermType] = useState(""); // Can be 'customer', 'date', 'city', 'province'
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfContent, setPdfContent] = useState("");
   const [excelData, setExcelData] = useState(null);
+  const [tableData, setTableData] = useState([]); // Holds the report data
+  const [resultsData, setResultsData] = useState([]);
 
-  // Helper function to search in all fields
-  const matchesSearchTerm = (order) => {
-    const searchStr = searchTerm.toLowerCase();
-    return (
-      order.CUSTOMER_NAME.toLowerCase().includes(searchStr) ||
-      order.CUSTOMER_LOCATION.toLowerCase().includes(searchStr) ||
-      order.SALES_ORDER_DATE.toLowerCase().includes(searchStr) ||
-      order.SALES_ORDER_COST.toFixed(2).includes(searchStr) ||
-      order.SALES_ORDER_REVENUE.toFixed(2).includes(searchStr) ||
-      (order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST)
-        .toFixed(2)
-        .includes(searchStr) // Gross Profit search
-    );
-  };
-
-  // Filter and sort orders based on search term and date range
-  const filteredOrders = SALES_ORDR.filter((order) => {
-    const matchesDateRange =
-      (!startDate || new Date(order.SALES_ORDER_DATE) >= new Date(startDate)) &&
-      (!endDate || new Date(order.SALES_ORDER_DATE) <= new Date(endDate));
-    return matchesSearchTerm(order) && matchesDateRange;
-  }).sort(
-    (a, b) => new Date(b.SALES_ORDER_DATE) - new Date(a.SALES_ORDER_DATE)
-  ); // Sort by order date descending
-
-  const totalOrders = filteredOrders.length;
-  const totalGrossProfit = filteredOrders.reduce(
-    (acc, order) => acc + (order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST), // Calculate Gross Profit
-    0
-  );
-
-  // Map the filtered orders to display the necessary fields, excluding Quantity
-  const tableData = filteredOrders.map((order) => [
-    order.CUSTOMER_NAME,
-    order.CUSTOMER_LOCATION,
-    order.SALES_ORDER_DATE,
-    formatCurrency(order.SALES_ORDER_REVENUE), // Swap Revenue and Cost
-    formatCurrency(order.SALES_ORDER_COST), // Swap Revenue and Cost
-    formatCurrency(order.SALES_ORDER_REVENUE - order.SALES_ORDER_COST), // Gross Profit Calculation
-  ]);
-
-  // Updated header to match the requested fields, excluding Quantity
   const header = [
     "Customer",
     "Location",
     "Date",
-    "Revenue", // Revenue now shown in Cost column
-    "Cost", // Cost now shown in Revenue column
-    "Gross Profit", // Gross Profit calculated as Revenue - Cost
+    "Revenue",
+    "Cost",
+    "Gross Profit",
   ];
+
+  const totalOrders = tableData.length;
+  const totalGrossProfit = resultsData.reduce(
+    (acc, order) =>
+      acc + (order.SALES_INV_TOTAL_GROSS_REVENUE - order.SALES_INV_TOTAL_PRICE),
+    0
+  );
+
+  // Fetch sales report data based on searchTerm and searchTermType
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await FetchSalesReport({
+          searchTerm,
+          searchTermType,
+          startDate,
+          endDate,
+          page: 1, // Pagination can be added as needed
+        });
+
+        // Map the response to match table data
+        const mappedData = response.results.map((order) => [
+          order.CLIENT_NAME,
+          order.CLIENT_CITY,
+          formatDate(order.SALES_INV_DATETIME),
+          formatCurrency(order.SALES_INV_TOTAL_GROSS_REVENUE), // Revenue now shown in Cost column
+          formatCurrency(order.SALES_INV_TOTAL_PRICE), // Cost now shown in Revenue column
+          formatCurrency(order.SALES_INV_TOTAL_GROSS_INCOME), // Gross Profit Calculation
+        ]);
+
+        console.log("Fetched Data:", response.results);
+        setResultsData(response.results);
+        setTableData(mappedData);
+      } catch (error) {
+        console.error("Error fetching sales report:", error);
+      }
+    };
+
+    if (searchTerm) {
+      fetchData();
+    }
+  }, [searchTerm, searchTermType, startDate, endDate]);
 
   const handlePreviewPDF = () => {
     const pdfData = generatePDF(
@@ -136,7 +150,7 @@ const CustomerOrderReport = () => {
         headers={header}
         rows={tableData}
         totalOrders={totalOrders}
-        totalOrderValue={totalGrossProfit} // Use Gross Profit instead of Order Value
+        totalOrderValue={totalGrossProfit}
         onDownloadPDF={handlePreviewPDF}
         onPreviewExcel={handlePreviewExcel}
       />

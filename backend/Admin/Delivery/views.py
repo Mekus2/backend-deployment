@@ -383,12 +383,11 @@ class CompleteOutboundDeliveryAPI(APIView):
                     SALES_ORDER_DLVRY_OPTION=outbound_delivery.OUTBOUND_DEL_DLVRY_OPTION,
                     CLIENT_ID=outbound_delivery.CLIENT_ID,
                     CLIENT_NAME=outbound_delivery.OUTBOUND_DEL_CUSTOMER_NAME,
+                    CLIENT_PROVINCE=outbound_delivery.OUTBOUND_DEL_PROVINCE,
+                    CLIENT_CITY=outbound_delivery.OUTBOUND_DEL_CITY,
                     SALES_INV_PYMNT_METHOD="Cash",
                     OUTBOUND_DEL_ID=outbound_delivery,
                 )
-
-                # Save the sales invoice to generate a primary key
-                sales_invoice.save()
 
                 for detail in outbound_delivery.outbound_details.all():
                     product = detail.OUTBOUND_DETAILS_PROD_ID
@@ -410,6 +409,8 @@ class CompleteOutboundDeliveryAPI(APIView):
                         )
                         * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
                     )
+                sales_invoice.calculate_totals()
+                sales_invoice.save()
 
                 # Return success response
                 return Response(
