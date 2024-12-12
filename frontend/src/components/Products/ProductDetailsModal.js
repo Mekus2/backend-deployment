@@ -10,7 +10,7 @@ import { notify } from "../Layout/CustomToast";
 const ProductDetailsModal = ({ productId, onClose }) => {
   const [product, setProduct] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editFields, setEditFields] = useState({ tags: [] });
+  const [editFields, setEditFields] = useState({ categories: [] });
   const [showPriceHistory, setShowPriceHistory] = useState(false);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
           PROD_RO_LEVEL: response.data.PROD_RO_LEVEL || "",
           PROD_RO_QTY: response.data.PROD_RO_QTY || "",
           PROD_QOH: response.data.PROD_QOH || "",
-          tags: response.data.PROD_TAGS || [],
+          categories: response.data.PROD_CATEGORIES || [],
         });
       } catch (error) {
         console.error("Error fetching product data:", error);
@@ -50,8 +50,8 @@ const ProductDetailsModal = ({ productId, onClose }) => {
     setEditFields((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleTagsChange = (newTags) => {
-    setEditFields((prev) => ({ ...prev, tags: newTags }));
+  const handleCategoriesChange = (newCategories) => {
+    setEditFields((prev) => ({ ...prev, categories: newCategories }));
   };
 
   const handleSave = async () => {
@@ -63,7 +63,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
         PROD_RO_LEVEL: editFields.PROD_RO_LEVEL,
         PROD_RO_QTY: editFields.PROD_RO_QTY,
         PROD_QOH: editFields.PROD_QOH,
-        PROD_TAGS: editFields.tags, // Save tags
+        PROD_CATEGORIES: editFields.categories, // Save categories
       };
       await axios.put(
         `http://127.0.0.1:8000/items/productList/${productId}/`,
@@ -97,7 +97,7 @@ const ProductDetailsModal = ({ productId, onClose }) => {
       { field: "PROD_RO_LEVEL", label: "Reorder Level" },
       { field: "PROD_RO_QTY", label: "Reorder Quantity" },
       { field: "PROD_QOH", label: "Quantity on Hand" },
-      { field: "PROD_TAGS", label: "Tags" },
+      { field: "PROD_CATEGORIES", label: "Categories" },
       { field: "PROD_DETAILS_DESCRIPTION", label: "Description" },
       { field: "PROD_DETAILS_PRICE", label: "Price" },
       { field: "PROD_DETAILS_SUPPLIER", label: "Supplier" },
@@ -180,8 +180,8 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             />
           </DetailItem>
           <DetailItem>
-            <Label>Tags:</Label>
-            <TagsInput value={editFields.tags} onChange={handleTagsChange} />
+            <Label>Category:</Label>
+            <CategoriesInput value={editFields.categories} onChange={handleCategoriesChange} />
           </DetailItem>
           <DetailItem>
             <Label>Units:</Label>
@@ -259,8 +259,8 @@ const ProductDetailsModal = ({ productId, onClose }) => {
             <DetailLabel>Name:</DetailLabel> {product.PROD_NAME}
           </Detail>
           <Detail>
-            <DetailLabel>Tags:</DetailLabel>{" "}
-            {product.PROD_TAGS && product.PROD_TAGS.join(", ")}
+            <DetailLabel>Category:</DetailLabel>{" "}
+            {product.PROD_CATEGORIES && product.PROD_CATEGORIES.join(", ")}
           </Detail>
           <Detail>
             <DetailLabel>Units:</DetailLabel> {productDetail.PROD_DETAILS_UNITS}
@@ -316,27 +316,27 @@ const ProductDetailsModal = ({ productId, onClose }) => {
   );
 };
 
-const TagsInput = ({ value, onChange }) => {
+const CategoriesInput = ({ value, onChange }) => {
   const [newTag, setNewTag] = useState("");
 
   const handleKeyDown = (e) => {
     if ((e.key === "Enter" || e.key === ",") && newTag.trim()) {
       e.preventDefault();
-      const updatedTags = [...value, newTag.trim()];
-      onChange(updatedTags);
+      const updatedCategories = [...value, newTag.trim()];
+      onChange(updatedCategories);
       setNewTag("");
     }
   };
 
   const handleRemoveTag = (tagToRemove) => {
-    const updatedTags = value.filter((tag) => tag !== tagToRemove);
-    onChange(updatedTags);
+    const updatedCategories = value.filter((tag) => tag !== tagToRemove);
+    onChange(updatedCategories);
   };
 
   const handleBlur = () => {
     if (newTag.trim()) {
-      const updatedTags = [...value, newTag.trim()];
-      onChange(updatedTags);
+      const updatedCategories = [...value, newTag.trim()];
+      onChange(updatedCategories);
       setNewTag("");
     }
   };
@@ -349,7 +349,7 @@ const TagsInput = ({ value, onChange }) => {
         onChange={(e) => setNewTag(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={handleBlur}
-        placeholder="Add a tag"
+        placeholder="Add a Category"
       />
       <TagList>
         {value.map((tag, index) => (

@@ -35,7 +35,10 @@ const SharedIssuesPage = () => {
   //   })
   //   .sort((a, b) => new Date(b.REPORTED_DATE) - new Date(a.REPORTED_DATE)); // Sort by reported date descending
 
-  const openDetailModal = (issueData) => setSelectedIssue(issueData);
+  const openDetailModal = (issue) => {
+    console.log("Selected issue:", issue);
+    setSelectedIssue(issue);
+  };
   const closeDetailModal = () => setSelectedIssue(null);
 
   const handleCancelIssue = (issueId) => {

@@ -13,7 +13,6 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
   const [error, setError] = useState(null);
   const [orderDetails, setOrderDetails] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // State to control EditSupplierOrderModal visibility
-  const [isEditMode, setIsEditMode] = useState(false); // State to toggle Edit Mode
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -106,14 +105,12 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
     onClose(); // Close modal after action
   };
 
-  const toggleEditMode = () => {
-    setIsEditMode((prev) => !prev); // Toggle the edit mode
+  const openEditModal = () => {
+    setIsEditModalOpen(true); // Open the edit modal
   };
 
-  const handleInputChange = (index, key, value) => {
-    const updatedDetails = [...orderDetails];
-    updatedDetails[index][key] = value;
-    setOrderDetails(updatedDetails);
+  const closeEditModal = () => {
+    setIsEditModalOpen(false); // Close the edit modal
   };
 
   return (
@@ -151,41 +148,11 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
               </thead>
               <tbody>
                 {orderDetails.length > 0 ? (
-                  orderDetails.map((detail, index) => (
+                  orderDetails.map((detail) => (
                     <TableRow key={detail.PURCHASE_ORDER_DET_ID}>
+                      <TableCell>{detail.PURCHASE_ORDER_DET_PROD_NAME}</TableCell>
                       <TableCell>
-                        {isEditMode ? (
-                          <input
-                            type="text"
-                            value={detail.PURCHASE_ORDER_DET_PROD_NAME}
-                            onChange={(e) =>
-                              handleInputChange(
-                                index,
-                                "PURCHASE_ORDER_DET_PROD_NAME",
-                                e.target.value
-                              )
-                            }
-                          />
-                        ) : (
-                          detail.PURCHASE_ORDER_DET_PROD_NAME
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {isEditMode ? (
-                          <input
-                            type="number"
-                            value={detail.PURCHASE_ORDER_DET_PROD_LINE_QTY}
-                            onChange={(e) =>
-                              handleInputChange(
-                                index,
-                                "PURCHASE_ORDER_DET_PROD_LINE_QTY",
-                                e.target.value
-                              )
-                            }
-                          />
-                        ) : (
-                          detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0
-                        )}
+                        {detail.PURCHASE_ORDER_DET_PROD_LINE_QTY || 0}
                       </TableCell>
                     </TableRow>
                   ))
@@ -208,8 +175,8 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
             <Button variant="red" onClick={handleCancelOrder}>
               Cancel Order
             </Button>
-            <Button variant="green" onClick={toggleEditMode}>
-              {isEditMode ? "Save Changes" : "Update Order"}
+            <Button variant="green" onClick={openEditModal}>
+              Update Order
             </Button>
             <Button variant="primary" onClick={handleAcceptOrder}>
               Accept Order
@@ -217,6 +184,13 @@ const SupplierOrderDetailsModal = ({ order, onClose, userRole }) => {
           </ButtonGroup>
         )}
       </Modal>
+
+      {isEditModalOpen && (
+        <EditSupplierOrderModal
+          orderDetails={orderDetails}
+          onClose={closeEditModal}
+        />
+      )}
     </>
   );
 };

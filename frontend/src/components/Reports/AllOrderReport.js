@@ -58,10 +58,10 @@ const AllOrderReport = () => {
     fetchData();
   }, []);
 
-  // Format number with currency and thousand separators
-  const formatCurrency = (value) => {
-    return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
-  };
+  // // Format number with currency and thousand separators
+  // const formatCurrency = (value) => {
+  //   return `₱${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+  // };
 
   const header = [
     "Product",
@@ -92,7 +92,7 @@ const AllOrderReport = () => {
   const handleDownloadPDF = () => {
     const link = document.createElement("a");
     link.href = pdfContent;
-    link.download = "OrderReport.pdf";
+    link.download = "DailyReport.pdf";
     link.click();
     setIsModalOpen(false);
   };
@@ -101,7 +101,7 @@ const AllOrderReport = () => {
     if (!excelData) return; // Ensure there is data to download
     const link = document.createElement("a");
     link.href = excelData.url;
-    link.download = "OrderReport.xlsx";
+    link.download = "DailyReport.xlsx";
     link.click();
     setIsModalOpen(false);
   };

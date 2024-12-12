@@ -52,6 +52,9 @@ import SuperAdminLogs from "./pages/admin/SuperAdminLogs";
 import SuperAdminCategories from "./pages/admin/SuperAdminCategories";
 import SuperAdminProfile from "./pages/admin/SuperAdminProfile";
 import SuperAdminNotification from "./pages/admin/SuperAdminNotification";
+import DailyReports from "./pages/admin/DailyReports";
+import ExpirationReports from "./pages/admin/ExpirationReports";
+import StockReports from "./pages/admin/StockReports";
 
 // Staff Pages
 import StaffDashboard from "./pages/prevstaff/StaffDashboard";
@@ -128,6 +131,9 @@ function App() {
             <Route path="/admin/logs" element={<ProtectedRoute allowedRoles={['admin']}><SuperAdminLogs /></ProtectedRoute>} />
             <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['admin']}><SuperAdminCategories /></ProtectedRoute>} />
             <Route path="/admin/notifications" element={<ProtectedRoute allowedRoles={['admin']}><SuperAdminNotification /></ProtectedRoute>} />
+            <Route path="/admin/daily-reports" element={<ProtectedRoute allowedRoles={['admin']}><DailyReports /></ProtectedRoute>} />
+            <Route path="/admin/expiration-reports" element={<ProtectedRoute allowedRoles={['admin']}><ExpirationReports /></ProtectedRoute>} />
+            <Route path="/admin/stock-reports" element={<ProtectedRoute allowedRoles={['admin']}><StockReports /></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/staff/dashboard" element={<ProtectedRoute allowedRoles={['staff']}><AdminDashboard /></ProtectedRoute>} />
