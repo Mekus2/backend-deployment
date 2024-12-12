@@ -1,1 +1,2 @@
-web: gunicorn PHILVETS.wsgi:app --log-file -
+web: gunicorn PHILVETS.wsgi:application --log-file -
+web: python manage.py collectstatic --noinput && gunicorn PHILVETS.wsgi:application
