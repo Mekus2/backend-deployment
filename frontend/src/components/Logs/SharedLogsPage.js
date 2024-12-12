@@ -38,26 +38,6 @@ const SharedLogsPage = () => {
 
         setLogs(data.results);
         setTotalRows(data.count);
-
-        // If it's user logs, fetch user details for each log
-        if (activeTab === "User Logs") {
-          for (const log of data.results) {
-            if (log.USER_ID) {
-              console.log(`Fetching user details for USER_ID: ${log.USER_ID}`);
-
-              const userData = await fetchUserById(log.USER_ID);
-              console.log(
-                `Fetched user details for USER_ID ${log.USER_ID}:`,
-                userData
-              );
-
-              setUserDetails((prevState) => ({
-                ...prevState,
-                [log.USER_ID]: `${userData.first_name} ${userData.last_name}`,
-              }));
-            }
-          }
-        }
       } catch (err) {
         console.error("Error fetching logs:", err);
         setError("Failed to fetch logs. Please try again.");
