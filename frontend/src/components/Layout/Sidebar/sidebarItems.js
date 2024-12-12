@@ -116,7 +116,7 @@ export const adminSidebarItems = [
       {
         icon: TbChevronRight,
         label: "Daily Report",
-        link: "/admin/daily-reports",
+        link: "/admin/reports",
       },
       {
         icon: TbChevronRight,
