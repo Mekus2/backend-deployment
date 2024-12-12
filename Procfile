@@ -1,1 +1,1 @@
-web: gunicorn backend.PHILVETS.wsgi:application
+web: gunicorn backend.PHILVETS.wsgi --log-file -
