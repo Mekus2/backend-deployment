@@ -7,10 +7,12 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         model = ProductCategory
         fields = "__all__"
 
+
 class ProductDetailsSerializer(serializers.ModelSerializer):  # noqa:F811
     class Meta:
         model = ProductDetails
         fields = "__all__"
+
 
 class ProductSerializer(serializers.ModelSerializer):
     PROD_IMAGE = serializers.ImageField(
