@@ -166,25 +166,19 @@ const SharedProductsPage = () => {
 
   return (
     <>
-      <Controls>
-        <SearchBar
-          placeholder="Search / Filter product..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <ButtonGroup>
-          <StyledButton onClick={openAddProductModal}>
-            <FaPlus className="icon" /> Product
-            <p value={product}></p>
-          </StyledButton>
-        </ButtonGroup>
-      </Controls>
       <AnalyticsContainer>
         <CardTotalProducts />
         <ClickableCard onClick={handleCardClick}>
           {/* <CardTotalCategories /> */}
         </ClickableCard>
       </AnalyticsContainer>
+      <Controls>
+        <SearchBar
+          placeholder="Search / Filter product..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </Controls>
       <Table headers={headers} rows={rows} />
       {isAddProductModalOpen && (
         <AddProductModal onClose={closeAddProductModal} />
@@ -196,7 +190,7 @@ const SharedProductsPage = () => {
         />
       )}
     </>
-  );
+  );  
 };
 
 // Styled components
