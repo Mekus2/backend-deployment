@@ -1,1 +1,1 @@
-web: gunicorn PHILVETS.wsgi 
+web: gunicorn backend.PHILVETS.wsgi:application
