@@ -12,19 +12,29 @@ const ExpirationReports = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [expirationData, setExpirationData] = useState([
     {
-      item_name: "Item 1",
+      item_name: "Canine Multivitamin",
       expiration_date: "2024-12-15",
       days_to_expire: 3,
     },
     {
-      item_name: "Item 2",
+      item_name: "Feline Omega Oil",
       expiration_date: "2024-12-20",
       days_to_expire: 8,
     },
     {
-      item_name: "Item 3",
+      item_name: "Equine Joint Supplement",
       expiration_date: "2024-12-25",
       days_to_expire: 13,
+    },
+    {
+      item_name: "Avian Calcium Boost",
+      expiration_date: "2024-12-18",
+      days_to_expire: 6,
+    },
+    {
+      item_name: "Reptile Multivitamin",
+      expiration_date: "2024-12-30",
+      days_to_expire: 18,
     },
   ]);
 

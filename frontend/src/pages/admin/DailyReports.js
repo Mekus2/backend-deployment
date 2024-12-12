@@ -3,33 +3,34 @@ import styled from "styled-components";
 import MainLayout from "../../components/Layout/MainLayout";
 import SearchBar from "../../components/Layout/SearchBar";
 import Table from "../../components/Layout/Table";
-import Card from "../../components/Layout/Card"; // Import Card component
+import Card from "../../components/Layout/Card";
+import Button from "../../components/Layout/Button"; // Import Button component
 import { colors } from "../../colors";
-import { FaClipboardList } from "react-icons/fa"; // Import an icon
+import { FaClipboardList } from "react-icons/fa"; // Import an icon for the card
 
-const DailyReportsPage = () => {
+const StocksReport = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [stockData, setStockData] = useState([
     {
-      item_name: "Item A",
-      opening_stock: 100,
-      stock_in: 50,
-      stock_out: 30,
-      closing_stock: 120,
+      product_name: "Canine Multivitamin",
+      opening_qty: 50,
+      sold_qty: 20,
+      delivered_qty: 10,
+      total_qty: 40,
     },
     {
-      item_name: "Item B",
-      opening_stock: 200,
-      stock_in: 70,
-      stock_out: 20,
-      closing_stock: 250,
+      product_name: "Feline Omega Oil",
+      opening_qty: 30,
+      sold_qty: 15,
+      delivered_qty: 5,
+      total_qty: 20,
     },
     {
-      item_name: "Item C",
-      opening_stock: 150,
-      stock_in: 40,
-      stock_out: 60,
-      closing_stock: 130,
+      product_name: "Equine Joint Supplement",
+      opening_qty: 20,
+      sold_qty: 5,
+      delivered_qty: 10,
+      total_qty: 25,
     },
   ]);
 
@@ -48,26 +49,30 @@ const DailyReportsPage = () => {
   };
 
   const headers = [
-    "Item Name",
-    "Opening Stock",
-    "Stock In",
-    "Stock Out",
-    "Closing Stock",
+    "Product Name",
+    "Opening Qty",
+    "Sold Qty",
+    "Delivered Qty",
+    "Total Qty",
+    "Action",
   ];
 
   const rows = filteredStockData.map((item) => [
-    item.item_name,
-    item.opening_stock,
-    item.stock_in,
-    item.stock_out,
-    item.closing_stock,
+    item.product_name,
+    item.opening_qty,
+    item.sold_qty,
+    item.delivered_qty,
+    item.total_qty,
+    <Button onClick={() => alert(`Details for ${item.product_name}`)}>
+      Details
+    </Button>,
   ]);
 
   return (
     <MainLayout>
       <HeaderCard>
         <Card
-          label="Total Reports"
+          label="Total Products"
           value={filteredStockData.length}
           bgColor={colors.primary}
           icon={<FaClipboardList />} // Add the icon here
@@ -75,7 +80,7 @@ const DailyReportsPage = () => {
       </HeaderCard>
       <Controls>
         <SearchBar
-          placeholder="Search items..."
+          placeholder="Search products..."
           value={searchTerm}
           onChange={handleSearch}
         />
@@ -99,4 +104,4 @@ const Controls = styled.div`
   margin-bottom: 20px;
 `;
 
-export default DailyReportsPage;
+export default StocksReport;

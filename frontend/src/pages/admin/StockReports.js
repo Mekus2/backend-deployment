@@ -8,22 +8,32 @@ import Button from "../../components/Layout/Button"; // Import Button component
 import { colors } from "../../colors";
 import { FaBoxOpen } from "react-icons/fa"; // Import an icon for the card
 
-const StockReport = () => {
+const LowStockReport = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [lowStockData, setLowStockData] = useState([
     {
-      item_name: "Product A",
+      item_name: "Canine Multivitamin",
       current_stock: 5,
       threshold: 10,
     },
     {
-      item_name: "Product B",
+      item_name: "Feline Omega Oil",
       current_stock: 8,
       threshold: 15,
     },
     {
-      item_name: "Product C",
+      item_name: "Equine Joint Supplement",
       current_stock: 2,
+      threshold: 5,
+    },
+    {
+      item_name: "Avian Calcium Boost",
+      current_stock: 4,
+      threshold: 7,
+    },
+    {
+      item_name: "Reptile Multivitamin",
+      current_stock: 1,
       threshold: 5,
     },
   ]);
@@ -94,4 +104,4 @@ const Controls = styled.div`
   margin-bottom: 20px;
 `;
 
-export default StockReport;
+export default LowStockReport;
