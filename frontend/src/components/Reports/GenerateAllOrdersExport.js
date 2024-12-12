@@ -46,7 +46,7 @@ const generatePDF = (
   // Report title (aligned to the left, adjust position to reduce space)
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("All Orders Report", 14, logoY + logoHeight + 24);
+  doc.text("Daily Stock Report", 14, logoY + logoHeight + 24);
 
   // Date (below report title, left-aligned)
   doc.setFontSize(10);

@@ -1,97 +1,135 @@
 import React, { useState, useEffect } from "react";
-import { SALES_ORDR } from "../../data/CusOrderData"; // Importing the static data
-import ReportBody from "./ReportBody";
+import styled from "styled-components";
+import SearchBar from "../Layout/SearchBar";
+import Table from "../Layout/Table";
+import Button from "../Layout/Button";
+import ReportCard from "../Layout/ReportCard";
+import { FaShoppingCart, FaDollarSign } from "react-icons/fa";
 import generatePDF from "./GeneratePdf";
 import generateExcel from "./GenerateExcel";
 import PreviewModal from "./PreviewModal";
-import { FetchSalesReport } from "../../api/SalesInvoiceApi";
-import { resolvePath } from "react-router-dom";
-
-// Utility function to format currency
-const formatCurrency = (amount) => {
-  return `₱${Math.abs(amount).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
-
-const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  if (isNaN(date)) return ""; // Return empty string if invalid date
-  return `${(date.getMonth() + 1).toString().padStart(2, "0")}/${date
-    .getDate()
-    .toString()
-    .padStart(2, "0")}/${date.getFullYear()}`;
-};
 
 const CustomerOrderReport = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchTermType, setSearchTermType] = useState(""); // Can be 'customer', 'date', 'city', 'province'
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfContent, setPdfContent] = useState("");
   const [excelData, setExcelData] = useState(null);
-  const [tableData, setTableData] = useState([]); // Holds the report data
-  const [resultsData, setResultsData] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [searchFilter, setSearchFilter] = useState("Customer");
 
-  const header = [
-    "Customer",
-    "Location",
-    "Date",
-    "Revenue",
-    "Cost",
-    "Gross Profit",
-  ];
-
-  const totalOrders = tableData.length;
-  const totalGrossProfit = resultsData.reduce(
-    (acc, order) =>
-      acc + (order.SALES_INV_TOTAL_GROSS_REVENUE - order.SALES_INV_TOTAL_PRICE),
-    0
-  );
-
-  // Fetch sales report data based on searchTerm and searchTermType
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchOrders = async () => {
+      if (!startDate || !endDate) return;
+
       try {
-        const response = await FetchSalesReport({
-          searchTerm,
-          searchTermType,
-          startDate,
-          endDate,
-          page: 1, // Pagination can be added as needed
-        });
-
-        // Map the response to match table data
-        const mappedData = response.results.map((order) => [
-          order.CLIENT_NAME,
-          order.CLIENT_CITY,
-          formatDate(order.SALES_INV_DATETIME),
-          formatCurrency(order.SALES_INV_TOTAL_GROSS_REVENUE), // Revenue now shown in Cost column
-          formatCurrency(order.SALES_INV_TOTAL_PRICE), // Cost now shown in Revenue column
-          formatCurrency(order.SALES_INV_TOTAL_GROSS_INCOME), // Gross Profit Calculation
-        ]);
-
-        console.log("Fetched Data:", response.results);
-        setResultsData(response.results);
-        setTableData(mappedData);
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/delivery/customer/dateRange/?start_date=${startDate}&end_date=${endDate}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setOrders(data);
+        } else {
+          console.error("Failed to fetch orders data");
+        }
       } catch (error) {
-        console.error("Error fetching sales report:", error);
+        console.error("Error fetching orders data:", error);
       }
     };
 
-    if (searchTerm) {
-      fetchData();
+    fetchOrders();
+  }, [startDate, endDate]);
+
+  const matchesSearchTerm = (order) => {
+    const searchStr = searchTerm.toLowerCase();
+    const customerName = order.OUTBOUND_DEL_CUSTOMER_NAME || "";
+    const status = order.OUTBOUND_DEL_STATUS || "";
+    const city = order.OUTBOUND_DEL_CITY || "";
+    const province = order.OUTBOUND_DEL_PROVINCE || "";
+    const orderDate = formatDate(order.OUTBOUND_DEL_CREATED);
+
+    switch (searchFilter) {
+      case "Date":
+        return orderDate.includes(searchStr);
+      case "Customer":
+        return customerName.toLowerCase().includes(searchStr);
+      case "City":
+        return city.toLowerCase().includes(searchStr);
+      case "Province":
+        return province.toLowerCase().includes(searchStr);
+      default:
+        return false;
     }
-  }, [searchTerm, searchTermType, startDate, endDate]);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  const filteredOrders = Array.isArray(orders)
+    ? orders
+        .filter((order) => {
+          const matchesDateRange =
+            (!startDate ||
+              new Date(order.OUTBOUND_DEL_CREATED) >= new Date(startDate)) &&
+            (!endDate ||
+              new Date(order.OUTBOUND_DEL_CREATED) <= new Date(endDate));
+          return matchesSearchTerm(order) && matchesDateRange;
+        })
+        .sort(
+          (a, b) =>
+            new Date(b.OUTBOUND_DEL_CREATED) - new Date(a.OUTBOUND_DEL_CREATED)
+        )
+    : [];
+
+  const groupByCustomer = (orders) => {
+    return orders.reduce((acc, order) => {
+      const customerName = order.OUTBOUND_DEL_CUSTOMER_NAME;
+      if (!acc[customerName]) {
+        acc[customerName] = {
+          totalPrice: 0,
+          orderCount: 0,
+          status: order.OUTBOUND_DEL_STATUS,
+          orders: [],
+        };
+      }
+      acc[customerName].totalPrice += parseFloat(
+        order.OUTBOUND_DEL_TOTAL_PRICE || 0
+      );
+      acc[customerName].orderCount += 1;
+      acc[customerName].orders.push(order);
+      return acc;
+    }, {});
+  };
+
+  const groupedCustomerData = groupByCustomer(filteredOrders);
+  const header = ["Customer", "Order Date", "Total Price", "Status"];
+
+  const tableData = filteredOrders.map((order) => [
+    order.OUTBOUND_DEL_CUSTOMER_NAME,
+    formatDate(order.OUTBOUND_DEL_CREATED),
+    `₱${parseFloat(order.OUTBOUND_DEL_TOTAL_PRICE).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`,
+    order.OUTBOUND_DEL_STATUS,
+  ]);
+
+  const totalOrders = filteredOrders.length;
+  const totalOrderValue = filteredOrders.reduce(
+    (acc, order) => acc + parseFloat(order.OUTBOUND_DEL_TOTAL_PRICE || 0),
+    0
+  );
 
   const handlePreviewPDF = () => {
     const pdfData = generatePDF(
       header,
       tableData,
       totalOrders,
-      totalGrossProfit // Update to reflect Gross Profit total
+      totalOrderValue
     );
     setPdfContent(pdfData);
     setExcelData(null);
@@ -102,8 +140,8 @@ const CustomerOrderReport = () => {
     setExcelData({
       header,
       rows: tableData,
-      totalOrders, // Pass total orders
-      totalAmount: totalGrossProfit, // Pass total Gross Profit
+      totalOrders,
+      totalAmount: totalOrderValue,
     });
     setPdfContent("");
     setIsModalOpen(true);
@@ -123,8 +161,8 @@ const CustomerOrderReport = () => {
         header,
         tableData,
         totalOrders,
-        totalGrossProfit // Update to reflect Gross Profit total
-      ); // Ensure this returns the Blob
+        totalOrderValue
+      );
       const url = URL.createObjectURL(excelBlobData);
       const a = document.createElement("a");
       a.href = url;
@@ -139,21 +177,74 @@ const CustomerOrderReport = () => {
 
   return (
     <>
-      <ReportBody
-        title="Customer Order Report"
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        startDate={startDate}
-        setStartDate={setStartDate}
-        endDate={endDate}
-        setEndDate={setEndDate}
-        headers={header}
-        rows={tableData}
-        totalOrders={totalOrders}
-        totalOrderValue={totalGrossProfit}
-        onDownloadPDF={handlePreviewPDF}
-        onPreviewExcel={handlePreviewExcel}
-      />
+      <CardsContainer>
+        <ReportCard
+          label={`Total Orders`}
+          value={`${totalOrders} Orders`}
+          startDate={startDate ? formatDate(startDate) : ""}
+          endDate={endDate ? formatDate(endDate) : ""}
+          icon={<FaShoppingCart />}
+        />
+        <ReportCard
+          label={`Order Value`}
+          value={`₱${totalOrderValue.toFixed(2)}`}
+          startDate={startDate ? formatDate(startDate) : ""}
+          endDate={endDate ? formatDate(endDate) : ""}
+          icon={<FaDollarSign />}
+        />
+      </CardsContainer>
+
+      <Controls>
+        <SearchAndDropdownContainer>
+          <SearchBar
+            placeholder={`Search by ${searchFilter.toLowerCase()}...`}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Dropdown>
+            <select
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+            >
+              <option value="Date">Date</option>
+              <option value="Customer">Customer</option>
+              <option value="City">City</option>
+              <option value="Province">Province</option>
+            </select>
+          </Dropdown>
+        </SearchAndDropdownContainer>
+        <DateContainer>
+          <label>
+            Start Date:
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </label>
+          <label>
+            End Date:
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </label>
+        </DateContainer>
+      </Controls>
+
+      <ReportContent>
+        <Table headers={header} rows={tableData} />
+      </ReportContent>
+
+      <DownloadButtons>
+        <Button variant="primary" onClick={handlePreviewPDF}>
+          Preview PDF
+        </Button>
+        <Button variant="primary" onClick={handlePreviewExcel}>
+          Preview Excel
+        </Button>
+      </DownloadButtons>
 
       <PreviewModal
         isOpen={isModalOpen}
@@ -166,5 +257,85 @@ const CustomerOrderReport = () => {
     </>
   );
 };
+const Controls = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+`;
+
+const DateContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+
+  label {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+  }
+
+  input {
+    margin-left: 0.5rem;
+    padding: 0.3rem;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+  }
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    margin-top: 0;
+
+    label {
+      margin-left: 1rem;
+    }
+  }
+`;
+
+const Dropdown = styled.div`
+
+  select {
+    padding: 9px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  }
+`;
+
+const SearchAndDropdownContainer = styled.div`
+  display: flex;
+  align-items: center;
+  width: 500px;
+  justify-content: flex-start;
+`;
+
+const CardsContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+
+  @media (max-width: 768px) {
+    justify-content: center;
+  }
+`;
+
+const ReportContent = styled.div`
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  min-height: 200px;
+  text-align: center;
+`;
+
+const DownloadButtons = styled.div`
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+`;
 
 export default CustomerOrderReport;

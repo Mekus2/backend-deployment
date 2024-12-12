@@ -8,12 +8,12 @@ import Button from "../../components/Layout/Button"; // For the tab buttons
 import { colors } from "../../colors"; // Ensure colors are correctly imported
 
 const AdminReports = () => {
-  const [activeTab, setActiveTab] = useState("All Orders Report");
+  const [activeTab, setActiveTab] = useState("Daily Stock Report");
 
   // Function to render the report body based on the active tab
   const renderActiveReport = () => {
     switch (activeTab) {
-      case "All Orders Report":
+      case "Daily Stock Report":
         return <AllOrderReport />;
       case "Customer Order Report":
         return <CustomerOrderReport />;
@@ -28,10 +28,10 @@ const AdminReports = () => {
     <MainLayout>
       <Tabs>
         <StyledTabButton
-          active={activeTab === "All Orders Report"}
-          onClick={() => setActiveTab("All Orders Report")}
+          active={activeTab === "Daily Stock Report"}
+          onClick={() => setActiveTab("Daily Stock Report")}
         >
-          All Orders Report
+          Daily Stock Report
         </StyledTabButton>
 
         <StyledTabButton
