@@ -324,21 +324,21 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
   // Handle the Mark as Received button click
   const handleMarkAsReceivedClick = async () => {
     setReceivedClicked(true);
-
+  
     const areExpiryDatesFilled = expiryDates.every(
       (date) => date && date.trim() !== ""
     );
-
+  
     const areQuantitiesFilled = orderDetails.every(
       (item) =>
         item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT &&
         item.INBOUND_DEL_DETAIL_LINE_QTY_ACCEPT > 0
     );
-
+  
     const areAllItemsAccepted = orderDetails.every(
       (item) => item.INBOUND_DEL_DETAIL_LINE_QTY_DEFECT === 0
     );
-
+  
     if (!areExpiryDatesFilled || !areQuantitiesFilled || !areAllItemsAccepted) {
       if (!areExpiryDatesFilled) {
         console.log("Some expiry dates are missing.");
@@ -356,16 +356,7 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
       }
       return; // Early exit if validation fails
     }
-
-    const logPayload = {
-      REPORT_TYPE: "Purchase",
-      REPORT_DATETIME: new Date().toISOString(),
-      REPORT_TITLE: "Received Items Report",
-      REPORT_DESCRIPTION:
-        "Report for the items received in the current purchase order.",
-      REPORT_CREATED_USER_ID: localStorage.getItem("user_id"),
-    };
-
+  
     const inventoryData = {
       INBOUND_DEL_ID: delivery.INBOUND_DEL_ID,
       status: "Delivered",
@@ -380,29 +371,9 @@ const SupplierDeliveryDetails = ({ delivery, onClose }) => {
         EXPIRY_DATE: expiryDates[index],
       })),
     };
-
+  
     try {
-      // Step 1: Create the report
-      const response = await fetch("http://127.0.0.1:8000/report/report/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("jwt_token")}`,
-        },
-        body: JSON.stringify(logPayload),
-      });
-
-      if (response.ok) {
-        const report = await response.json();
-        console.log("Report created successfully:", report);
-        notify.success("Report created successfully!");
-      } else {
-        const error = await response.json();
-        console.error("Failed to create report:", error);
-        notify.error("Failed to create report. Please try again.");
-      }
-
-      // Step 2: Add inventory
+      // Step 1: Add inventory
       const inventoryResponse = await addNewInventory(inventoryData);
       if (inventoryResponse) {
         console.log("Inventory updated successfully:", inventoryResponse);
