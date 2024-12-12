@@ -14,23 +14,28 @@ const SupplierOrderReport = () => {
   const [orders, setOrders] = useState([]); // State for holding orders data
 
   // Fetch data from the API
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/delivery/supplier/date");
-        if (response.ok) {
-          const data = await response.json();
-          setOrders(data); // Assuming the API response is an array of orders
-        } else {
-          console.error("Failed to fetch orders data");
-        }
-      } catch (error) {
-        console.error("Error fetching orders data:", error);
-      }
-    };
+ // Fetch data from the API
+useEffect(() => {
+  const fetchOrders = async () => {
+    if (!startDate || !endDate) return; // Prevent fetching when dates are not set
 
-    fetchOrders();
-  }, []);
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/delivery/supplier/dateRange/?start_date=${startDate}&end_date=${endDate}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data); // Assuming the API response is an array of orders
+      } else {
+        console.error("Failed to fetch orders data");
+      }
+    } catch (error) {
+      console.error("Error fetching orders data:", error);
+    }
+  };
+
+  fetchOrders();
+}, [startDate, endDate]); // Re-run fetch when startDate or endDate changes
 
   // Helper function to search in all fields
   const matchesSearchTerm = (order) => {
