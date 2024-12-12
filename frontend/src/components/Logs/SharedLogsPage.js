@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import SearchBar from "../../components/Layout/SearchBar";
-import Table from "../../components/Layout/Table";
+import Table from "../../components/Layout/Table_Pagination";
 import Card from "../../components/Layout/Card"; // Import Card component
 import Button from "../../components/Layout/Button"; // Use Button component for tabs
 import Loading from "../../components/Layout/Loading"; // Import Loading component
@@ -11,42 +11,63 @@ import { FaListAlt } from "react-icons/fa"; // For the card icon
 
 const SharedLogsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("User Logs"); // State for active tab
-  const [logs, setLogs] = useState([]); // State to store logs
-  const [loading, setLoading] = useState(false); // Loading state
-  const [error, setError] = useState(null); // Error state
-  const [userDetails, setUserDetails] = useState({}); // State to store user details by ID
+  const [activeTab, setActiveTab] = useState("User Logs");
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [userDetails, setUserDetails] = useState({});
 
-  // Fetch logs dynamically based on the active tab
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalRows, setTotalRows] = useState(0);
+  const rowsPerPage = 10; // Number of rows per page
+
+  // Fetch logs dynamically based on the active tab and pagination
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
       setError(null);
       try {
         const logType = activeTab === "User Logs" ? "user" : "transaction";
-        const data = await fetchLogsByType(logType);
-        setLogs(data);
+        console.log(
+          `Fetching logs for: ${logType}, Page: ${currentPage}, Rows per page: ${rowsPerPage}`
+        );
+
+        const data = await fetchLogsByType(logType, currentPage, rowsPerPage);
+        console.log("Fetched logs data:", data);
+
+        setLogs(data.results);
+        setTotalRows(data.count);
 
         // If it's user logs, fetch user details for each log
         if (activeTab === "User Logs") {
-          for (const log of data) {
+          for (const log of data.results) {
             if (log.USER_ID) {
-              const userData = await fetchUserById(log.USER_ID); // Fetch user by ID
+              console.log(`Fetching user details for USER_ID: ${log.USER_ID}`);
+
+              const userData = await fetchUserById(log.USER_ID);
+              console.log(
+                `Fetched user details for USER_ID ${log.USER_ID}:`,
+                userData
+              );
+
               setUserDetails((prevState) => ({
                 ...prevState,
-                [log.USER_ID]: `${userData.first_name} ${userData.last_name}`, // Store full name in userDetails
+                [log.USER_ID]: `${userData.first_name} ${userData.last_name}`,
               }));
             }
           }
         }
       } catch (err) {
+        console.error("Error fetching logs:", err);
         setError("Failed to fetch logs. Please try again.");
       } finally {
         setLoading(false);
+        console.log("Finished fetching logs.");
       }
     };
     fetchLogs();
-  }, [activeTab]);
+  }, [activeTab, currentPage]);
 
   // Filtered logs based on the search term
   const filteredLogs = logs.filter((log) => {
@@ -59,39 +80,48 @@ const SharedLogsPage = () => {
   });
 
   // Update headers and rows dynamically based on active tab
-  const headers = ["Date & Time", "Description", "User"]; // Removed "Type" column
+  const headers = ["Date & Time", "Description", "User"];
 
   const rows = filteredLogs.map((log) => [
     log.LOG_DATETIME,
     log.LOG_DESCRIPTION || "N/A",
-    userDetails[log.USER_ID] || "Unknown User", // Display user full name
+    userDetails[log.USER_ID] || "Unknown User",
   ]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   return (
     <>
       {loading ? (
-        <Loading /> // Display the Loading component while fetching data
+        <Loading />
       ) : (
         <div>
           <Tabs>
             <StyledTabButton
               active={activeTab === "User Logs"}
-              onClick={() => setActiveTab("User Logs")}
+              onClick={() => {
+                setActiveTab("User Logs");
+                setCurrentPage(1); // Reset to page 1 on tab change
+              }}
             >
               User Logs
             </StyledTabButton>
             <StyledTabButton
               active={activeTab === "Transaction Logs"}
-              onClick={() => setActiveTab("Transaction Logs")}
+              onClick={() => {
+                setActiveTab("Transaction Logs");
+                setCurrentPage(1); // Reset to page 1 on tab change
+              }}
             >
               Transaction Logs
             </StyledTabButton>
           </Tabs>
           <AnalyticsContainer>
-            {/* Logs Card */}
             <Card
               label="Total Logs"
-              value={filteredLogs.length} // Count the logs dynamically
+              value={totalRows} // Display the total count of logs
               bgColor={colors.primary}
               icon={<FaListAlt />}
             />
@@ -103,7 +133,18 @@ const SharedLogsPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </Controls>
-          {error ? <p>{error}</p> : <Table headers={headers} rows={rows} />}
+          {error ? (
+            <p>{error}</p>
+          ) : (
+            <Table
+              headers={headers}
+              rows={rows}
+              rowsPerPage={rowsPerPage}
+              currentPage={currentPage}
+              totalRows={totalRows}
+              onPageChange={handlePageChange}
+            />
+          )}
         </div>
       )}
     </>
