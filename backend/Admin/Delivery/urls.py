@@ -11,6 +11,7 @@ from .views import (
     AcceptOutboundDeliveryAPI,
     CompleteOutboundDeliveryAPI,
     DeliveredOutboundDeliveryView,
+    InboundDeliveryTodayAPIView,
 )
 
 urlpatterns = [
@@ -73,4 +74,16 @@ urlpatterns = [
         DeliveredOutboundDeliveryView.as_view(),
         name="Delivered",
     ),
+
+
+
+
+    #REPORT SUPPLIER
+    path(
+        "supplier/date",
+        InboundDeliveryTodayAPIView.as_view(),
+        name="Delivered",
+    ),
+
+    
 ]

@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReportBody from "./ReportBody";
-import PURCHASE_ORDR from "../../data/SuppOrderData"; // Corrected import
 import generatePDF from "./GeneratePdf";
 import generateExcel from "./GenerateExcel";
 import PreviewModal from "./PreviewModal";
@@ -12,69 +11,94 @@ const SupplierOrderReport = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pdfContent, setPdfContent] = useState("");
   const [excelData, setExcelData] = useState(null);
+  const [orders, setOrders] = useState([]); // State for holding orders data
+
+  // Fetch data from the API
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/delivery/supplier/date");
+        if (response.ok) {
+          const data = await response.json();
+          setOrders(data); // Assuming the API response is an array of orders
+        } else {
+          console.error("Failed to fetch orders data");
+        }
+      } catch (error) {
+        console.error("Error fetching orders data:", error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   // Helper function to search in all fields
   const matchesSearchTerm = (order) => {
     const searchStr = searchTerm.toLowerCase();
     return (
-      order.SUPPLIER_NAME.toLowerCase().includes(searchStr) ||
-      order.PURCHASE_ORDER_DATE.toLowerCase().includes(searchStr) ||
-      order.PURCHASE_ORDER_QTY.toString().includes(searchStr) ||
-      order.PURCHASE_ORDER_COST.toString().includes(searchStr) ||
-      order.PURCHASE_ORDER_REVENUE.toString().includes(searchStr) ||
-      order.PURCHASE_ORDER_DISCOUNT.toString().includes(searchStr)
+      order.INBOUND_DEL_SUPP_NAME.toLowerCase().includes(searchStr) ||
+      order.INBOUND_DEL_ORDER_DATE_CREATED.toLowerCase().includes(searchStr) ||
+      order.INBOUND_DEL_TOTAL_RCVD_QTY.toString().includes(searchStr) ||
+      order.INBOUND_DEL_TOTAL_PRICE.toString().includes(searchStr) ||
+      order.INBOUND_DEL_STATUS.toLowerCase().includes(searchStr)
     );
   };
 
-  // Ensure PURCHASE_ORDR is an array before using filter
-  const filteredOrders = Array.isArray(PURCHASE_ORDR)
-    ? PURCHASE_ORDR.filter((order) => {
+  // Helper function to format statuses (capitalizing first letter)
+  const formatStatus = (status) => {
+    if (!status) return "Pending"; // Default to "Pending" if status is undefined or null
+    return status
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
+  };
+
+  // Function to format the order date (display only the date)
+  const formatDate = (dateString) => {
+    if (!dateString) return ""; // Handle null or undefined date
+    const date = new Date(dateString);
+    return date.toLocaleDateString(); // Default format: MM/DD/YYYY
+  };
+
+  // Ensure orders is an array before using filter
+  const filteredOrders = Array.isArray(orders)
+    ? orders.filter((order) => {
         const matchesDateRange =
           (!startDate ||
-            new Date(order.PURCHASE_ORDER_DATE) >= new Date(startDate)) &&
+            new Date(order.INBOUND_DEL_ORDER_DATE_CREATED) >= new Date(startDate)) &&
           (!endDate ||
-            new Date(order.PURCHASE_ORDER_DATE) <= new Date(endDate));
+            new Date(order.INBOUND_DEL_ORDER_DATE_CREATED) <= new Date(endDate));
         return matchesSearchTerm(order) && matchesDateRange;
       }).sort(
         (a, b) =>
-          new Date(b.PURCHASE_ORDER_DATE) - new Date(a.PURCHASE_ORDER_DATE)
+          new Date(b.INBOUND_DEL_ORDER_DATE_CREATED) - new Date(a.INBOUND_DEL_ORDER_DATE_CREATED)
       )
     : []; // Fallback to empty array if it's not an array
 
   const totalOrders = filteredOrders.length;
 
-  // Calculate total order value (as negative)
-  const totalOrderValue = -filteredOrders.reduce(
-    (acc, order) => acc + (order.PURCHASE_ORDER_REVENUE || 0),
+  // Calculate total price (negative) for display
+  const totalOrderValue = filteredOrders.reduce(
+    (acc, order) => acc + parseFloat(order.INBOUND_DEL_TOTAL_PRICE || 0),
     0
   );
 
   // Map the filtered orders to display necessary fields and calculate gross profit
   const tableData = filteredOrders.map((order) => {
     const grossProfit =
-      order.PURCHASE_ORDER_REVENUE -
-      order.PURCHASE_ORDER_COST -
-      order.PURCHASE_ORDER_DISCOUNT;
+      parseFloat(order.INBOUND_DEL_TOTAL_PRICE) - parseFloat(order.INBOUND_DEL_TOTAL_RCVD_QTY);
     return [
-      order.SUPPLIER_NAME, // CUSTOMER
-      order.PURCHASE_ORDER_DATE, // DATE
-      `₱${order.PURCHASE_ORDER_COST.toLocaleString(undefined, {
+      order.INBOUND_DEL_SUPP_NAME, // Supplier
+      formatDate(order.INBOUND_DEL_ORDER_DATE_CREATED), // Order Date, formatted to show only date
+      `₱${parseFloat(order.INBOUND_DEL_TOTAL_PRICE).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      })}`, // COST
-      `₱${order.PURCHASE_ORDER_REVENUE.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`, // REVENUE
-      `₱${grossProfit.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`, // GROSS PROFIT
+      })}`, // Total Price
+      order.INBOUND_DEL_STATUS, // Status
     ];
   });
 
   // Updated header to match the requested fields
-  const header = ["Supplier", "Order Date", "Cost", "Revenue", "Gross Profit"];
+  const header = ["Supplier", "Order Date", "Total Price", "Status"];
 
   const handlePreviewPDF = () => {
     const pdfData = generatePDF(
