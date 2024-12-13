@@ -70,20 +70,8 @@ class ProductPagination(PageNumberPagination):
 
 
 class ProductListManager(APIView):
-    # authentication_classes = [CookieJWTAuthentication]
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.AllowAny]  # Adjust permissions as needed
 
-    # def get(self, request, pk=None):
-    #     if pk:
-    #         product = get_object_or_404(Product, pk=pk)
-    #         serializer = ProductReadSerializer(product)
-    #         return Response(serializer.data)
-
-    #     queryset = Product.objects.all().order_by("-pk")
-    #     serializer = ProductReadSerializer(queryset, many=True)
-    #     return Response(serializer.data)
-
-    # Testing Pagination Query
     def get(self, request, pk=None):
         """
         Handles fetching a single product or a paginated list of products with optional search functionality.
@@ -106,7 +94,7 @@ class ProductListManager(APIView):
                 Q(PROD_NAME__icontains=search_term)  # Search by product name
                 | Q(
                     PROD_DETAILS_CODE__PROD_DETAILS_SUPPLIER__icontains=search_term
-                )  # Search by supplier in ProductDetails
+                )  # Search by supplier
             )
 
         # Paginate the queryset
@@ -115,6 +103,8 @@ class ProductListManager(APIView):
 
         # Serialize the data
         serializer = ProductReadSerializer(paginated_queryset, many=True)
+
+        # Return paginated response
         return paginator.get_paginated_response(serializer.data)
 
     def put(self, request, pk):
