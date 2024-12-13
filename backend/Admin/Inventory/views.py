@@ -5,9 +5,12 @@ from django.utils import timezone
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
 from .serializers import AddProductInventorySerializer, InventorySerializer
 from .models import Inventory
 from django.db import transaction
+from django.db.models import Q
+from rest_framework.generics import GenericAPIView
 
 from Admin.Delivery.models import InboundDeliveryDetails, InboundDelivery
 from Admin.Delivery.utils import update_inbound_delivery_totals
@@ -215,15 +218,29 @@ class AddProductInventoryView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class InventoryListView(APIView):
+class InventoryPagination(PageNumberPagination):
+    page_size = 20  # Set default page size
+    page_size_query_param = "page_size"  # Allow clients to customize page size
+    max_page_size = 100  # Limit the maximum number of items per page
+
+
+class InventoryListView(GenericAPIView):
     permission_classes = [permissions.AllowAny]  # Adjust as necessary
+    serializer_class = InventorySerializer
+    pagination_class = InventoryPagination
+
+    def get_queryset(self):
+        """
+        Returns the queryset of inventory items.
+        """
+        return Inventory.objects.all()
 
     def get(self, request, pk=None):
         # If pk is provided, fetch the specific inventory item
         if pk:
             try:
                 inventory_item = Inventory.objects.get(pk=pk)
-                serializer = InventorySerializer(inventory_item)
+                serializer = self.get_serializer(inventory_item)
                 return Response(serializer.data, status=status.HTTP_200_OK)
             except Inventory.DoesNotExist:
                 return Response(
@@ -231,18 +248,24 @@ class InventoryListView(APIView):
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
-        # Otherwise, fetch all inventory records
-        inventory_items = Inventory.objects.all()
+        # Fetch all inventory items with pagination
+        queryset = self.get_queryset()
 
         # Check if there are no inventory items
-        if not inventory_items.exists():
+        if not queryset.exists():
             return Response(
                 {"error": "No inventory records found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Serialize the data using the InventorySerializer
-        serializer = InventorySerializer(inventory_items, many=True)
+        # Apply pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        # If pagination is not applied, serialize all data
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -255,26 +278,17 @@ class InventorySearchView(APIView):
         batch_id_query = request.query_params.get("BATCH_ID", None)
         expiry_date_query = request.query_params.get("expiry_date", None)
 
-        # Ensure at least one query parameter is provided
-        if not product_name_query and not batch_id_query and not expiry_date_query:
-            return Response(
-                {
-                    "error": "At least one query parameter (product_name, batch_id, expiry_date) must be provided."
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         # Build the filter dynamically based on provided query parameters
-        filters = {}
+        filters = Q()
         if product_name_query:
-            filters["PRODUCT_NAME__icontains"] = product_name_query
+            filters &= Q(PRODUCT_NAME__icontains=product_name_query)
         if batch_id_query:
-            filters["BATCH_ID__icontains"] = batch_id_query
+            filters &= Q(BATCH_ID__icontains=batch_id_query)
         if expiry_date_query:
-            filters["EXPIRY_DATE"] = expiry_date_query
+            filters &= Q(EXPIRY_DATE=expiry_date_query)
 
-        # Query the Inventory model
-        inventory_items = Inventory.objects.filter(**filters)
+        # Query the Inventory model; return all items if no filters are provided
+        inventory_items = Inventory.objects.filter(filters)
 
         if not inventory_items.exists():
             return Response(
@@ -282,20 +296,25 @@ class InventorySearchView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # Serialize the results into a dictionary
-        inventory_data = inventory_items.values(
-            "INVENTORY_ID",
-            "PRODUCT_ID",
-            "PRODUCT_NAME",
-            "INBOUND_DEL_ID",
-            "BATCH_ID",
-            "EXPIRY_DATE",
-            "QUANTITY_ON_HAND",
-            "LAST_UPDATED",
-            "DATE_CREATED",
+        # Apply pagination
+        paginator = InventoryPagination()
+        paginated_inventory = paginator.paginate_queryset(
+            inventory_items.values(
+                "INVENTORY_ID",
+                "PRODUCT_ID",
+                "PRODUCT_NAME",
+                "INBOUND_DEL_ID",
+                "BATCH_ID",
+                "EXPIRY_DATE",
+                "QUANTITY_ON_HAND",
+                "LAST_UPDATED",
+                "DATE_CREATED",
+            ),
+            request,
         )
 
-        return Response(inventory_data, status=status.HTTP_200_OK)
+        # Return paginated results
+        return paginator.get_paginated_response(paginated_inventory)
 
 
 class ExpiringProductsView(APIView):
