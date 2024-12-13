@@ -84,11 +84,11 @@ class SalesInvoice(models.Model):
             else:
                 self.SALES_INV_ID = "INV001"
 
-        # Calculate totals before saving
-        self.calculate_totals()
-
         # Save the SalesInvoice first to generate a primary key
         super().save(*args, **kwargs)
+
+        # Calculate totals after the first save (this is now safe because the primary key is generated)
+        self.calculate_totals()
 
         # Automatically calculate balance
         self.SALES_INV_AMOUNT_BALANCE = (

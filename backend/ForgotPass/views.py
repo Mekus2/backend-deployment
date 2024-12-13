@@ -130,15 +130,19 @@ class ChangePasswordView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Validate the new password and OTP (existing validations)
+        # Validate the new password and OTP (updated validation)
         if (
             len(new_password) < 8
-            or not re.search(r"[!@#$%^&*(),.?\":{}|<>]", new_password)
-            or not re.search(r"\d", new_password)
+            or not re.search(r"[a-z]", new_password)  # Lowercase letter
+            or not re.search(r"[A-Z]", new_password)  # Uppercase letter
+            or not re.search(r"\d", new_password)  # Number
+            or not re.search(
+                r"[!@#$%^&*(),.?\":{}|<>]", new_password
+            )  # Special character
         ):
             return Response(
                 {
-                    "message": "Password must be at least 8 characters long, contain a number, and a special character."
+                    "message": "Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character."
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -191,7 +195,9 @@ class ResendOTPView(APIView):
         user = User.objects.get(email=email)
 
         # Mark the current OTP as used (if it exists)
-        otp_instance = OTP.objects.filter(user=user, is_used=False).order_by("-created_at").first()
+        otp_instance = (
+            OTP.objects.filter(user=user, is_used=False).order_by("-created_at").first()
+        )
         if otp_instance:
             otp_instance.is_used = True
             otp_instance.save()
@@ -200,7 +206,9 @@ class ResendOTPView(APIView):
         otp_value = str(random.randint(100000, 999999))
 
         # Create and save the new OTP instance
-        new_otp_instance = OTP.objects.create(user=user, otp_value=otp_value)
+        new_otp_instance = OTP.objects.create(  # noqa:F841
+            user=user, otp_value=otp_value
+        )
 
         # Custom email message
         email_message = f"""

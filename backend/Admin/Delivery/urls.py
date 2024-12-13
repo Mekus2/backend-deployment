@@ -77,11 +77,7 @@ urlpatterns = [
         DeliveredOutboundDeliveryView.as_view(),
         name="Delivered",
     ),
-
-
-
-
-    #REPORT SUPPLIER
+    # REPORT SUPPLIER
     path(
         "supplier/date",
         InboundDeliveryTodayAPIView.as_view(),
@@ -92,8 +88,7 @@ urlpatterns = [
         InboundDeliveryDateRangeAPIView.as_view(),
         name="supplier-delivery-date-range",  # A new name for the date range filter
     ),
-
-     #REPORT CUSTOMER
+    # REPORT CUSTOMER
     path(
         "customer/date",
         OutboundDeliveryTodayAPIView.as_view(),
@@ -104,6 +99,4 @@ urlpatterns = [
         OutboundDeliveryDateRangeAPIView.as_view(),
         name="supplier-delivery-date-range",  # A new name for the date range filter
     ),
-
-    
 ]

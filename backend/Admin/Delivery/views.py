@@ -388,38 +388,44 @@ class CompleteOutboundDeliveryAPI(APIView):
                     SALES_INV_PYMNT_METHOD="Cash",
                     OUTBOUND_DEL_ID=outbound_delivery,
                 )
-                sales_invoice.save()
 
-                for detail in outbound_delivery.outbound_details.all():
-                    product = detail.OUTBOUND_DETAILS_PROD_ID
-                    product_details = product.PROD_DETAILS_CODE
+            # Save the SalesInvoice to generate the primary key
+            sales_invoice.save()
 
-                    # Create a SalesInvoiceItems record
-                    SalesInvoiceItems.objects.create(
-                        SALES_INV_ID=sales_invoice,
-                        SALES_INV_ITEM_PROD_ID=product,
-                        SALES_INV_ITEM_PROD_NAME=detail.OUTBOUND_DETAILS_PROD_NAME,
-                        SALES_INV_item_PROD_DLVRD=detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
-                        SALES_INV_ITEM_PROD_SELL_PRICE=detail.OUTBOUND_DETAILS_SELL_PRICE,
-                        SALES_INV_ITEM_PROD_PURCH_PRICE=product_details.PROD_DETAILS_PURCHASE_PRICE,
-                        SALES_INV_ITEM_LINE_GROSS_REVENUE=detail.OUTBOUND_DETAILS_SELL_PRICE
-                        * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
-                        SALES_INV_ITEM_LINE_GROSS_INCOME=(
-                            detail.OUTBOUND_DETAILS_SELL_PRICE
-                            - product_details.PROD_DETAILS_PRICE
-                        )
-                        * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
+            # Now create SalesInvoiceItems records with a reference to the saved sales_invoice
+            for detail in outbound_delivery.outbound_details.all():
+                product = detail.OUTBOUND_DETAILS_PROD_ID
+                product_details = product.PROD_DETAILS_CODE
+
+                SalesInvoiceItems.objects.create(
+                    SALES_INV_ID=sales_invoice,  # This is now safe because sales_invoice is saved
+                    SALES_INV_ITEM_PROD_ID=product,
+                    SALES_INV_ITEM_PROD_NAME=detail.OUTBOUND_DETAILS_PROD_NAME,
+                    SALES_INV_item_PROD_DLVRD=detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
+                    SALES_INV_ITEM_PROD_SELL_PRICE=detail.OUTBOUND_DETAILS_SELL_PRICE,
+                    SALES_INV_ITEM_PROD_PURCH_PRICE=product_details.PROD_DETAILS_PURCHASE_PRICE,
+                    SALES_INV_ITEM_LINE_GROSS_REVENUE=detail.OUTBOUND_DETAILS_SELL_PRICE
+                    * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
+                    SALES_INV_ITEM_LINE_GROSS_INCOME=(
+                        detail.OUTBOUND_DETAILS_SELL_PRICE
+                        - product_details.PROD_DETAILS_PRICE
                     )
-                sales_invoice.calculate_totals()
-                sales_invoice.save()
-
-                # Return success response
-                return Response(
-                    {
-                        "message": "Outbound Delivery marked as Delivered, delivery details updated, and Sales Invoice created."
-                    },
-                    status=status.HTTP_200_OK,
+                    * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
                 )
+
+            # After creating the items, calculate totals for the SalesInvoice instance
+            sales_invoice.calculate_totals()
+
+            # Save the sales_invoice after all related records have been created
+            sales_invoice.save()
+
+            # Continue with the response
+            return Response(
+                {
+                    "message": "Outbound Delivery marked as Delivered, delivery details updated, and Sales Invoice created."
+                },
+                status=status.HTTP_200_OK,
+            )
 
         except Http404 as e:
             logger.error(f"Http404 error: {str(e)}")
