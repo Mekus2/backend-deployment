@@ -120,7 +120,7 @@ class PurchaseOrderListCreateView(APIView):
         # Supplier data logic remains the same
         supplier_data = {
             "Supp_Company_Name": request.data.get("PURCHASE_ORDER_SUPPLIER_CMPNY_NAME"),
-            "Supp_Company_Num": request.data.get("PURCHASE_ORDER_SUPPLIER_ID"),
+            "Supp_Company_Num": request.data.get("PURCHASE_ORDER_SUPPLIER_CMPNY_NUM"),
             "Supp_Contact_Pname": request.data.get("PURCHASE_ORDER_CONTACT_PERSON"),
             "Supp_Contact_Num": request.data.get("PURCHASE_ORDER_CONTACT_NUMBER"),
         }
