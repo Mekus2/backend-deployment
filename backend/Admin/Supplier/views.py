@@ -49,11 +49,12 @@ class SupplierManager(APIView):
         supplier.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-class TotalSupplierCount(APIView):
-     authentication_classes = [CookieJWTAuthentication]
-     permission_classes = [AllowAny]
 
-     def get(self, request):
-         
-         total_supplier = Supplier.objects.count()
-         return Response({total_supplier}, status=status.HTTP_200_OK)
+class TotalSupplierCount(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+
+        total_supplier = Supplier.objects.count()
+        return Response({total_supplier}, status=status.HTTP_200_OK)

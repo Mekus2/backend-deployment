@@ -33,6 +33,12 @@ class OutboundDelivery(models.Model):
     OUTBOUND_DEL_TOTAL_PRICE = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )
+    OUTBOUND_DEL_PYMNT_TERMS = models.PositiveIntegerField(null=True, default=0)
+    OUTBOUND_DEL_PYMNT_OPTION = models.CharField(
+        max_length=30,
+        null=True,
+        blank=True,
+    )
     OUTBOUND_DEL_DISCOUNT = models.DecimalField(
         max_digits=10, decimal_places=2, default=0
     )

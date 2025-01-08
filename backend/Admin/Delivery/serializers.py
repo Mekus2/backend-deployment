@@ -36,7 +36,7 @@ class OutboundDeliverySerializer(serializers.ModelSerializer):
             "OUTBOUND_DEL_TOTAL_PRICE",
             "OUTBOUND_DEL_DISCOUNT",
             "OUTBOUND_DEL_STATUS",
-            "OUTBOUND_DEL_DLVRD_QTY",
+            "OUTBOUND_DEL_TOTAL_ORDERED_QTY",
             "OUTBOUND_DEL_DLVRY_OPTION",
             "OUTBOUND_DEL_CITY",
             "OUTBOUND_DEL_PROVINCE",

@@ -40,6 +40,7 @@ class SalesOrderSerializer(serializers.ModelSerializer):
             "SALES_ORDER_CLIENT_PHONE_NUM",
             "SALES_ORDER_DLVRY_OPTION",
             "SALES_ORDER_PYMNT_OPTION",
+            "SALES_ORDER_PYMNT_TERMS",
             "SALES_ORDER_TOTAL_QTY",
             "SALES_ORDER_TOTAL_PRICE",
             "SALES_ORDER_TOTAL_DISCOUNT",
