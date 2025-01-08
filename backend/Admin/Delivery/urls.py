@@ -24,16 +24,19 @@ urlpatterns = [
         OutboundDeliveryListCreateAPIView.as_view(),
         name="customer-delivery-list-create",
     ),
+    # Fetch customer delivery details by ID
     path(
         "customer/<int:pk>/details",
         OutboundDeliveryDetailsAPIView.as_view(),
         name="customer-delivery-details",
     ),
+    # Accept orders with Pending Status into Dispatched
     path(
         "customer/<int:pk>/accept",
         AcceptOutboundDeliveryAPI.as_view(),
         name="dispatch-delivery",
     ),
+    # Complete orders with Dispatched Status into Delivered and create payment entry
     path(
         "customer/<int:pk>/create-invoice/",
         CompleteOutboundDeliveryAPI.as_view(),
