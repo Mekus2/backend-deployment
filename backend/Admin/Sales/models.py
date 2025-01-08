@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.db import models
 from django.db.models import Sum
 
@@ -149,4 +150,55 @@ class SalesInvoiceItems(models.Model):
         self.SALES_INV_ITEM_LINE_GROSS_INCOME = self.calculate_gross_income()
 
         # Call the parent class's save method to actually save the instance
+        super().save(*args, **kwargs)
+
+
+class CustomerPayment(models.Model):
+    PAYMENT_ID = models.AutoField(primary_key=True)
+    OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
+    CLIENT_ID = models.ForeignKey(Clients, on_delete=models.CASCADE)
+    CLIENT_NAME = models.CharField(max_length=255)
+    PAYMENT_TERMS = models.PositiveIntegerField()
+    PAYMENT_START_DATE = models.DateTimeField(auto_now_add=True)
+    PAYMENT_DUE_DATE = models.DateTimeField(null=True)
+    PAYMENT_METHOD = models.CharField(max_length=50)  # Cash, Check, Bank Transfer, etc.
+    PAYMENT_TERMS = models.PositiveIntegerField()  # Refers in days
+    PAYMENT_STATUS = models.CharField(
+        max_length=20,
+        choices=[
+            ("Unpaid", "Unpaid"),
+            ("Partially Paid", "Partially Paid"),
+            ("Paid", "Paid"),
+        ],
+        default="Unpaid",
+    )
+    AMOUNT_PAID = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    AMOUNT_BALANCE = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    CREATED_AT = models.DateTimeField(auto_now_add=True)
+    UPDATED_AT = models.DateTimeField(auto_now=True)
+    CREATED_BY = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
+
+    class Meta:
+        db_table = "CUSTOMER_PAYMENT"
+        verbose_name = "Customer Payment"
+        verbose_name_plural = "Customer Payments"
+
+    def save(self, *args, **kwargs):
+        # Calculate the due date
+        if self.PAYMENT_START_DATE and self.PAYMENT_TERMS:
+            self.PAYMENT_DUE_DATE = self.PAYMENT_START_DATE + timedelta(
+                days=self.PAYMENT_TERMS
+            )
+
+        # Update payment status
+        if self.AMOUNT_PAID == self.AMOUNT_BALANCE and self.AMOUNT_BALANCE > 0:
+            self.PAYMENT_STATUS = "Paid"
+        elif self.AMOUNT_PAID > 0 and self.AMOUNT_PAID < self.AMOUNT_BALANCE:
+            self.PAYMENT_STATUS = "Partially Paid"
+        else:
+            self.PAYMENT_STATUS = "Unpaid"
+
+        # Call the parent class's save method
         super().save(*args, **kwargs)
