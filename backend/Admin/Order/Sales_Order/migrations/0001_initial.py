@@ -123,13 +123,6 @@ class Migration(migrations.Migration):
                         to="Sales_Order.salesorder",
                     ),
                 ),
-                (
-                    "SALES_ORDER_PROD_ID",
-                    models.ForeignKey(
-                        on_delete=django.db.models.deletion.CASCADE,
-                        to="Product.product",
-                    ),
-                ),
             ],
             options={
                 "verbose_name": "Sales Order Detail",
