@@ -92,7 +92,13 @@ class Migration(migrations.Migration):
                     "SALES_ORDER_DET_ID",
                     models.AutoField(primary_key=True, serialize=False),
                 ),
-                ("SALES_ORDER_PROD_ID", models.IntegerField()),
+                (
+                    "SALES_ORDER_PROD_ID",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="Product.Product",
+                    ),
+                ),
                 ("SALES_ORDER_PROD_NAME", models.CharField(max_length=50)),
                 (
                     "SALES_ORDER_LINE_PRICE",

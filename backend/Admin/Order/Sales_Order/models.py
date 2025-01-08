@@ -44,6 +44,7 @@ class SalesOrder(models.Model):
     SALES_ORDER_PYMNT_OPTION = models.CharField(
         max_length=30, null=False, blank=False, default="Cash On Delivery (COD)"
     )
+    SALES_ORDER_PYMNT_TERMS = models.PositiveIntegerField(null=True, default=0)
     SALES_ORDER_TOTAL_QTY = models.PositiveIntegerField(null=False, default=0)
     SALES_ORDER_TOTAL_PRICE = models.DecimalField(
         null=False, max_digits=10, decimal_places=2, default=0

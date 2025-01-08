@@ -150,3 +150,36 @@ class SalesInvoiceItems(models.Model):
 
         # Call the parent class's save method to actually save the instance
         super().save(*args, **kwargs)
+
+
+class CustomerPayment(models.Model):
+    PAYMENT_ID = models.AutoField(primary_key=True)
+    OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
+    CLIENT_ID = models.ForeignKey(Clients, on_delete=models.CASCADE)
+    CLIENT_NAME = models.CharField(max_length=255)
+    PAYMENT_TERMS = models.PositiveIntegerField()
+    PAYMENT_START_DATE = models.DateTimeField(auto_now_add=True)
+    PAYMENT_DUE_DATE = models.DateTimeField(null=True)
+    PAYMENT_METHOD = models.CharField(max_length=50)  # Cash, Check, Bank Transfer, etc.
+    PAYMENT_TERMS = models.PositiveIntegerField()  # Refers in days
+    PAYMENT_STATUS = models.CharField(
+        max_length=20,
+        choices=[
+            ("Unpaid", "Unpaid"),
+            ("Partially Paid", "Partially Paid"),
+            ("Paid", "Paid"),
+        ],
+        default="Unpaid",
+    )
+    AMOUNT_PAID = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    AMOUNT_BALANCE = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    CREATED_AT = models.DateTimeField(auto_now_add=True)
+    UPDATED_AT = models.DateTimeField(auto_now=True)
+    CREATED_BY = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )
+
+    class Meta:
+        db_table = "CUSTOMER_PAYMENT"
+        verbose_name = "Customer Payment"
+        verbose_name_plural = "Customer Payments"
