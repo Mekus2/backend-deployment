@@ -27,7 +27,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.http import Http404
 from Admin.Inventory.models import Inventory
-from Admin.Sales.models import SalesInvoice, SalesInvoiceItems
+from Admin.Sales.models import SalesInvoice, SalesInvoiceItems, CustomerPayment
 from Admin.Product.models import Product, ProductDetails
 
 
@@ -376,48 +376,18 @@ class CompleteOutboundDeliveryAPI(APIView):
                     f"Outbound Delivery {outbound_delivery.pk} marked as Delivered."
                 )
 
-                # Create a Sales Invoice for the completed Outbound Delivery
-                sales_invoice = SalesInvoice(
-                    SALES_INV_DATETIME=outbound_delivery.OUTBOUND_DEL_CREATED,
-                    SALES_INV_TOTAL_PRICE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
-                    SALES_ORDER_DLVRY_OPTION=outbound_delivery.OUTBOUND_DEL_DLVRY_OPTION,
+                # Create a Payment Entry for the completed Outbound Delivery
+                customer_payment = CustomerPayment(
+                    OUTBOUND_DEL_ID=outbound_delivery,
                     CLIENT_ID=outbound_delivery.CLIENT_ID,
                     CLIENT_NAME=outbound_delivery.OUTBOUND_DEL_CUSTOMER_NAME,
-                    CLIENT_PROVINCE=outbound_delivery.OUTBOUND_DEL_PROVINCE,
-                    CLIENT_CITY=outbound_delivery.OUTBOUND_DEL_CITY,
-                    SALES_INV_PYMNT_METHOD="Cash",
-                    OUTBOUND_DEL_ID=outbound_delivery,
+                    PAYMENT_TERMS=30,  # Example payment terms, adjust as needed
+                    PAYMENT_METHOD="Cash",  # Example payment method, adjust as needed
+                    AMOUNT_BALANCE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
                 )
 
-            # Save the SalesInvoice to generate the primary key
-            sales_invoice.save()
-
-            # Now create SalesInvoiceItems records with a reference to the saved sales_invoice
-            for detail in outbound_delivery.outbound_details.all():
-                product = detail.OUTBOUND_DETAILS_PROD_ID
-                product_details = product.PROD_DETAILS_CODE
-
-                SalesInvoiceItems.objects.create(
-                    SALES_INV_ID=sales_invoice,  # This is now safe because sales_invoice is saved
-                    SALES_INV_ITEM_PROD_ID=product,
-                    SALES_INV_ITEM_PROD_NAME=detail.OUTBOUND_DETAILS_PROD_NAME,
-                    SALES_INV_item_PROD_DLVRD=detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
-                    SALES_INV_ITEM_PROD_SELL_PRICE=detail.OUTBOUND_DETAILS_SELL_PRICE,
-                    SALES_INV_ITEM_PROD_PURCH_PRICE=product_details.PROD_DETAILS_PURCHASE_PRICE,
-                    SALES_INV_ITEM_LINE_GROSS_REVENUE=detail.OUTBOUND_DETAILS_SELL_PRICE
-                    * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
-                    SALES_INV_ITEM_LINE_GROSS_INCOME=(
-                        detail.OUTBOUND_DETAILS_SELL_PRICE
-                        - product_details.PROD_DETAILS_PRICE
-                    )
-                    * detail.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,
-                )
-
-            # After creating the items, calculate totals for the SalesInvoice instance
-            sales_invoice.calculate_totals()
-
-            # Save the sales_invoice after all related records have been created
-            sales_invoice.save()
+                # Save the CustomerPayment to generate the primary key
+                customer_payment.save()
 
             # Continue with the response
             return Response(

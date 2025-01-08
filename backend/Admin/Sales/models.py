@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.db import models
 from django.db.models import Sum
 
@@ -183,3 +184,21 @@ class CustomerPayment(models.Model):
         db_table = "CUSTOMER_PAYMENT"
         verbose_name = "Customer Payment"
         verbose_name_plural = "Customer Payments"
+
+    def save(self, *args, **kwargs):
+        # Calculate the due date
+        if self.PAYMENT_START_DATE and self.PAYMENT_TERMS:
+            self.PAYMENT_DUE_DATE = self.PAYMENT_START_DATE + timedelta(
+                days=self.PAYMENT_TERMS
+            )
+
+        # Update payment status
+        if self.AMOUNT_PAID == self.AMOUNT_BALANCE and self.AMOUNT_BALANCE > 0:
+            self.PAYMENT_STATUS = "Paid"
+        elif self.AMOUNT_PAID > 0 and self.AMOUNT_PAID < self.AMOUNT_BALANCE:
+            self.PAYMENT_STATUS = "Partially Paid"
+        else:
+            self.PAYMENT_STATUS = "Unpaid"
+
+        # Call the parent class's save method
+        super().save(*args, **kwargs)
