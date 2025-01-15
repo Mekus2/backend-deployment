@@ -19,6 +19,10 @@ from ...Customer.utils import (
     get_existing_customer_id,
 )
 from Admin.Delivery.models import OutboundDelivery, OutboundDeliveryDetails
+from Admin.Delivery.serializers import (
+    CreateOutboundDeliveryDetailsSerializer,
+    CreateOutboundDeliverySerializer,
+)
 from Admin.Product.models import Product
 
 # Permission imports
@@ -47,8 +51,8 @@ class SalesOrderListCreateAPIView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        """Create a new Sales Order along with its details."""
-        print("Incoming request data:", request.data)
+        """Create a new Sales Order along with its details, auto-accept if admin."""
+        logger.info("Incoming request data: %s", request.data)
         sales_order_serializer = SalesOrderSerializer(data=request.data)
 
         # Extract customer data from the incoming request
@@ -59,35 +63,128 @@ class SalesOrderListCreateAPIView(APIView):
             "phoneNumber": request.data.get("SALES_ORDER_CLIENT_PHONE_NUM"),
         }
 
-        # Check if the customer exists and add them if not
-        customer_id = None
-        if customer_data and not check_customer_exists(customer_data):
-            customer = add_customer(customer_data)
-            customer_id = customer.id
-        else:
-            customer_id = get_existing_customer_id(
-                customer_data
-            )  # Assuming this function fetches the customer ID
-
-        # Update sales order data with the customer ID
-        if customer_id:
-            sales_order_data = request.data.copy()
-            sales_order_data["CLIENT_ID"] = customer_id
-            sales_order_serializer = SalesOrderSerializer(
-                data=sales_order_data
-            )  # Update serializer with modified data
-
-        if sales_order_serializer.is_valid():
-            # Use transaction.atomic() to ensure atomicity
+        try:
             with transaction.atomic():
-                # Save the sales order
-                sales_order = sales_order_serializer.save()  # noqa:F841
+                # Check if the customer exists and add them if not
+                customer_id = None
+                if customer_data and not check_customer_exists(customer_data):
+                    customer = add_customer(customer_data)
+                    customer_id = customer.id
+                    logger.info("New customer created with ID: %s", customer_id)
+                else:
+                    customer_id = get_existing_customer_id(customer_data)
+                    logger.info("Existing customer ID: %s", customer_id)
+
+                # Update sales order data with the customer ID
+                if customer_id:
+                    sales_order_data = request.data.copy()
+                    sales_order_data["CLIENT_ID"] = customer_id
+                    sales_order_serializer = SalesOrderSerializer(data=sales_order_data)
+
+                if sales_order_serializer.is_valid():
+                    # Save the sales order
+                    sales_order = sales_order_serializer.save()
+                    logger.info(
+                        "Sales order created with ID: %s", sales_order.SALES_ORDER_ID
+                    )
+
+                    # Check if the user is an admin using `USER_TYPE`
+                    user_type = request.data.get("USER_TYPE")
+                    if user_type == "admin" or user_type == "Admin":
+                        # Automatically process and accept the sales order
+                        sales_order.SALES_ORDER_STATUS = "Accepted"
+                        sales_order.save()
+                        logger.info(
+                            "Sales order accepted with ID: %s",
+                            sales_order.SALES_ORDER_ID,
+                        )
+
+                        # Create an Outbound Delivery associated with the sales order
+                        outbound_delivery_data = {
+                            "SALES_ORDER_ID": sales_order.SALES_ORDER_ID,
+                            "CLIENT_ID": sales_order.CLIENT_ID.id,
+                            "OUTBOUND_DEL_CUSTOMER_NAME": sales_order.SALES_ORDER_CLIENT_NAME,
+                            "OUTBOUND_DEL_DLVRY_OPTION": sales_order.SALES_ORDER_DLVRY_OPTION,
+                            "OUTBOUND_DEL_PYMNT_TERMS": sales_order.SALES_ORDER_PYMNT_TERMS,
+                            "OUTBOUND_DEL_PYMNT_OPTION": sales_order.SALES_ORDER_PYMNT_OPTION,
+                            "OUTBOUND_DEL_TOTAL_PRICE": sales_order.SALES_ORDER_TOTAL_PRICE,
+                            "OUTBOUND_DEL_TOTAL_ORDERED_QTY": sales_order.SALES_ORDER_TOTAL_QTY,
+                            "OUTBOUND_DEL_CITY": sales_order.SALES_ORDER_CLIENT_CITY,
+                            "OUTBOUND_DEL_PROVINCE": sales_order.SALES_ORDER_CLIENT_PROVINCE,
+                            "OUTBOUND_DEL_ACCPTD_BY_USERNAME": request.data.get(
+                                "USERNAME"
+                            ),
+                            "OUTBOUND_DEL_ACCPTD_BY_USER": sales_order.SALES_ORDER_CREATEDBY_USER.id,
+                        }
+                        delivery_serializer = CreateOutboundDeliverySerializer(
+                            data=outbound_delivery_data
+                        )
+                        if delivery_serializer.is_valid():
+                            outbound_delivery = delivery_serializer.save()
+                            logger.info(
+                                "Outbound delivery created with ID: %s",
+                                outbound_delivery.OUTBOUND_DEL_ID,
+                            )
+
+                            # Fetch and process sales order details
+                            sales_order_details = sales_order.sales_order_details.all()
+                            for sales_detail in sales_order_details:
+                                outbound_detail_data = {
+                                    "OUTBOUND_DEL_ID": outbound_delivery.OUTBOUND_DEL_ID,
+                                    "OUTBOUND_DETAILS_PROD_ID": sales_detail.SALES_ORDER_PROD_ID.id,
+                                    "OUTBOUND_DETAILS_PROD_NAME": sales_detail.SALES_ORDER_PROD_NAME,
+                                    "OUTBOUND_DETAILS_PROD_QTY_ORDERED": sales_detail.SALES_ORDER_LINE_QTY,
+                                    "OUTBOUND_DETAILS_LINE_DISCOUNT": sales_detail.SALES_ORDER_LINE_DISCOUNT,
+                                    "OUTBOUND_DETAILS_SELL_PRICE": sales_detail.SALES_ORDER_LINE_PRICE,
+                                    "OUTBOUND_DETAIL_LINE_TOTAL": sales_detail.SALES_ORDER_LINE_TOTAL,
+                                }
+                                detail_serializer = (
+                                    CreateOutboundDeliveryDetailsSerializer(
+                                        data=outbound_detail_data
+                                    )
+                                )
+                                if detail_serializer.is_valid():
+                                    detail_serializer.save()
+                                    logger.info(
+                                        "Outbound delivery detail saved for product ID: %s",
+                                        sales_detail.SALES_ORDER_PROD_ID.id,
+                                    )
+                                else:
+                                    logger.error(
+                                        "Invalid outbound delivery detail data: %s",
+                                        detail_serializer.errors,
+                                    )
+                                    raise ValueError(
+                                        "Invalid outbound delivery detail data"
+                                    )
+
+                        else:
+                            logger.error(
+                                "Invalid outbound delivery data: %s",
+                                delivery_serializer.errors,
+                            )
+                            raise ValueError("Invalid outbound delivery data")
+
+                else:
+                    logger.error(
+                        "Invalid sales order data: %s", sales_order_serializer.errors
+                    )
+                    raise ValueError("Invalid sales order data")
+
+            # Return the created sales order data
             return Response(sales_order_serializer.data, status=status.HTTP_201_CREATED)
 
-        print("Serializer errors:", sales_order_serializer.errors)
-        return Response(
-            sales_order_serializer.errors, status=status.HTTP_400_BAD_REQUEST
-        )
+        except ValueError as e:
+            logger.error("ValueError: %s", str(e))
+            # If any error occurs, rollback the transaction and return the error
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            logger.exception("Exception occurred")
+            # Handle any other exceptions
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 class GetPendingTotalView(APIView):

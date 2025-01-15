@@ -68,7 +68,10 @@ class SalesOrder(models.Model):
 class SalesOrderDetails(models.Model):
     SALES_ORDER_DET_ID = models.AutoField(primary_key=True)
     SALES_ORDER_ID = models.ForeignKey(
-        SalesOrder, on_delete=models.CASCADE, null=False, related_name="sales_order"
+        SalesOrder,
+        on_delete=models.CASCADE,
+        null=False,
+        related_name="sales_order_details",
     )
     SALES_ORDER_PROD_ID = models.ForeignKey(
         Product, null=False, on_delete=models.CASCADE

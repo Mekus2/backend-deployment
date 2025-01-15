@@ -87,6 +87,7 @@ class OutboundDeliveryListCreateAPIView(APIView):
         return Response(delivery_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+# Function to get the total count of Outbound Deliveries with status 'Pending'
 class GetTotalOutboundPendingCount(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -103,6 +104,7 @@ class GetTotalOutboundPendingCount(APIView):
             )
 
 
+# Function that will get the Delivery details of a specific Outbound Delivery
 class OutboundDeliveryDetailsAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -117,25 +119,6 @@ class OutboundDeliveryDetailsAPIView(APIView):
 
         serializer = OutboundDeliveryDetailsSerializer(details, many=True)
         return Response(serializer.data)
-
-    def delete(self, request, pk):
-        """Delete specific Outbound Delivery details."""
-        details = OutboundDeliveryDetails.objects.filter(OUTBOUND_DEL_ID=pk)
-        if not details.exists():
-            return Response(
-                {"error": "Outbound Delivery details not found."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        details.delete()
-        return Response(
-            {"message": "Outbound Delivery details deleted successfully."},
-            status=status.HTTP_204_NO_CONTENT,
-        )
-
-
-class DeductProductInventory(APIView):
-    permission_classes = [permissions.AllowAny]
 
 
 class AcceptOutboundDeliveryAPI(APIView):
@@ -308,6 +291,7 @@ class AcceptOutboundDeliveryAPI(APIView):
             )
 
 
+# Function that will set the status of the Outbound Delivery to "Delivered" then trigger the creation of a payment entry
 class CompleteOutboundDeliveryAPI(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -381,8 +365,8 @@ class CompleteOutboundDeliveryAPI(APIView):
                     OUTBOUND_DEL_ID=outbound_delivery,
                     CLIENT_ID=outbound_delivery.CLIENT_ID,
                     CLIENT_NAME=outbound_delivery.OUTBOUND_DEL_CUSTOMER_NAME,
-                    PAYMENT_TERMS=30,  # Example payment terms, adjust as needed
-                    PAYMENT_METHOD="Cash",  # Example payment method, adjust as needed
+                    PAYMENT_TERMS=outbound_delivery.OUTBOUND_DEL_PYMTN_TERMS,
+                    PAYMENT_METHOD=outbound_delivery.OUTBOUND_DEL_PYMNT_OPTION,
                     AMOUNT_BALANCE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
                 )
 
