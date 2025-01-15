@@ -365,7 +365,7 @@ class CompleteOutboundDeliveryAPI(APIView):
                     OUTBOUND_DEL_ID=outbound_delivery,
                     CLIENT_ID=outbound_delivery.CLIENT_ID,
                     CLIENT_NAME=outbound_delivery.OUTBOUND_DEL_CUSTOMER_NAME,
-                    PAYMENT_TERMS=outbound_delivery.OUTBOUND_DEL_PYMTN_TERMS,
+                    PAYMENT_TERMS=outbound_delivery.OUTBOUND_DEL_PYMNT_TERMS,
                     PAYMENT_METHOD=outbound_delivery.OUTBOUND_DEL_PYMNT_OPTION,
                     AMOUNT_BALANCE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
                 )

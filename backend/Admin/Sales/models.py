@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.db import models
 from django.db.models import Sum
 
@@ -186,6 +186,9 @@ class CustomerPayment(models.Model):
         verbose_name_plural = "Customer Payments"
 
     def save(self, *args, **kwargs):
+        # Ensure PAYMENT_START_DATE is set before calculating PAYMENT_DUE_DATE
+        if not self.PAYMENT_START_DATE:
+            self.PAYMENT_START_DATE = datetime.now()
         # Calculate the due date
         if self.PAYMENT_START_DATE and self.PAYMENT_TERMS:
             self.PAYMENT_DUE_DATE = self.PAYMENT_START_DATE + timedelta(
