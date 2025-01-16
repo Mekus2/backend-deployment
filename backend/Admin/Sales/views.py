@@ -125,11 +125,11 @@ class ViewPaymentDetails(APIView):
                         )
 
                         # Round to 2 decimal places before comparing (this ensures precision)
-                        # payment.AMOUNT_BALANCE = payment.AMOUNT_BALANCE.quantize(
-                        #     Decimal("0.01"), rounding=ROUND_HALF_UP
-                        # )
+                        payment.AMOUNT_BALANCE = payment.AMOUNT_BALANCE.quantize(
+                            Decimal("0.01"), rounding=ROUND_HALF_UP
+                        )
 
-                        # logger.info(f"Rounded AMOUNT_BALANCE: {payment.AMOUNT_BALANCE}")
+                        logger.info(f"Rounded AMOUNT_BALANCE: {payment.AMOUNT_BALANCE}")
 
                         # Check and update the payment status based on the balance
                         if payment.AMOUNT_BALANCE == Decimal("0.00"):
@@ -176,13 +176,9 @@ class ViewPaymentDetails(APIView):
                     # Fetch the Outbound Delivery details
                     outbound_delivery = payment.OUTBOUND_DEL_ID
 
-                    # Assign the discount to the invoice
-                    sales_invoice.SALES_INV_DISCOUNT = (
-                        outbound_delivery.OUTBOUND_DEL_DISCOUNT
-                    )
-
-                    # Save the SalesInvoice with the discount
-                    sales_invoice.save()
+                    # Initialize total gross revenue and total gross income
+                    total_gross_revenue = Decimal("0.00")
+                    total_gross_income = Decimal("0.00")
 
                     # Loop through each OutboundDeliveryDetails item and create SalesInvoiceItems
                     for item in outbound_delivery.outbound_details.all():
@@ -205,6 +201,10 @@ class ViewPaymentDetails(APIView):
                             item.OUTBOUND_DETAILS_SELL_PRICE - purchase_price
                         ) * item.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED
 
+                        # Add to the total gross revenue and gross income
+                        total_gross_revenue += line_gross_revenue
+                        total_gross_income += line_gross_income
+
                         # Create the SalesInvoiceItems
                         SalesInvoiceItems.objects.create(
                             SALES_INV_ID=sales_invoice,  # Reference to the created SalesInvoice
@@ -219,6 +219,17 @@ class ViewPaymentDetails(APIView):
                         logger.info(
                             f"Sales invoice item created for product ID: {item.OUTBOUND_DETAILS_PROD_ID}"
                         )
+
+                    # Update the total gross revenue and gross income in the sales_invoice
+                    sales_invoice.SALES_INV_TOTAL_GROSS_REVENUE = total_gross_revenue
+                    sales_invoice.SALES_INV_TOTAL_GROSS_INCOME = total_gross_income
+
+                    # Save the updated sales_invoice
+                    sales_invoice.save()
+
+                    logger.info(
+                        f"Sales invoice totals updated: GROSS_REVENUE={total_gross_revenue}, GROSS_INCOME={total_gross_income}"
+                    )
 
                 # Serialize the updated payment and return the response
                 serializer = CustomerPaymentSerializer(payment)
