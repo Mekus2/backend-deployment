@@ -368,6 +368,7 @@ class CompleteOutboundDeliveryAPI(APIView):
                     PAYMENT_TERMS=outbound_delivery.OUTBOUND_DEL_PYMNT_TERMS,
                     PAYMENT_METHOD=outbound_delivery.OUTBOUND_DEL_PYMNT_OPTION,
                     AMOUNT_BALANCE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
+                    CREATED_BY=request.data.get("user_id"),
                 )
 
                 # Save the CustomerPayment to generate the primary key

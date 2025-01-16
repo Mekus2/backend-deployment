@@ -5,6 +5,7 @@ from .views import (
     SalesReportView,
     AddPaymentView,
     CustomerPayableListView,
+    ViewPaymentDetails,
 )
 
 urlpatterns = [
@@ -14,9 +15,16 @@ urlpatterns = [
     path("sales-report/", SalesReportView.as_view(), name="sales-report-list"),
     # Path for Updating Customer Payment API
     path("customer-payment/", AddPaymentView.as_view(), name="customer-payment"),
+    # Path for Customer Payable List
     path(
         "customer-payment-list/",
         CustomerPayableListView.as_view(),
         name="customer-payment-list",
+    ),
+    # Path for specific Customer Payable Details
+    path(
+        "customer-payment-details/<int:payment_id>/",
+        ViewPaymentDetails.as_view(),
+        name="customer-payment-details",
     ),
 ]

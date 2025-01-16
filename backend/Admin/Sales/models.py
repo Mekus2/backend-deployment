@@ -155,7 +155,9 @@ class SalesInvoiceItems(models.Model):
 
 class CustomerPayment(models.Model):
     PAYMENT_ID = models.AutoField(primary_key=True)
-    OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
+    OUTBOUND_DEL_ID = models.ForeignKey(
+        OutboundDelivery, on_delete=models.CASCADE, related_name="customer_payments"
+    )
     CLIENT_ID = models.ForeignKey(Clients, on_delete=models.CASCADE)
     CLIENT_NAME = models.CharField(max_length=255)
     PAYMENT_TERMS = models.PositiveIntegerField()

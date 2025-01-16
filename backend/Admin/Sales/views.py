@@ -83,6 +83,63 @@ class CustomerPayableListView(generics.ListAPIView):
         return queryset
 
 
+class ViewPaymentDetails(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, payment_id):
+        try:
+            payment = CustomerPayment.objects.get(PAYMENT_ID=payment_id)
+            serializer = CustomerPaymentListSerializer(payment)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except CustomerPayment.DoesNotExist:
+            return Response(
+                {"error": "Payment not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    def patch(self, request, payment_id):
+        try:
+            with transaction.atomic():
+                # Retrieve the sales invoice using the invoice_id from the URL
+                paymentId = CustomerPayment.objects.get(PAYMENT_ID=payment_id)
+
+                # Get the data from the request body
+                amount = request.data.get("CUSTOMER_AMOUNT_PAID")
+
+                amount = Decimal(amount)
+
+                # Stack the amount if provided
+                if amount is not None:
+                    if amount <= paymentId.AMOUNT_BALANCE:
+                        paymentId.AMOUNT_PAID += amount  # Accumulate the amount
+                        paymentId.AMOUNT_BALANCE -= (
+                            amount  # Deduct the amount from the balance
+                        )
+                    else:
+                        return Response(
+                            {"error": "Amount paid exceeds the balance."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                else:
+                    return Response(
+                        {"error": "Amount paid is required."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Save the updated invoice
+                paymentId.save()
+
+                # Serialize the updated invoice and return the response
+                serializer = CustomerPaymentSerializer(paymentId)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except CustomerPayment.DoesNotExist:
+            return Response(
+                {"error": "Invoice not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 class AddPaymentView(APIView):
     permission_classes = [permissions.AllowAny]
 
