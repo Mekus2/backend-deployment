@@ -7,15 +7,17 @@ from rest_framework.pagination import PageNumberPagination
 
 from .models import SalesInvoice, SalesInvoiceItems, CustomerPayment
 from .serializers import (
-    SalesInvoiceSerializer,
     CustomerPaymentSerializer,
     CustomerPaymentListSerializer,
+    SalesInvoiceSerializer,
 )
+from django.db import transaction
 from django.db.models import Sum, Q, F
+from django.utils.dateparse import parse_date
 
 from decimal import Decimal, ROUND_HALF_UP
-from datetime import datetime
-from django.db import transaction
+from datetime import datetime, timedelta
+
 import logging
 
 # from .utils import recalculate_sales_invoice  # Import the utility function
@@ -23,38 +25,38 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# Custom pagination class to handle paginated responses
+# # Custom pagination class to handle paginated responses
 class SalesInvoicePagination(PageNumberPagination):
     page_size = 10  # You can set your own page size or get it from query parameters
     page_size_query_param = "page_size"
     max_page_size = 100
 
 
-# Create a view to list sales invoices with search and pagination
-class SalesInvoiceListView(generics.ListAPIView):
-    permission_classes = [permissions.AllowAny]
-    queryset = SalesInvoice.objects.all().order_by("-SALES_INV_CREATED_AT")
-    serializer_class = SalesInvoiceSerializer
-    pagination_class = SalesInvoicePagination
-    filter_backends = [SearchFilter]
-    search_fields = [
-        "SALES_INV_ID",
-        "CLIENT_NAME",
-        "SALES_INV_PYMNT_STATUS",
-    ]  # Define fields you want to allow searching on
+# # Create a view to list sales invoices with search and pagination
+# class SalesInvoiceListView(generics.ListAPIView):
+#     permission_classes = [permissions.AllowAny]
+#     queryset = SalesInvoice.objects.all().order_by("-SALES_INV_CREATED_AT")
+#     serializer_class = SalesInvoiceSerializer
+#     pagination_class = SalesInvoicePagination
+#     filter_backends = [SearchFilter]
+#     search_fields = [
+#         "SALES_INV_ID",
+#         "CLIENT_NAME",
+#         "SALES_INV_PYMNT_STATUS",
+#     ]  # Define fields you want to allow searching on
 
-    def get_queryset(self):
-        """
-        Optionally restricts the returned sales invoices,
-        by filtering against a `search` query parameter in the URL.
-        """
-        queryset = super().get_queryset()
-        search_term = self.request.query_params.get("search", None)
+#     def get_queryset(self):
+#         """
+#         Optionally restricts the returned sales invoices,
+#         by filtering against a `search` query parameter in the URL.
+#         """
+#         queryset = super().get_queryset()
+#         search_term = self.request.query_params.get("search", None)
 
-        if search_term:
-            queryset = queryset.filter(SALES_INV_ID__icontains=search_term)
+#         if search_term:
+#             queryset = queryset.filter(SALES_INV_ID__icontains=search_term)
 
-        return queryset
+#         return queryset
 
 
 class CustomerPayableListView(generics.ListAPIView):
@@ -90,6 +92,7 @@ class CustomerPayableListView(generics.ListAPIView):
 class ViewPaymentDetails(APIView):
     permission_classes = [permissions.AllowAny]
 
+    # Retrieve the payment details
     def get(self, request, payment_id):
         try:
             payment = CustomerPayment.objects.get(PAYMENT_ID=payment_id)
@@ -100,6 +103,7 @@ class ViewPaymentDetails(APIView):
                 {"error": "Payment not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
+    # Update the payment details and generate a sales invoice if fully paid
     def patch(self, request, payment_id):
         try:
             with transaction.atomic():
@@ -279,51 +283,65 @@ class AddPaymentView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class SalesReportPagination(PageNumberPagination):
-    page_size = 20  # Set default page size to 20
-    page_size_query_param = "page_size"
-    max_page_size = 100  # Max limit for page size
+class SalesInvoicePagination(PageNumberPagination):
+    page_size = 10  # Set the number of items per page
+    page_size_query_param = "page_size"  # Allow overriding via query parameter
 
 
-class SalesReportView(APIView):
+class SalesInvoiceListView(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
-        search_term_type = request.GET.get("search_term_type", None)
-        search_term = request.GET.get("search_term", None)
-        page = request.GET.get("page", 1)  # noqa:F841
+        # Extract search term and date filters
+        search_term = request.query_params.get("search", "")
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
 
-        # Handle search filters
-        if search_term_type == "customer" and search_term:
-            invoices = SalesInvoice.objects.filter(CLIENT_NAME__icontains=search_term)
-        elif search_term_type == "date" and search_term:
-            # Ensure date is in the correct format (YYYY-MM-DD)
-            try:
-                search_date = datetime.strptime(search_term, "%Y-%m-%d").date()
-                invoices = SalesInvoice.objects.filter(
-                    SALES_INV_DATETIME__date=search_date
-                )
-            except ValueError:
-                return Response(
-                    {"error": "Invalid date format. Please use YYYY-MM-DD."}, status=400
-                )
-        elif search_term_type == "city" and search_term:
-            invoices = SalesInvoice.objects.filter(CLIENT_CITY__icontains=search_term)
-        elif search_term_type == "province" and search_term:
-            invoices = SalesInvoice.objects.filter(
-                CLIENT_PROVINCE__icontains=search_term
-            )
-        else:
-            # If no search term or term type, return all invoices (or apply some other default behavior)
-            invoices = SalesInvoice.objects.all()
+        # Default to current month if no date range is provided
+        if not start_date or not end_date:
+            today = datetime.today()
+            start_date = today.replace(day=1)  # First day of the current month
+            end_date = today + timedelta(
+                days=(31 - today.day)
+            )  # Last day of the current month
 
-        # Pagination
-        paginator = PageNumberPagination()
-        paginator.page_size = 20
-        result_page = paginator.paginate_queryset(invoices, request)
+        # Filter sales invoices based on search term and date range
+        sales_invoices = SalesInvoice.objects.filter(
+            Q(SALES_INV_ID__icontains=search_term)
+            | Q(CLIENT__name__icontains=search_term)
+            | Q(CLIENT__address__icontains=search_term)
+            | Q(CLIENT__province__icontains=search_term),
+            SALES_INV_DATETIME__range=(start_date, end_date),
+        ).order_by("-SALES_INV_DATETIME")
 
-        # Serialize the result
-        serializer = SalesInvoiceSerializer(result_page, many=True)
+        # Calculate the sum of gross income and revenue for the filtered invoices
+        total_gross_income = (
+            sales_invoices.aggregate(total_income=Sum("SALES_INV_TOTAL_GROSS_INCOME"))[
+                "total_income"
+            ]
+            or 0
+        )
 
-        # Return the paginated response with serialized data
-        return paginator.get_paginated_response(serializer.data)
+        total_gross_revenue = (
+            sales_invoices.aggregate(
+                total_revenue=Sum("SALES_INV_TOTAL_GROSS_REVENUE")
+            )["total_revenue"]
+            or 0
+        )
+
+        # Paginate results
+        paginator = SalesInvoicePagination()
+        paginated_sales_invoices = paginator.paginate_queryset(sales_invoices, request)
+
+        # Serialize the results
+        serializer = SalesInvoiceSerializer(paginated_sales_invoices, many=True)
+
+        # Include totals in the response
+        response_data = {
+            "total_gross_income": total_gross_income,
+            "total_gross_revenue": total_gross_revenue,
+            "sales_invoices": serializer.data,
+        }
+
+        # Return paginated response with totals
+        return paginator.get_paginated_response(response_data)

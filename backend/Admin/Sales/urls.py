@@ -2,7 +2,7 @@
 from django.urls import path
 from .views import (
     SalesInvoiceListView,
-    SalesReportView,
+    # SalesReportView,
     AddPaymentView,
     CustomerPayableListView,
     ViewPaymentDetails,
@@ -12,7 +12,7 @@ urlpatterns = [
     # Path for Sales Invoice API
     path("list/", SalesInvoiceListView.as_view(), name="sales_invoice_list"),
     # Path for Sales Report API
-    path("sales-report/", SalesReportView.as_view(), name="sales-report-list"),
+    # path("sales-report/", SalesReportView.as_view(), name="sales-report-list"),
     # Path for Updating Customer Payment API
     path("customer-payment/", AddPaymentView.as_view(), name="customer-payment"),
     # Path for Customer Payable List
@@ -26,5 +26,9 @@ urlpatterns = [
         "customer-payment-details/<int:payment_id>/",
         ViewPaymentDetails.as_view(),
         name="customer-payment-details",
+    ),
+    # Path for List of Sales Invoice
+    path(
+        "sales-invoice-list/", SalesInvoiceListView.as_view(), name="sales-invoice-list"
     ),
 ]
