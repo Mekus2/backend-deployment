@@ -29,7 +29,7 @@ from django.http import Http404
 from Admin.Inventory.models import Inventory
 from Admin.Sales.models import SalesInvoice, SalesInvoiceItems, CustomerPayment
 from Admin.Product.models import Product, ProductDetails
-
+from Account.models import User
 
 import logging
 
@@ -359,6 +359,9 @@ class CompleteOutboundDeliveryAPI(APIView):
                 logger.info(
                     f"Outbound Delivery {outbound_delivery.pk} marked as Delivered."
                 )
+                # Get the User instance from the provided user_id
+                user_id = request.data.get("user_id")
+                created_by_user = get_object_or_404(User, id=user_id)
 
                 # Create a Payment Entry for the completed Outbound Delivery
                 customer_payment = CustomerPayment(
@@ -368,7 +371,7 @@ class CompleteOutboundDeliveryAPI(APIView):
                     PAYMENT_TERMS=outbound_delivery.OUTBOUND_DEL_PYMNT_TERMS,
                     PAYMENT_METHOD=outbound_delivery.OUTBOUND_DEL_PYMNT_OPTION,
                     AMOUNT_BALANCE=outbound_delivery.OUTBOUND_DEL_TOTAL_PRICE,
-                    CREATED_BY=request.data.get("user_id"),
+                    CREATED_BY=created_by_user,
                 )
 
                 # Save the CustomerPayment to generate the primary key
