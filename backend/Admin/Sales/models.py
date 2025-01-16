@@ -9,23 +9,19 @@ from Admin.Customer.models import Clients
 from Admin.Product.models import Product
 
 
-# Create your models here.
-class SalesInvoice(models.Model):
-    SALES_INV_ID = models.CharField(max_length=20, unique=True, blank=True)
-    SALES_INV_DATETIME = models.DateTimeField(auto_now_add=True)
-    SALES_INV_DISCOUNT = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0.0
+class CustomerPayment(models.Model):
+    PAYMENT_ID = models.AutoField(primary_key=True)
+    OUTBOUND_DEL_ID = models.ForeignKey(
+        OutboundDelivery, on_delete=models.CASCADE, related_name="customer_payments"
     )
-    SALES_INV_TOTAL_PRICE = models.DecimalField(max_digits=10, decimal_places=2)
-    SALES_ORDER_DLVRY_OPTION = models.CharField(max_length=50)
     CLIENT_ID = models.ForeignKey(Clients, on_delete=models.CASCADE)
     CLIENT_NAME = models.CharField(max_length=255)
-    CLIENT_CITY = models.CharField(max_length=70, null=True)
-    CLIENT_PROVINCE = models.CharField(max_length=70, null=True)
-    CLIENT_PHONENUM = models.CharField(max_length=20)
-    SALES_INV_PYMNT_METHOD = models.CharField(max_length=50, null=True, blank=True)
-    SALES_INV_PYMNT_TERMS = models.PositiveIntegerField(null=True, default=0)
-    SALES_INV_PYMNT_STATUS = models.CharField(
+    PAYMENT_TERMS = models.PositiveIntegerField()
+    PAYMENT_START_DATE = models.DateTimeField(auto_now_add=True)
+    PAYMENT_DUE_DATE = models.DateTimeField(null=True)
+    PAYMENT_METHOD = models.CharField(max_length=50)  # Cash, Check, Bank Transfer, etc.
+    PAYMENT_TERMS = models.PositiveIntegerField()  # Refers in days
+    PAYMENT_STATUS = models.CharField(
         max_length=20,
         choices=[
             ("Unpaid", "Unpaid"),
@@ -34,21 +30,72 @@ class SalesInvoice(models.Model):
         ],
         default="Unpaid",
     )
-    SALES_INV_PYMNT_DATE = models.DateField(null=True, blank=True)
-    SALES_INV_AMOUNT_PAID = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0
-    )
-    SALES_INV_AMOUNT_BALANCE = models.DecimalField(
-        max_digits=10, decimal_places=2, default=0
-    )
-    SALES_INV_CREATED_AT = models.DateTimeField(auto_now_add=True)
-    SALES_INV_UPDATED_AT = models.DateTimeField(auto_now=True)
-    SALES_INV_CREATED_USER_ID = models.ForeignKey(
+    AMOUNT_PAID = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    AMOUNT_BALANCE = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    CREATED_AT = models.DateTimeField(auto_now_add=True)
+    UPDATED_AT = models.DateTimeField(auto_now=True)
+    CREATED_BY = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
     )
-    OUTBOUND_DEL_ID = models.ForeignKey(OutboundDelivery, on_delete=models.CASCADE)
 
-    # New fields for total gross revenue and total gross income
+    class Meta:
+        db_table = "CUSTOMER_PAYMENT"
+        verbose_name = "Customer Payment"
+        verbose_name_plural = "Customer Payments"
+
+    def save(self, *args, **kwargs):
+        # Ensure PAYMENT_START_DATE is set before calculating PAYMENT_DUE_DATE
+        if not self.PAYMENT_START_DATE:
+            self.PAYMENT_START_DATE = datetime.now()
+        # Calculate the due date
+        if self.PAYMENT_START_DATE and self.PAYMENT_TERMS:
+            self.PAYMENT_DUE_DATE = self.PAYMENT_START_DATE + timedelta(
+                days=self.PAYMENT_TERMS
+            )
+
+        # Update payment status
+        # if self.AMOUNT_PAID == self.AMOUNT_BALANCE and self.AMOUNT_BALANCE > 0:
+        #     self.PAYMENT_STATUS = "Paid"
+        # elif self.AMOUNT_PAID > 0 and self.AMOUNT_PAID < self.AMOUNT_BALANCE:
+        #     self.PAYMENT_STATUS = "Partially Paid"
+        # else:
+        #     self.PAYMENT_STATUS = "Unpaid"
+
+        # Call the parent class's save method
+        super().save(*args, **kwargs)
+
+
+# Create your models here.
+class SalesInvoice(models.Model):
+    SALES_INV_ID = models.CharField(
+        max_length=20, unique=True, blank=True
+    )  # Invoice ID
+    SALES_INV_DATETIME = models.DateTimeField(
+        auto_now_add=True
+    )  # Invoice creation date/time
+    SALES_INV_DISCOUNT = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0.0
+    )  # Total discount for the invoice
+    SALES_INV_TOTAL_PRICE = models.DecimalField(
+        max_digits=10, decimal_places=2
+    )  # Total invoice amount paid
+    CLIENT = models.ForeignKey(
+        Clients, on_delete=models.CASCADE
+    )  # Reference to the client
+    PAYMENT_ID = models.ForeignKey(
+        CustomerPayment, on_delete=models.SET_NULL, null=True
+    )  # Reference to the payment
+    OUTBOUND_DEL_ID = models.ForeignKey(
+        OutboundDelivery, on_delete=models.SET_NULL, null=True
+    )  # Reference to the outbound delivery
+    SALES_INV_CREATED_BY = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
+    )  # User who created the invoice
+    SALES_INV_CREATED_AT = models.DateTimeField(
+        auto_now_add=True
+    )  # Timestamp when created
+
+    # Optional: Fields for gross revenue and income
     SALES_INV_TOTAL_GROSS_REVENUE = models.DecimalField(
         max_digits=15, decimal_places=2, default=0.0
     )
@@ -56,24 +103,24 @@ class SalesInvoice(models.Model):
         max_digits=15, decimal_places=2, default=0.0
     )
 
-    def calculate_totals(self):
-        # Calculate total gross revenue and total gross income from related SalesInvoiceItems
-        total_revenue = (
-            self.sales_items.aggregate(
-                total_revenue=Sum("SALES_INV_ITEM_LINE_GROSS_REVENUE")
-            )["total_revenue"]
-            or 0
-        )
+    # def calculate_totals(self):
+    #     # Calculate total gross revenue and total gross income from related SalesInvoiceItems
+    #     total_revenue = (
+    #         self.sales_items.aggregate(
+    #             total_revenue=Sum("SALES_INV_ITEM_LINE_GROSS_REVENUE")
+    #         )["total_revenue"]
+    #         or 0
+    #     )
 
-        total_income = (
-            self.sales_items.aggregate(
-                total_income=Sum("SALES_INV_ITEM_LINE_GROSS_INCOME")
-            )["total_income"]
-            or 0
-        )
+    #     total_income = (
+    #         self.sales_items.aggregate(
+    #             total_income=Sum("SALES_INV_ITEM_LINE_GROSS_INCOME")
+    #         )["total_income"]
+    #         or 0
+    #     )
 
-        self.SALES_INV_TOTAL_GROSS_REVENUE = total_revenue
-        self.SALES_INV_TOTAL_GROSS_INCOME = total_income
+    #     self.SALES_INV_TOTAL_GROSS_REVENUE = total_revenue
+    #     self.SALES_INV_TOTAL_GROSS_INCOME = total_income
 
     def save(self, *args, **kwargs):
         # Automatically generate the sales invoice ID (starts with INV01)
@@ -86,25 +133,6 @@ class SalesInvoice(models.Model):
                 self.SALES_INV_ID = "INV001"
 
         # Save the SalesInvoice first to generate a primary key
-        super().save(*args, **kwargs)
-
-        # Calculate totals after the first save (this is now safe because the primary key is generated)
-        self.calculate_totals()
-
-        # Automatically calculate balance
-        self.SALES_INV_AMOUNT_BALANCE = (
-            self.SALES_INV_TOTAL_PRICE - self.SALES_INV_AMOUNT_PAID
-        )
-
-        # Set the payment status based on the balance and amount paid
-        if self.SALES_INV_AMOUNT_BALANCE == 0:
-            self.SALES_INV_PYMNT_STATUS = "Paid"
-        elif self.SALES_INV_AMOUNT_PAID == 0:
-            self.SALES_INV_PYMNT_STATUS = "Unpaid"
-        else:
-            self.SALES_INV_PYMNT_STATUS = "Partially Paid"
-
-        # Save again to persist the updated balance and payment status
         super().save(*args, **kwargs)
 
     class Meta:
@@ -152,58 +180,7 @@ class SalesInvoiceItems(models.Model):
         # Call the parent class's save method to actually save the instance
         super().save(*args, **kwargs)
 
-
-class CustomerPayment(models.Model):
-    PAYMENT_ID = models.AutoField(primary_key=True)
-    OUTBOUND_DEL_ID = models.ForeignKey(
-        OutboundDelivery, on_delete=models.CASCADE, related_name="customer_payments"
-    )
-    CLIENT_ID = models.ForeignKey(Clients, on_delete=models.CASCADE)
-    CLIENT_NAME = models.CharField(max_length=255)
-    PAYMENT_TERMS = models.PositiveIntegerField()
-    PAYMENT_START_DATE = models.DateTimeField(auto_now_add=True)
-    PAYMENT_DUE_DATE = models.DateTimeField(null=True)
-    PAYMENT_METHOD = models.CharField(max_length=50)  # Cash, Check, Bank Transfer, etc.
-    PAYMENT_TERMS = models.PositiveIntegerField()  # Refers in days
-    PAYMENT_STATUS = models.CharField(
-        max_length=20,
-        choices=[
-            ("Unpaid", "Unpaid"),
-            ("Partially Paid", "Partially Paid"),
-            ("Paid", "Paid"),
-        ],
-        default="Unpaid",
-    )
-    AMOUNT_PAID = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    AMOUNT_BALANCE = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    CREATED_AT = models.DateTimeField(auto_now_add=True)
-    UPDATED_AT = models.DateTimeField(auto_now=True)
-    CREATED_BY = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True
-    )
-
     class Meta:
-        db_table = "CUSTOMER_PAYMENT"
-        verbose_name = "Customer Payment"
-        verbose_name_plural = "Customer Payments"
-
-    def save(self, *args, **kwargs):
-        # Ensure PAYMENT_START_DATE is set before calculating PAYMENT_DUE_DATE
-        if not self.PAYMENT_START_DATE:
-            self.PAYMENT_START_DATE = datetime.now()
-        # Calculate the due date
-        if self.PAYMENT_START_DATE and self.PAYMENT_TERMS:
-            self.PAYMENT_DUE_DATE = self.PAYMENT_START_DATE + timedelta(
-                days=self.PAYMENT_TERMS
-            )
-
-        # Update payment status
-        if self.AMOUNT_PAID == self.AMOUNT_BALANCE and self.AMOUNT_BALANCE > 0:
-            self.PAYMENT_STATUS = "Paid"
-        elif self.AMOUNT_PAID > 0 and self.AMOUNT_PAID < self.AMOUNT_BALANCE:
-            self.PAYMENT_STATUS = "Partially Paid"
-        else:
-            self.PAYMENT_STATUS = "Unpaid"
-
-        # Call the parent class's save method
-        super().save(*args, **kwargs)
+        db_table = "SALES_INVOICE_ITEMS"
+        verbose_name = "Sales Invoice Item"
+        verbose_name_plural = "Sales Invoice Items"

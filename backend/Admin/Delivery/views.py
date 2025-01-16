@@ -354,6 +354,9 @@ class CompleteOutboundDeliveryAPI(APIView):
 
                 # Update the delivery status to "Delivered"
                 outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
+                outbound_delivery.OUTBOUND_DEL_DLVRD_QTY = request.data.get(
+                    "total_qty_accepted"
+                )
                 outbound_delivery.OUTBOUND_DEL_CSTMR_RCVD_DATE = timezone.now()
                 outbound_delivery.save()
                 logger.info(

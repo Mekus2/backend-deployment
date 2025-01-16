@@ -13,10 +13,14 @@ from .serializers import (
 )
 from django.db.models import Sum, Q, F
 
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from datetime import datetime
 from django.db import transaction
-from .utils import recalculate_sales_invoice  # Import the utility function
+import logging
+
+# from .utils import recalculate_sales_invoice  # Import the utility function
+
+logger = logging.getLogger(__name__)
 
 
 # Custom pagination class to handle paginated responses
@@ -99,44 +103,135 @@ class ViewPaymentDetails(APIView):
     def patch(self, request, payment_id):
         try:
             with transaction.atomic():
-                # Retrieve the sales invoice using the invoice_id from the URL
-                paymentId = CustomerPayment.objects.get(PAYMENT_ID=payment_id)
+                # Retrieve the CustomerPayment using the payment_id from the URL
+                payment = CustomerPayment.objects.get(PAYMENT_ID=payment_id)
+                logger.info(f"Retrieved payment with ID: {payment_id}")
 
-                # Get the data from the request body
+                # Get the amount paid from the request body
                 amount = request.data.get("CUSTOMER_AMOUNT_PAID")
-
                 amount = Decimal(amount)
+                logger.info(f"Amount received: {amount}")
 
-                # Stack the amount if provided
+                # Check and update payment details
                 if amount is not None:
-                    if amount <= paymentId.AMOUNT_BALANCE:
-                        paymentId.AMOUNT_PAID += amount  # Accumulate the amount
-                        paymentId.AMOUNT_BALANCE -= (
-                            amount  # Deduct the amount from the balance
+                    if amount <= payment.AMOUNT_BALANCE:
+                        # Accumulate the amount paid
+                        payment.AMOUNT_PAID += amount
+                        # Deduct the amount from the balance
+                        payment.AMOUNT_BALANCE -= amount
+
+                        logger.info(
+                            f"Updated payment: AMOUNT_PAID={payment.AMOUNT_PAID}, AMOUNT_BALANCE={payment.AMOUNT_BALANCE}"
+                        )
+
+                        # Round to 2 decimal places before comparing (this ensures precision)
+                        # payment.AMOUNT_BALANCE = payment.AMOUNT_BALANCE.quantize(
+                        #     Decimal("0.01"), rounding=ROUND_HALF_UP
+                        # )
+
+                        # logger.info(f"Rounded AMOUNT_BALANCE: {payment.AMOUNT_BALANCE}")
+
+                        # Check and update the payment status based on the balance
+                        if payment.AMOUNT_BALANCE == Decimal("0.00"):
+                            payment.PAYMENT_STATUS = "Paid"
+                        else:
+                            payment.PAYMENT_STATUS = "Partially Paid"
+
+                        logger.info(
+                            f"Payment status updated to: {payment.PAYMENT_STATUS}"
                         )
                     else:
+                        logger.error("Amount paid exceeds the balance.")
                         return Response(
                             {"error": "Amount paid exceeds the balance."},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
                 else:
+                    logger.error("Amount paid is required.")
                     return Response(
                         {"error": "Amount paid is required."},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
-                # Save the updated invoice
-                paymentId.save()
+                # Save the updated payment
+                payment.save()
+                logger.info(
+                    f"Payment saved with ID: {payment.PAYMENT_ID}, New Status: {payment.PAYMENT_STATUS}"
+                )
 
-                # Serialize the updated invoice and return the response
-                serializer = CustomerPaymentSerializer(paymentId)
+                # If payment is fully paid, generate a Sales Invoice
+                if payment.PAYMENT_STATUS == "Paid":
+                    # Create SalesInvoice
+                    sales_invoice = SalesInvoice.objects.create(
+                        CLIENT=payment.CLIENT_ID,
+                        PAYMENT_ID=payment,
+                        OUTBOUND_DEL_ID=payment.OUTBOUND_DEL_ID,
+                        SALES_INV_TOTAL_PRICE=payment.AMOUNT_PAID,
+                        SALES_INV_CREATED_BY=payment.CREATED_BY,
+                    )
+                    logger.info(
+                        f"Sales invoice created with ID: {sales_invoice.SALES_INV_ID}"
+                    )
+
+                    # Fetch the Outbound Delivery details
+                    outbound_delivery = payment.OUTBOUND_DEL_ID
+
+                    # Assign the discount to the invoice
+                    sales_invoice.SALES_INV_DISCOUNT = (
+                        outbound_delivery.OUTBOUND_DEL_DISCOUNT
+                    )
+
+                    # Save the SalesInvoice with the discount
+                    sales_invoice.save()
+
+                    # Loop through each OutboundDeliveryDetails item and create SalesInvoiceItems
+                    for item in outbound_delivery.outbound_details.all():
+                        # Fetch the product details for the current product in the outbound details
+                        product_details = (
+                            item.OUTBOUND_DETAILS_PROD_ID.PROD_DETAILS_CODE
+                        )
+
+                        # Calculate line gross revenue
+                        line_gross_revenue = (
+                            item.OUTBOUND_DETAILS_SELL_PRICE
+                            * item.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED
+                        )
+
+                        # Fetch the purchase price from the ProductDetails model
+                        purchase_price = product_details.PROD_DETAILS_PURCHASE_PRICE
+
+                        # Calculate line gross income
+                        line_gross_income = (
+                            item.OUTBOUND_DETAILS_SELL_PRICE - purchase_price
+                        ) * item.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED
+
+                        # Create the SalesInvoiceItems
+                        SalesInvoiceItems.objects.create(
+                            SALES_INV_ID=sales_invoice,  # Reference to the created SalesInvoice
+                            SALES_INV_ITEM_PROD_ID=item.OUTBOUND_DETAILS_PROD_ID,  # Product ID
+                            SALES_INV_ITEM_PROD_NAME=item.OUTBOUND_DETAILS_PROD_NAME,  # Product Name
+                            SALES_INV_item_PROD_DLVRD=item.OUTBOUND_DETAILS_PROD_QTY_ACCEPTED,  # Quantity Delivered
+                            SALES_INV_ITEM_PROD_SELL_PRICE=item.OUTBOUND_DETAILS_SELL_PRICE,  # Selling Price
+                            SALES_INV_ITEM_PROD_PURCH_PRICE=purchase_price,  # Purchase Price from ProductDetails
+                            SALES_INV_ITEM_LINE_GROSS_REVENUE=line_gross_revenue,  # Gross revenue for the item
+                            SALES_INV_ITEM_LINE_GROSS_INCOME=line_gross_income,  # Gross income for the item
+                        )
+                        logger.info(
+                            f"Sales invoice item created for product ID: {item.OUTBOUND_DETAILS_PROD_ID}"
+                        )
+
+                # Serialize the updated payment and return the response
+                serializer = CustomerPaymentSerializer(payment)
+                logger.info(f"Payment serialized with ID: {payment.PAYMENT_ID}")
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
         except CustomerPayment.DoesNotExist:
+            logger.error(f"Payment not found with ID: {payment_id}")
             return Response(
-                {"error": "Invoice not found."}, status=status.HTTP_404_NOT_FOUND
+                {"error": "Payment not found."}, status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
+            logger.error(f"An error occurred: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
