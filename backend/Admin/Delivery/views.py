@@ -353,7 +353,7 @@ class CompleteOutboundDeliveryAPI(APIView):
                         )
 
                 # Update the delivery status to "Delivered"
-                outbound_delivery.OUTBOUND_DEL_STATUS = "Delivered"
+                outbound_delivery.OUTBOUND_DEL_STATUS = request.data.get("status")
                 outbound_delivery.OUTBOUND_DEL_DLVRD_QTY = request.data.get(
                     "total_qty_accepted"
                 )
