@@ -33,6 +33,7 @@ class LoginView(TokenObtainPairView):
             "id": user.id,
             "type": user.accType,
             "username": user.username,
+            "email": user.email,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "message": "Login Successful",

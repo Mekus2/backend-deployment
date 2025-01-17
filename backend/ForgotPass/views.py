@@ -236,3 +236,57 @@ class ResendOTPView(APIView):
                 {"message": f"Failed to send OTP. Error: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class RegisterOTPView(APIView):
+    permission_classes = [permissions.AllowAny]  # Allow public access to this endpoint
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+
+        if not email:
+            return Response(
+                {"message": "Email is required."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if email exists
+        if not User.objects.filter(email=email).exists():
+            return Response(
+                {"message": "Email not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Retrieve the user
+        user = User.objects.get(email=email)
+
+        # Generate a 6-digit OTP
+        otp_value = str(random.randint(100000, 999999))
+
+        # Create and save the OTP instance
+        otp_instance = OTP.objects.create(user=user, otp_value=otp_value)  # noqa:F841
+
+        # Custom email message
+        email_message = f"""
+        Hi {user.first_name},
+        This is the otp for creating new user:
+        {otp_value}
+        If you did not request this, please ignore this email.
+        """
+
+        # Send the OTP via email
+        try:
+            send_mail(
+                "Your OTP for Password Reset",
+                email_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
+            return Response(
+                {"message": "OTP sent to email successfully."},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {"message": f"Failed to send OTP. Error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
