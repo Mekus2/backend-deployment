@@ -28,12 +28,14 @@ class DeliveryIssue(models.Model):
         ("Wrong Item", "Wrong Item"),
         ("Defective", "Defective"),
         ("Expired", "Expired"),
+        ("Wrong Quantity", "Wrong Quantity"),
+        ("Packaging Issue", "Packaging Issue"),
         ("Other", "Other"),
     ]
     RESOLUTION_CHOICES = [
-        ("Offset", "Offset"),
         ("Replacement", "Replacement"),
-        ("No Selected", "No Selected"),
+        ("Offset", "Offset"),
+        ("No Selected", "Other"),
     ]
 
     # Fields

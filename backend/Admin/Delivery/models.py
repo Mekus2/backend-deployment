@@ -20,6 +20,7 @@ class OutboundDelivery(models.Model):
         ("Pending", "Pending"),
         ("Delivered", "Delivered"),
         ("Received", "Received"),
+        ("Delivered with Issues", "Delivered with Issues"),
     ]
 
     OUTBOUND_DEL_ID = models.AutoField(primary_key=True)
@@ -43,7 +44,7 @@ class OutboundDelivery(models.Model):
         max_digits=10, decimal_places=2, default=0
     )
     OUTBOUND_DEL_STATUS = models.CharField(
-        max_length=15, choices=DELIVERY_STATUS_CHOICES, default="Pending"
+        max_length=30, choices=DELIVERY_STATUS_CHOICES, default="Pending"
     )
     OUTBOUND_DEL_TOTAL_ORDERED_QTY = models.PositiveIntegerField(
         null=False, default=0
