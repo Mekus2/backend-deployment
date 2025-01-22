@@ -101,3 +101,10 @@ class PurchaseOrderUpdateSerializer(serializers.ModelSerializer):
             "PURCHASE_ORDER_CONTACT_NUMBER",
             "details",
         )
+
+
+
+class PurchaseOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseOrder
+        fields = "__all__"

@@ -4,11 +4,11 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 import logging
 from django.http import Http404
-
+from django.utils.timezone import now
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-
+from django.db.models import Q
 from .models import PurchaseOrder, PurchaseOrderDetails
 from ...Product.models import Product
 from Admin.Delivery.models import InboundDelivery, InboundDeliveryDetails
@@ -19,6 +19,7 @@ from .serializers import (
     PurchaseOrderDetailsSerializer,
     PurchaseOrderDetailsUpdateSerializer,
     PurchaseOrderUpdateSerializer,
+    PurchaseOrderSerializer,
 )
 from ...Supplier.utils import (
     check_supplier_exists,
@@ -596,3 +597,16 @@ class PurchaseOrderCancelAPIView(APIView):
                 {"error": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+
+class DailyPurchaseOrdersView(APIView):
+    permission_classes = [permissions.AllowAny]  # Ensure the user is authenticated
+
+    def get(self, request):
+        today = now().date()
+        purchase_orders = PurchaseOrder.objects.filter(
+            Q(PURCHASE_ORDER_DATE_CREATED__date=today)
+        )
+        serializer = PurchaseOrderSerializer(purchase_orders, many=True)
+        return Response(serializer.data, status=200)
