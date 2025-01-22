@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ClientListManager, TotalClientsCount
+from .views import ClientListManager, TotalClientsCount, GetClientsWithBalance
 
 urlpatterns = [
     path(
@@ -8,7 +8,9 @@ urlpatterns = [
     path(
         "clients/<int:pk>/", ClientListManager.as_view(), name="client-detail"
     ),  # For retrieving, updating, deleting a single client by ID (pk)
+    path("totalClients/", TotalClientsCount.as_view(), name="totalClients"),
+    # to retrieve custmer and their balance
     path(
-        'totalClients/', TotalClientsCount.as_view(), name="totalClients"
+        "client-balance/", GetClientsWithBalance.as_view(), name="client-balance-list"
     ),
 ]
