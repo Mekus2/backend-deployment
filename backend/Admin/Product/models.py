@@ -33,6 +33,7 @@ class ProductDetails(models.Model):
 
 class Product(models.Model):
     PROD_NAME = models.CharField(max_length=255, unique=False)
+    PROD_BRAND = models.CharField(max_length=255, null= True)
     PROD_DETAILS_CODE = models.ForeignKey(
         ProductDetails, on_delete=models.CASCADE, null=True
     )

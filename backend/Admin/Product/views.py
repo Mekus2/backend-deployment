@@ -134,8 +134,15 @@ class ProductCategoryManager(APIView):
                     {"error": "Category not found."}, status=status.HTTP_404_NOT_FOUND
                 )
 
-        # If no pk is provided, return all categories
+        # Fetch query parameters for filtering
+        prod_cat_name = request.query_params.get("prod_cat_name", None)
+
+        # If no pk is provided, return filtered or all categories
         queryset = ProductCategory.objects.all()
+
+        if prod_cat_name:
+            queryset = queryset.filter(PROD_CAT_NAME__icontains=prod_cat_name)
+
         serializer = ProductCategorySerializer(queryset, many=True)
         return Response(serializer.data)
 

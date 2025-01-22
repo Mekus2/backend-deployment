@@ -69,6 +69,7 @@ class ProductReadSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "PROD_NAME",
+            "PROD_BRAND",
             "PROD_RO_LEVEL",
             "PROD_RO_QTY",
             "PROD_QOH",
@@ -81,6 +82,7 @@ class ProductReadSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         # Update the Product instance
+        instance.PROD_BRAND = validated_data.get("PROD_BRAND", instance.PROD_BRAND)
         instance.PROD_NAME = validated_data.get("PROD_NAME", instance.PROD_NAME)
         instance.PROD_RO_LEVEL = validated_data.get(
             "PROD_RO_LEVEL", instance.PROD_RO_LEVEL
@@ -111,6 +113,7 @@ class ProductWriteSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "PROD_NAME",
+            "PROD_BRAND",
             "PROD_RO_LEVEL",
             "PROD_RO_QTY",
             "PROD_QOH",
@@ -121,6 +124,7 @@ class ProductWriteSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         # Update the Product fields
         instance.PROD_NAME = validated_data.get("PROD_NAME", instance.PROD_NAME)
+        instance.PROD_BRAND = validated_data.get("PROD_BRAND", instance.PROD_BRAND)
         instance.PROD_RO_LEVEL = validated_data.get(
             "PROD_RO_LEVEL", instance.PROD_RO_LEVEL
         )
@@ -129,7 +133,7 @@ class ProductWriteSerializer(serializers.ModelSerializer):
         instance.PROD_IMAGE = validated_data.get("PROD_IMAGE", instance.PROD_IMAGE)
         instance.save()
 
-        # Update the related ProductDetails if present
+        # Update the related ProductDeta    ils if present
         product_details_data = validated_data.get("PROD_DETAILS_CODE", None)
         if product_details_data:
             product_details_instance = (
