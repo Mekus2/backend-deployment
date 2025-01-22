@@ -13,8 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-# Create your views here.
-class DeliveryIssueAPIView(APIView):
+class DeliveryIssueListAPI(APIView):
     permission_classes = [permissions.AllowAny]
 
     def get(self, request):
@@ -22,6 +21,11 @@ class DeliveryIssueAPIView(APIView):
         delivery_issues = DeliveryIssue.objects.prefetch_related("item_issues").all()
         serializer = DeliveryIssueSerializer(delivery_issues, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# Create your views here.
+class DeliveryIssueAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         """Create a new delivery issue along with its items."""
