@@ -21,7 +21,6 @@ urlpatterns = [
     path("list/<str:pk>/", InventoryListView.as_view(), name="Inventory list"),
     # Path for inventory search
     path("search/", InventorySearchView.as_view(), name="inventory-search"),
-
-    #path for expired soon
+    # path for expired soon
     path("expiredsoon/", ExpiringProductsView.as_view(), name="expiring soon"),
 ]

@@ -4,6 +4,7 @@ from .views import (
     PurchaseOrderDetailView,
     TransferToInboundDelivery,
     PurchaseOrderUpdateAPIView,
+    PurchaseOrderCancelAPIView,
 )
 
 urlpatterns = [
@@ -18,9 +19,15 @@ urlpatterns = [
         TransferToInboundDelivery.as_view(),
         name="accept-purchase-order",
     ),
+    # Path for updating a purchase order details
     path(
         "<int:purchase_order_id>/update/",
         PurchaseOrderUpdateAPIView.as_view(),
         name="update-purchase_order",
+    ),
+    path(
+        "<int:purchase_order_id>/cancel/",
+        PurchaseOrderCancelAPIView.as_view(),
+        name="cancel-purchase_order",
     ),
 ]

@@ -219,6 +219,11 @@ class AcceptOutboundDeliveryAPI(APIView):
                                 )
                                 batch.QUANTITY_ON_HAND -= deduct_from_batch
                                 total_deducted += deduct_from_batch
+
+                                # Set IS_ACTIVE to False if QUANTITY_ON_HAND reaches 0
+                                if batch.QUANTITY_ON_HAND == 0:
+                                    batch.IS_ACTIVE = False
+
                                 batch.save()
 
                                 logger.info(
@@ -649,6 +654,8 @@ class DeliveredOutboundDeliveryView(APIView):
     """
     API View to fetch all OutboundDeliveries with status 'Delivered'.
     """
+
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, *args, **kwargs):
         # Query OutboundDelivery objects with status 'Delivered'

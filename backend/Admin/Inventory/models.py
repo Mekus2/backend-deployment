@@ -20,6 +20,7 @@ class Inventory(models.Model):
     BATCH_ID = models.CharField(max_length=50, unique=True)
     EXPIRY_DATE = models.DateField(null=True, blank=True)
     QUANTITY_ON_HAND = models.PositiveIntegerField()  # Quantity available in stock
+    IS_ACTIVE = models.BooleanField(default=True)
     LAST_UPDATED = models.DateTimeField(auto_now=True)
     DATE_CREATED = models.DateTimeField(auto_now_add=True)
 

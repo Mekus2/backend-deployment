@@ -15,6 +15,7 @@ from rest_framework.generics import GenericAPIView
 from Admin.Delivery.models import InboundDeliveryDetails, InboundDelivery
 from Admin.Delivery.utils import update_inbound_delivery_totals
 from Admin.Product.models import Product
+from Admin.Order.Purchase.models import PurchaseOrder
 
 logger = logging.getLogger(__name__)
 
@@ -143,9 +144,18 @@ class AddProductInventoryView(APIView):
                     # Update the status of the Inbound Delivery
                     if new_status == "Delivered":
                         logger.info("Updating Inbound Delivery status to 'Delivered'.")
+
+                        # Update Inbound Delivery status
                         inbound_delivery_obj.INBOUND_DEL_STATUS = "Delivered"
                         inbound_delivery_obj.INBOUND_DEL_RCVD_BY_USER_NAME = username
                         inbound_delivery_obj.INBOUND_DEL_DATE_DELIVERED = timezone.now()
+
+                        # Update the related Purchase Order status to "Delivered"
+                        if inbound_delivery_obj.PURCHASE_ORDER_ID:
+                            purchase_order = inbound_delivery_obj.PURCHASE_ORDER_ID
+                            purchase_order.PURCHASE_ORDER_STATUS = "Delivered"
+                            purchase_order.save()
+
                     elif new_status == "Partially Delivered":
                         logger.info(
                             "Updating Inbound Delivery status to 'Partially Delivered'."
@@ -158,6 +168,7 @@ class AddProductInventoryView(APIView):
                             status=status.HTTP_400_BAD_REQUEST,
                         )
 
+                    # Save the updated InboundDelivery
                     inbound_delivery_obj.save()
 
                     # Update totals

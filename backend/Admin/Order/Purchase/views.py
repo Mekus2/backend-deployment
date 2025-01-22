@@ -436,16 +436,6 @@ class PurchaseOrderUpdateAPIView(APIView):
                 purchase_order = get_object_or_404(
                     PurchaseOrder, PURCHASE_ORDER_ID=purchase_order_id
                 )
-
-                # Update PurchaseOrder fields from the request data
-                if supplier_id := request.data.get("PURCHASE_ORDER_SUPPLIER_ID"):
-                    supplier = get_object_or_404(Supplier, id=supplier_id)
-                    purchase_order.PURCHASE_ORDER_SUPPLIER_ID = supplier
-
-                purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME = request.data.get(
-                    "PURCHASE_ORDER_SUPPLIER_CMPNY_NAME",
-                    purchase_order.PURCHASE_ORDER_SUPPLIER_CMPNY_NAME,
-                )
                 purchase_order.save()
 
                 # Check if there is an existing InboundDelivery for the PurchaseOrder
@@ -574,3 +564,35 @@ class PurchaseOrderUpdateAPIView(APIView):
         #         {"error": f"An error occurred: {str(e)}"},
         #         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         #     )
+
+
+class PurchaseOrderCancelAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, purchase_order_id):
+        try:
+            with transaction.atomic():
+                # Fetch the PurchaseOrder
+                purchase_order = get_object_or_404(
+                    PurchaseOrder, PURCHASE_ORDER_ID=purchase_order_id
+                )
+
+                # Update the purchase order status to 'Cancelled'
+                purchase_order.PURCHASE_ORDER_STATUS = "Cancelled"
+                purchase_order.save()
+
+                return Response(
+                    {"message": "Purchase Order cancelled successfully."},
+                    status=status.HTTP_200_OK,
+                )
+
+        except PurchaseOrder.DoesNotExist:
+            return Response(
+                {"error": f"Purchase Order with ID {purchase_order_id} not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
