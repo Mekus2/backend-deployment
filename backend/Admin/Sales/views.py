@@ -14,6 +14,7 @@ from .serializers import (
 )
 from django.db import transaction
 from django.db.models import Sum, Q, F
+from django.db.models.functions import TruncMonth
 from django.utils.dateparse import parse_date
 
 from decimal import Decimal, ROUND_HALF_UP
@@ -377,3 +378,46 @@ class SalesInvoiceDetailsView(APIView):
             )
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class MonthlyRevenueIncomeAPI(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        """Fetch total revenue and income for each month in the current year."""
+        current_year = datetime.now().year  # Get the current year
+
+        # Filter by current year and group by month
+        monthly_data = (
+            SalesInvoice.objects.filter(SALES_INV_DATETIME__year=current_year)
+            .annotate(month=TruncMonth("SALES_INV_DATETIME"))  # Group by month
+            .values("month")
+            .annotate(
+                revenue=Sum("SALES_INV_TOTAL_GROSS_REVENUE"),
+                income=Sum("SALES_INV_TOTAL_GROSS_INCOME"),
+            )
+            .order_by("month")
+        )
+
+        # Create a list of all months in the current year
+        all_months = [
+            {"month": i, "name": datetime(current_year, i, 1).strftime("%B")}
+            for i in range(1, 13)
+        ]
+
+        # Create a dictionary of the monthly data by month index
+        monthly_data_dict = {entry["month"].month: entry for entry in monthly_data}
+
+        # Format the response to include all months, even those with no sales
+        response_data = []
+        for month in all_months:
+            month_data = monthly_data_dict.get(month["month"])
+            response_data.append(
+                {
+                    "name": month["name"],
+                    "revenue": float(month_data["revenue"] if month_data else 0),
+                    "income": float(month_data["income"] if month_data else 0),
+                }
+            )
+
+        return Response(response_data, status=status.HTTP_200_OK)

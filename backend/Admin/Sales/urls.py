@@ -7,6 +7,7 @@ from .views import (
     CustomerPayableListView,
     ViewPaymentDetails,
     SalesInvoiceDetailsView,
+    MonthlyRevenueIncomeAPI,
 )
 
 urlpatterns = [
@@ -38,4 +39,6 @@ urlpatterns = [
         SalesInvoiceDetailsView.as_view(),
         name="sales-invoice-details",
     ),
+    # Path for fetching monthly revenue and income
+    path("monthly-sales/", MonthlyRevenueIncomeAPI.as_view(), name="monthly-sales"),
 ]
