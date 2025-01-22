@@ -192,28 +192,6 @@ class InboundDeliveryDetails(models.Model):
     )
     INBOUND_DEL_DETAIL_PROD_EXP_DATE = models.DateField(null=True, blank=True)
 
-    # def save(self, *args, **kwargs):
-    #     if not self.INBOUND_DEL_DETAIL_BATCH_ID:
-    #         # Ensure the related InboundDelivery instance exists
-    #         inbound_delivery = (
-    #             self.INBOUND_DEL_ID
-    #         )  # This retrieves the related instance
-
-    #         if not inbound_delivery:
-    #             raise ValueError("Inbound Delivery instance does not exist.")
-
-    #         if not inbound_delivery.INBOUND_DEL_DATE_DELIVERED:
-    #             raise ValueError("Inbound Delivery date delivered is not set.")
-
-    #         # Generate batch ID using the product name and delivery date
-    #         prod_name_slug = slugify(self.INBOUND_DEL_DETAIL_PROD_NAME)
-    #         delivery_date = inbound_delivery.INBOUND_DEL_DATE_DELIVERED.strftime(
-    #             "%Y%m%d"
-    #         )
-    #         self.INBOUND_DEL_DETAIL_BATCH_ID = f"{prod_name_slug}-{delivery_date}"
-
-    #     super().save(*args, **kwargs)
-
     class Meta:
         db_table = "INBOUND_DELIVERY_DETAILS"
         verbose_name = "Inbound Delivery Detail"

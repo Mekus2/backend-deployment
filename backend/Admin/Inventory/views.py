@@ -76,10 +76,12 @@ class AddProductInventoryView(APIView):
                         f"Processing inventory entries for {len(details)} items."
                     )
                     for detail in details:
-                        logger.debug(f"Processing detail: {detail}")
+                        logger.info(f"Processing detail: {detail}")
 
                         # Validate PRICE manually
                         price = detail.get("PRICE")
+                        logger.info(f"Processing Price:{price}")
+                        logger.debug(f"Processing Price:{price}")
                         if (
                             price is None
                             or not isinstance(price, (int, float))
