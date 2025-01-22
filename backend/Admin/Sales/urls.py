@@ -6,6 +6,7 @@ from .views import (
     AddPaymentView,
     CustomerPayableListView,
     ViewPaymentDetails,
+    SalesInvoiceDetailsView,
 )
 
 urlpatterns = [
@@ -30,5 +31,11 @@ urlpatterns = [
     # Path for List of Sales Invoice
     path(
         "sales-invoice-list/", SalesInvoiceListView.as_view(), name="sales-invoice-list"
+    ),
+    # Path for specific Sales Invoice Details
+    path(
+        "sales-invoice-details/<str:sales_inv_id>/",
+        SalesInvoiceDetailsView.as_view(),
+        name="sales-invoice-details",
     ),
 ]

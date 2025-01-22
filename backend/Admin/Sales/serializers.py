@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SalesInvoice, CustomerPayment
+from .models import SalesInvoice, CustomerPayment, SalesInvoiceItems
 
 
 class CustomerPaymentSerializer(serializers.ModelSerializer):
@@ -41,7 +41,22 @@ class SalesInvoiceSerializer(serializers.ModelSerializer):
             "SALES_INV_TOTAL_PRICE",
             "SALES_INV_TOTAL_GROSS_REVENUE",
             "SALES_INV_TOTAL_GROSS_INCOME",
+            "OUTBOUND_DEL_ID",
             "client_name",
             "client_address",
             "client_province",
+        ]
+
+
+class SalesInvoiceItemsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SalesInvoiceItems
+        fields = [
+            "SALES_INV_ITEM_PROD_ID",
+            "SALES_INV_ITEM_PROD_NAME",
+            "SALES_INV_item_PROD_DLVRD",
+            "SALES_INV_ITEM_PROD_SELL_PRICE",
+            "SALES_INV_ITEM_PROD_PURCH_PRICE",
+            "SALES_INV_ITEM_LINE_GROSS_REVENUE",
+            "SALES_INV_ITEM_LINE_GROSS_INCOME",
         ]

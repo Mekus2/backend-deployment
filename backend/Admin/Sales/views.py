@@ -10,6 +10,7 @@ from .serializers import (
     CustomerPaymentSerializer,
     CustomerPaymentListSerializer,
     SalesInvoiceSerializer,
+    SalesInvoiceItemsSerializer,
 )
 from django.db import transaction
 from django.db.models import Sum, Q, F
@@ -345,3 +346,34 @@ class SalesInvoiceListView(APIView):
 
         # Return paginated response with totals
         return paginator.get_paginated_response(response_data)
+
+
+class SalesInvoiceDetailsView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request, sales_inv_id):
+        try:
+            # Retrieve the sales invoice using the sales_inv_id from the URL
+            sales_invoice = SalesInvoice.objects.get(SALES_INV_ID=sales_inv_id)
+
+            # Retrieve related SalesInvoiceItems
+            invoice_items = SalesInvoiceItems.objects.filter(SALES_INV_ID=sales_invoice)
+
+            # Debugging: print the invoice_items to ensure it's a queryset
+            print(invoice_items)  # This should be a queryset, not a list
+
+            # Serialize the sales invoice and its related items
+            items_serializer = SalesInvoiceItemsSerializer(invoice_items, many=True)
+
+            # Return both sales invoice and its items as serialized data
+            return Response(
+                {"items": items_serializer.data},
+                status=status.HTTP_200_OK,
+            )
+
+        except SalesInvoice.DoesNotExist:
+            return Response(
+                {"error": "Sales invoice not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
