@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status, permissions
 from .models import DeliveryIssue, DeliveryItemIssue
 from .serializers import DeliveryIssueSerializer, DeliveryItemIssueSerializer
+from Admin.Customer.models import Clients
+from Admin.Supplier.models import Supplier
 
 
 import logging
@@ -19,8 +21,48 @@ class DeliveryIssueListAPI(APIView):
     def get(self, request):
         """Fetch all delivery issues."""
         delivery_issues = DeliveryIssue.objects.prefetch_related("item_issues").all()
-        serializer = DeliveryIssueSerializer(delivery_issues, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        response_data = []
+        for issue in delivery_issues:
+            delivery_details = issue.DELIVERY  # Resolve GenericForeignKey
+            print(f"Issue {issue.ISSUE_NO}: DELIVERY -> {delivery_details}")
+            print(f"Type of delivery_details -> {type(delivery_details)}")
+
+            if issue.DELIVERY_TYPE:
+                print(f"Issue {issue.ISSUE_NO}: DELIVERY_TYPE -> {issue.DELIVERY_TYPE}")
+                print(
+                    f"App Label: {issue.DELIVERY_TYPE.app_label}, Model: {issue.DELIVERY_TYPE.model}"
+                )
+
+            # Determine name based on DELIVERY_TYPE.model
+            if delivery_details:
+                delivery_model = (
+                    issue.DELIVERY_TYPE.model.strip().lower()
+                    if issue.DELIVERY_TYPE
+                    else None
+                )
+                if delivery_model == "outbounddelivery":
+                    # For outbound deliveries (Customer Delivery)
+                    name = delivery_details.OUTBOUND_DEL_CUSTOMER_NAME
+                    print(f"Issue {issue.ISSUE_NO}: Resolved to Customer {name}")
+                elif delivery_model == "inbounddelivery":
+                    # For inbound deliveries (Supply Delivery)
+                    name = delivery_details.INBOUND_DEL_SUPP_NAME
+                    print(f"Issue {issue.ISSUE_NO}: Resolved to Supplier {name}")
+                else:
+                    # Fallback for unknown types
+                    name = "Uncategorized Delivery"
+                    print(f"Issue {issue.ISSUE_NO}: Defaulting to Uncategorized")
+            else:
+                name = "Uncategorized Delivery"
+                print(f"Issue {issue.ISSUE_NO}: No Delivery Details Found")
+
+            # Serialize the issue and add the name
+            serialized_issue = DeliveryIssueSerializer(issue).data
+            serialized_issue["name"] = name
+            response_data.append(serialized_issue)
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 # Create your views here.
