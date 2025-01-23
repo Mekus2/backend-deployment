@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.db.models import Q
+
 from .models import PurchaseOrder, PurchaseOrderDetails
 from ...Product.models import Product
 from Admin.Delivery.models import InboundDelivery, InboundDeliveryDetails
@@ -19,7 +20,7 @@ from .serializers import (
     PurchaseOrderDetailsSerializer,
     PurchaseOrderDetailsUpdateSerializer,
     PurchaseOrderUpdateSerializer,
-    PurchaseOrderSerializer,
+    BasayPurchaseOrderSerializer,
 )
 from ...Supplier.utils import (
     check_supplier_exists,
@@ -599,7 +600,6 @@ class PurchaseOrderCancelAPIView(APIView):
             )
 
 
-
 class DailyPurchaseOrdersView(APIView):
     permission_classes = [permissions.AllowAny]  # Ensure the user is authenticated
 
@@ -608,5 +608,5 @@ class DailyPurchaseOrdersView(APIView):
         purchase_orders = PurchaseOrder.objects.filter(
             Q(PURCHASE_ORDER_DATE_CREATED__date=today)
         )
-        serializer = PurchaseOrderSerializer(purchase_orders, many=True)
+        serializer = BasayPurchaseOrderSerializer(purchase_orders, many=True)
         return Response(serializer.data, status=200)

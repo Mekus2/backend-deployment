@@ -31,12 +31,10 @@ urlpatterns = [
         PurchaseOrderCancelAPIView.as_view(),
         name="cancel-purchase_order",
     ),
-    #For purchase order report
+    # For purchase order report
     path(
         "purchaseOrder/",
         DailyPurchaseOrdersView.as_view(),
         name="daily purchase order",
     ),
-    
-
 ]

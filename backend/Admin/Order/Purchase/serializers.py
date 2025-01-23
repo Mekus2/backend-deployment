@@ -103,8 +103,7 @@ class PurchaseOrderUpdateSerializer(serializers.ModelSerializer):
         )
 
 
-
-class PurchaseOrderSerializer(serializers.ModelSerializer):
+class BasayPurchaseOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = PurchaseOrder
         fields = "__all__"
