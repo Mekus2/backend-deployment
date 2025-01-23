@@ -98,3 +98,68 @@ class DeliveryItemIssue(models.Model):
                 self.ISSUE_QTY_DEFECT * self.ISSUE_PROD_LINE_PRICE
             )
             self.save()
+
+
+class ReplacementHold(models.Model):
+    ACTION_CHOICES = [
+        ("Return", "Return"),
+        ("Replacement", "Replacement"),
+    ]
+
+    STATUS_CHOICES = [
+        ("On Hold", "On Hold"),
+        ("Processed", "Processed"),
+    ]
+
+    DELIVERY_TYPE_CHOICES = [
+        ("Inbound Delivery", "Inbound Delivery"),
+        ("Customer Delivery", "Customer Delivery"),
+    ]
+
+    delivery_issue = models.ForeignKey(
+        "DeliveryIssue",
+        on_delete=models.CASCADE,
+        related_name="replacement_holds",
+        help_text="The associated delivery issue for this hold entry.",
+    )
+    product_id = models.CharField(
+        max_length=50,
+        help_text="ID of the product associated with the hold.",
+    )
+    product_name = models.CharField(
+        max_length=255,
+        help_text="Name of the product associated with the hold.",
+    )
+    quantity = models.PositiveIntegerField(
+        help_text="Quantity of the product involved in the hold."
+    )
+    price = models.DecimalField(
+        max_digits=10, decimal_places=2, help_text="Price of the product per unit."
+    )
+    action_type = models.CharField(
+        max_length=20,
+        choices=ACTION_CHOICES,
+        help_text="Action to be taken, either Return or Replacement.",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="On Hold",
+        help_text="Current status of the hold entry.",
+    )
+    delivery_type = models.CharField(
+        max_length=20,
+        choices=DELIVERY_TYPE_CHOICES,
+        help_text="Type of delivery associated with this entry (Inbound or Customer Delivery).",
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Timestamp when the replacement hold entry was created.",
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="Timestamp when the replacement hold entry was last updated.",
+    )
+
+    def __str__(self):
+        return f"{self.product_name} ({self.action_type} - {self.delivery_type})"
