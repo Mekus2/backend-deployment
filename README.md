@@ -1,5 +1,7 @@
-Clone first the remote repository
---> 
+Requirements:
+	--> python version 3.12.4+
+	--> pip
+	
 
 To setup python virtual environment on your local device
 	--> got to backend directory ==> use "cd backend" command
@@ -8,6 +10,10 @@ To setup python virtual environment on your local device
 
 To install all required packages for backend
 	--> pip install -r requirements.txt ==> this will install all the packages included in requirements.text
+
+To setup database:
+	--> open pgadmin 4
+	--> create a database, save credentials: DB_NAME, DB_PASSWORD
 
 NOTE: if naa moy i-dag2 nga packages sa backend, please make sure naka activate ang virtual environment para ang mga packages ma include
 
